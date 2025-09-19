@@ -1,0 +1,418 @@
+{
+  "name": "scaffold",
+  "version": "1.0.0",
+  "description": "Generic project structure management with template-based scaffolding",
+  "commands": [
+    {
+      "name": "new",
+      "description": "Create new project with template selection",
+      "usage": "scaffold new <project>",
+      "arguments": [
+        {
+          "name": "project",
+          "type": "string",
+          "required": true,
+          "description": "Project name or path"
+        }
+      ],
+      "options": [
+        {
+          "name": "template",
+          "alias": "t",
+          "type": "string[]",
+          "description": "Pre-select templates (comma-separated)"
+        },
+        {
+          "name": "strict",
+          "type": "boolean",
+          "default": true,
+          "description": "Enable strict mode"
+        },
+        {
+          "name": "dry-run",
+          "type": "boolean",
+          "default": false,
+          "description": "Show what would be created without doing it"
+        }
+      ],
+      "returns": {
+        "success": {
+          "code": 0,
+          "message": "Project created successfully at {path}"
+        },
+        "errors": [
+          {
+            "code": 1,
+            "condition": "project_exists",
+            "message": "Project already exists at {path}"
+          },
+          {
+            "code": 2,
+            "condition": "template_not_found",
+            "message": "Template '{template}' not found"
+          },
+          {
+            "code": 3,
+            "condition": "permission_denied",
+            "message": "Permission denied to create project at {path}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "extend",
+      "description": "Add templates or modify existing project",
+      "usage": "scaffold extend <project>",
+      "arguments": [
+        {
+          "name": "project",
+          "type": "string",
+          "required": true,
+          "description": "Project path"
+        }
+      ],
+      "options": [
+        {
+          "name": "add-template",
+          "type": "string[]",
+          "description": "Add specific templates to existing project"
+        },
+        {
+          "name": "configure",
+          "type": "boolean",
+          "default": false,
+          "description": "Open configuration file editor"
+        }
+      ],
+      "returns": {
+        "success": {
+          "code": 0,
+          "message": "Project extended with {count} templates"
+        },
+        "errors": [
+          {
+            "code": 1,
+            "condition": "project_not_found",
+            "message": "Project not found at {path}"
+          },
+          {
+            "code": 1,
+            "condition": "not_scaffold_project",
+            "message": "Not a scaffold project (missing .scaffold/manifest.json)"
+          },
+          {
+            "code": 2,
+            "condition": "template_conflict",
+            "message": "Template '{template}' conflicts with existing structure"
+          }
+        ]
+      }
+    },
+    {
+      "name": "template",
+      "description": "Manage template definitions",
+      "usage": "scaffold template <action>",
+      "subcommands": [
+        {
+          "name": "list",
+          "description": "Show available templates",
+          "options": [
+            {
+              "name": "json",
+              "type": "boolean",
+              "default": false,
+              "description": "Output in JSON format"
+            }
+          ]
+        },
+        {
+          "name": "create",
+          "description": "Interactive template creator",
+          "arguments": [
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "Template name"
+            }
+          ]
+        },
+        {
+          "name": "update",
+          "description": "Modify existing template",
+          "arguments": [
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "Template name"
+            }
+          ]
+        },
+        {
+          "name": "delete",
+          "description": "Remove custom template",
+          "arguments": [
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "Template name"
+            }
+          ],
+          "options": [
+            {
+              "name": "force",
+              "type": "boolean",
+              "default": false,
+              "description": "Skip confirmation"
+            }
+          ]
+        },
+        {
+          "name": "show",
+          "description": "Display template details",
+          "arguments": [
+            {
+              "name": "name",
+              "type": "string",
+              "required": true,
+              "description": "Template name"
+            }
+          ],
+          "options": [
+            {
+              "name": "json",
+              "type": "boolean",
+              "default": false,
+              "description": "Output in JSON format"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "show",
+      "description": "Display projects, templates, and project details",
+      "usage": "scaffold show [target]",
+      "arguments": [
+        {
+          "name": "target",
+          "type": "string",
+          "required": false,
+          "description": "What to show (project path or 'templates')"
+        }
+      ],
+      "options": [
+        {
+          "name": "json",
+          "type": "boolean",
+          "default": false,
+          "description": "Output in JSON format"
+        }
+      ]
+    },
+    {
+      "name": "config",
+      "description": "Manage configurations",
+      "usage": "scaffold config [setting]",
+      "arguments": [
+        {
+          "name": "setting",
+          "type": "string",
+          "required": false,
+          "description": "Setting to view or modify"
+        }
+      ],
+      "options": [
+        {
+          "name": "global",
+          "type": "boolean",
+          "default": false,
+          "description": "Manage user-wide settings"
+        },
+        {
+          "name": "local",
+          "type": "boolean",
+          "default": false,
+          "description": "Manage project-specific settings"
+        },
+        {
+          "name": "list",
+          "type": "boolean",
+          "default": false,
+          "description": "Show current configuration"
+        },
+        {
+          "name": "set",
+          "type": "string",
+          "description": "Set configuration value (key=value)"
+        }
+      ]
+    },
+    {
+      "name": "fix",
+      "description": "Fix project structure to match templates (does nothing if already compliant)",
+      "usage": "scaffold fix [project]",
+      "arguments": [
+        {
+          "name": "project",
+          "type": "string",
+          "required": false,
+          "default": ".",
+          "description": "Project path"
+        }
+      ],
+      "options": [
+        {
+          "name": "dry-run",
+          "type": "boolean",
+          "default": false,
+          "description": "Show what would be changed"
+        },
+        {
+          "name": "force",
+          "type": "boolean",
+          "default": false,
+          "description": "Apply changes without confirmation"
+        },
+        {
+          "name": "backup",
+          "type": "boolean",
+          "default": true,
+          "description": "Create backup before sync"
+        }
+      ],
+      "returns": {
+        "success": {
+          "code": 0,
+          "message": "Project fixed successfully: {added} added, {modified} modified, {removed} removed"
+        },
+        "errors": [
+          {
+            "code": 1,
+            "condition": "fix_conflicts",
+            "message": "{count} conflicts require manual resolution"
+          },
+          {
+            "code": 2,
+            "condition": "backup_failed",
+            "message": "Failed to create backup at {path}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "check",
+      "description": "Validate project structure against templates (read-only)",
+      "usage": "scaffold check [project]",
+      "arguments": [
+        {
+          "name": "project",
+          "type": "string",
+          "required": false,
+          "default": ".",
+          "description": "Project path"
+        }
+      ],
+      "options": [
+        {
+          "name": "verbose",
+          "type": "boolean",
+          "default": false,
+          "description": "Show detailed validation report"
+        },
+        {
+          "name": "json",
+          "type": "boolean",
+          "default": false,
+          "description": "Output results in JSON format"
+        }
+      ],
+      "returns": {
+        "success": {
+          "code": 0,
+          "message": "Project structure is valid"
+        },
+        "errors": [
+          {
+            "code": 1,
+            "condition": "validation_failed",
+            "message": "Found {errors} errors and {warnings} warnings"
+          }
+        ]
+      }
+    },
+    {
+      "name": "clean",
+      "description": "Manage temporary storage and cleanup",
+      "usage": "scaffold clean",
+      "options": [
+        {
+          "name": "cache",
+          "type": "boolean",
+          "default": false,
+          "description": "Clear template caches"
+        },
+        {
+          "name": "tmp",
+          "type": "boolean",
+          "default": false,
+          "description": "Clean temporary directories"
+        },
+        {
+          "name": "orphaned",
+          "type": "boolean",
+          "default": false,
+          "description": "Remove orphaned configuration files"
+        },
+        {
+          "name": "all",
+          "type": "boolean",
+          "default": false,
+          "description": "Clean everything"
+        }
+      ],
+      "returns": {
+        "success": {
+          "code": 0,
+          "message": "Cleaned {size}MB from {count} items"
+        }
+      }
+    }
+  ],
+  "globalOptions": [
+    {
+      "name": "verbose",
+      "alias": "v", 
+      "type": "boolean",
+      "default": false,
+      "description": "Enable verbose output"
+    },
+    {
+      "name": "quiet",
+      "alias": "q",
+      "type": "boolean",
+      "default": false,
+      "description": "Suppress non-essential output"
+    },
+    {
+      "name": "help",
+      "alias": "h",
+      "type": "boolean",
+      "default": false,
+      "description": "Show help information"
+    },
+    {
+      "name": "version",
+      "type": "boolean",
+      "default": false,
+      "description": "Show version information"
+    },
+    {
+      "name": "config",
+      "type": "string",
+      "description": "Use specific config file"
+    }
+  ]
+}
