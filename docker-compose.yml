@@ -1,0 +1,132 @@
+services:
+  # Development service with hot-reload
+  dev:
+    build:
+      context: .
+      dockerfile: docker/development/Dockerfile
+    container_name: scaffold-dev
+    environment:
+      - NODE_ENV=development
+      - DEBUG=scaffold:*
+    volumes:
+      # Mount source code for hot-reload
+      - .:/app
+      # Preserve node_modules in container
+      - /app/node_modules
+      # Mount git directory for version control access
+      - ./.git:/app/.git:ro
+    ports:
+      - "3000:3000"
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    networks:
+      - scaffold-network
+    restart: unless-stopped
+
+  # Testing service
+  test:
+    build:
+      context: .
+      dockerfile: docker/development/Dockerfile
+    container_name: scaffold-test
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    volumes:
+      # Mount source and test files
+      - .:/app
+      # Preserve node_modules in container
+      - /app/node_modules
+      # Mount for test results and coverage
+      - ./coverage:/app/coverage
+    working_dir: /app
+    command: npm test
+    networks:
+      - scaffold-network
+    profiles:
+      - test
+
+  # Production service
+  prod:
+    build:
+      context: .
+      dockerfile: docker/production/Dockerfile
+    container_name: scaffold-prod
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3001:3000"
+    networks:
+      - scaffold-network
+    profiles:
+      - production
+    restart: unless-stopped
+
+  # Lint service (extends dev for consistency)
+  lint:
+    build:
+      context: .
+      dockerfile: docker/development/Dockerfile
+    container_name: scaffold-lint
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run lint
+    networks:
+      - scaffold-network
+    profiles:
+      - lint
+
+  # TypeScript check service
+  typecheck:
+    build:
+      context: .
+      dockerfile: docker/development/Dockerfile
+    container_name: scaffold-typecheck
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run typecheck
+    networks:
+      - scaffold-network
+    profiles:
+      - typecheck
+
+  # Build service
+  build:
+    build:
+      context: .
+      dockerfile: docker/development/Dockerfile
+    container_name: scaffold-build
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./dist:/app/dist
+    working_dir: /app
+    command: npm run build
+    networks:
+      - scaffold-network
+    profiles:
+      - build
+
+networks:
+  scaffold-network:
+    driver: bridge
+    name: scaffold-network
+
+volumes:
+  # Named volume for node_modules persistence
+  scaffold_node_modules:
+    driver: local
+  # Named volume for build artifacts
+  scaffold_dist:
+    driver: local

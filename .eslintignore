@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+*.d.ts
+*.js
+.git/
+docker/
+tests/
+jest.config.js

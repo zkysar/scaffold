@@ -1,0 +1,217 @@
+# Shell Completion Command Contracts
+# Defines the CLI commands for managing shell completion
+
+openapi: 3.0.0
+info:
+  title: Scaffold CLI Completion Commands
+  version: 1.0.0
+  description: Command contracts for shell completion functionality
+
+paths:
+  /completion/install:
+    post:
+      summary: Install shell completion
+      operationId: installCompletion
+      description: Install completion scripts for the current shell
+      parameters:
+        - name: shell
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [bash, zsh, fish]
+          description: Target shell (auto-detect if not specified)
+        - name: force
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Overwrite existing completion scripts
+      responses:
+        '200':
+          description: Completion installed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  shell:
+                    type: string
+                  installPath:
+                    type: string
+                  message:
+                    type: string
+        '409':
+          description: Completion already installed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  installedPath:
+                    type: string
+                  hint:
+                    type: string
+        '400':
+          description: Unsupported shell or invalid parameters
+
+  /completion/uninstall:
+    delete:
+      summary: Uninstall shell completion
+      operationId: uninstallCompletion
+      description: Remove completion scripts from shell configuration
+      parameters:
+        - name: shell
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [bash, zsh, fish]
+          description: Target shell (auto-detect if not specified)
+      responses:
+        '200':
+          description: Completion uninstalled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  shell:
+                    type: string
+                  message:
+                    type: string
+        '404':
+          description: No completion found to uninstall
+
+  /completion/script:
+    get:
+      summary: Get completion script
+      operationId: getCompletionScript
+      description: Output the completion script for manual installation
+      parameters:
+        - name: shell
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [bash, zsh, fish]
+          description: Target shell (auto-detect if not specified)
+      responses:
+        '200':
+          description: Completion script returned
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Shell completion script content
+
+  /completion/status:
+    get:
+      summary: Check completion status
+      operationId: getCompletionStatus
+      description: Check if completion is installed and working
+      responses:
+        '200':
+          description: Completion status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  installed:
+                    type: boolean
+                  shell:
+                    type: string
+                    nullable: true
+                  version:
+                    type: string
+                    nullable: true
+                  installPath:
+                    type: string
+                    nullable: true
+                  installDate:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+  /completion/complete:
+    get:
+      summary: Generate completions (internal)
+      operationId: generateCompletions
+      description: Internal endpoint called by shell completion scripts
+      parameters:
+        - name: line
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Current command line
+        - name: point
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Cursor position
+      responses:
+        '200':
+          description: Completion suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  completions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        value:
+                          type: string
+                        description:
+                          type: string
+                          nullable: true
+                        type:
+                          type: string
+                          enum: [command, option, argument, path]
+
+components:
+  schemas:
+    CompletionConfig:
+      type: object
+      properties:
+        shellType:
+          type: string
+          enum: [bash, zsh, fish]
+        installedVersion:
+          type: string
+          nullable: true
+        installPath:
+          type: string
+          nullable: true
+        installDate:
+          type: string
+          format: date-time
+          nullable: true
+        isEnabled:
+          type: boolean
+
+    CompletionError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object

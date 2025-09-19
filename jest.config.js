@@ -1,0 +1,134 @@
+/** @type {import('jest').Config} */
+module.exports = {
+  // Use ts-jest preset for TypeScript support
+  preset: 'ts-jest',
+
+  // Test environment
+  testEnvironment: 'node',
+
+  // Test file locations
+  roots: ['<rootDir>/src', '<rootDir>/tests'],
+
+  // Test file patterns
+  testMatch: [
+    '**/tests/**/*.test.ts',
+    '**/tests/**/*.spec.ts'
+  ],
+
+  // Module file extensions
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+
+  // Transform files
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: 'tsconfig.json'
+    }]
+  },
+
+  // Coverage configuration
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.d.ts',
+    '!src/**/index.ts',
+    '!src/**/*.interface.ts',
+    '!src/**/*.type.ts'
+  ],
+
+  // Coverage thresholds (80% minimum as specified)
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    }
+  },
+
+  // Coverage output
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'text-summary', 'lcov', 'html', 'json'],
+
+  // Setup files
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+
+  // Test timeout (30 seconds for integration tests)
+  testTimeout: 30000,
+
+  // Clear mocks between tests
+  clearMocks: true,
+
+  // Restore mocks after each test
+  restoreMocks: true,
+
+  // Verbose output for debugging
+  verbose: true,
+
+  // Test projects for different test types
+  projects: [
+    {
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      displayName: 'unit',
+      testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
+      transform: {
+        '^.+\\.ts$': ['ts-jest', {
+          tsconfig: 'tsconfig.json'
+        }]
+      },
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+        '^@tests/(.*)$': '<rootDir>/tests/$1'
+      }
+    },
+    {
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      displayName: 'integration',
+      testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
+      transform: {
+        '^.+\\.ts$': ['ts-jest', {
+          tsconfig: 'tsconfig.json'
+        }]
+      },
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+        '^@tests/(.*)$': '<rootDir>/tests/$1'
+      }
+    },
+    {
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      displayName: 'contract',
+      testMatch: ['<rootDir>/tests/contract/**/*.test.ts'],
+      transform: {
+        '^.+\\.ts$': ['ts-jest', {
+          tsconfig: 'tsconfig.json'
+        }]
+      },
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+      moduleNameMapper: {
+        '^@/(.*)$': '<rootDir>/src/$1',
+        '^@tests/(.*)$': '<rootDir>/tests/$1'
+      }
+    }
+  ],
+
+  // Module name mapping for absolute imports
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@tests/(.*)$': '<rootDir>/tests/$1'
+  },
+
+  // Ignore patterns for coverage
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/coverage/',
+    '/tests/fixtures/',
+    '/tests/helpers/',
+    '\\.d\\.ts$',
+    'index\\.ts$'
+  ]
+};
