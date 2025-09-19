@@ -257,12 +257,12 @@ export class TemplateService implements ITemplateService {
     if (!template.rootFolder || typeof template.rootFolder !== 'string') {
       errors.push('Template rootFolder is required and must be a string');
     } else {
-      // Validate rootFolder is a simple directory name (no slashes, no special chars)
-      if (!/^[a-zA-Z0-9_-]+$/.test(template.rootFolder)) {
-        errors.push('Template rootFolder must be a simple directory name (alphanumeric, underscore, hyphen only)');
+      // Validate rootFolder - allow "." for current directory or a simple directory name
+      if (template.rootFolder !== '.' && !/^[a-zA-Z0-9_-]+$/.test(template.rootFolder)) {
+        errors.push('Template rootFolder must be "." or a simple directory name (alphanumeric, underscore, hyphen only)');
       }
-      if (template.rootFolder.startsWith('.') || template.rootFolder.startsWith('-')) {
-        errors.push('Template rootFolder cannot start with a dot or hyphen');
+      if (template.rootFolder !== '.' && (template.rootFolder.startsWith('.') || template.rootFolder.startsWith('-'))) {
+        errors.push('Template rootFolder cannot start with a dot or hyphen (except for ".")');
       }
     }
 
@@ -274,8 +274,15 @@ export class TemplateService implements ITemplateService {
           errors.push(`Folder ${index}: path is required and must be a string`);
         } else if (template.rootFolder) {
           // Validate that folder path starts with rootFolder
-          if (!folder.path.startsWith(template.rootFolder + '/') && folder.path !== template.rootFolder) {
-            errors.push(`Folder ${index}: path '${folder.path}' must start with rootFolder '${template.rootFolder}/'`);
+          if (template.rootFolder === '.') {
+            // For current directory, paths should start with "./"
+            if (!folder.path.startsWith('./') && folder.path !== '.') {
+              errors.push(`Folder ${index}: path '${folder.path}' must start with './' when rootFolder is '.'`);
+            }
+          } else {
+            if (!folder.path.startsWith(template.rootFolder + '/') && folder.path !== template.rootFolder) {
+              errors.push(`Folder ${index}: path '${folder.path}' must start with rootFolder '${template.rootFolder}/'`);
+            }
           }
         }
       });
@@ -289,8 +296,15 @@ export class TemplateService implements ITemplateService {
           errors.push(`File ${index}: path is required and must be a string`);
         } else if (template.rootFolder) {
           // Validate that file path starts with rootFolder
-          if (!file.path.startsWith(template.rootFolder + '/')) {
-            errors.push(`File ${index}: path '${file.path}' must start with rootFolder '${template.rootFolder}/'`);
+          if (template.rootFolder === '.') {
+            // For current directory, paths should start with "./"
+            if (!file.path.startsWith('./')) {
+              errors.push(`File ${index}: path '${file.path}' must start with './' when rootFolder is '.'`);
+            }
+          } else {
+            if (!file.path.startsWith(template.rootFolder + '/')) {
+              errors.push(`File ${index}: path '${file.path}' must start with rootFolder '${template.rootFolder}/'`);
+            }
           }
         }
         if (!file.sourcePath && !file.content) {
@@ -370,8 +384,15 @@ export class TemplateService implements ITemplateService {
             errors.push(`Rule ${index}: target is required and must be a string`);
           } else if (template.rootFolder) {
             // Validate that rule target starts with rootFolder
-            if (!rule.target.startsWith(template.rootFolder + '/') && rule.target !== template.rootFolder) {
-              errors.push(`Rule ${index}: target '${rule.target}' must start with rootFolder '${template.rootFolder}/'`);
+            if (template.rootFolder === '.') {
+              // For current directory, targets should start with "./"
+              if (!rule.target.startsWith('./') && rule.target !== '.') {
+                errors.push(`Rule ${index}: target '${rule.target}' must start with './' when rootFolder is '.'`);
+              }
+            } else {
+              if (!rule.target.startsWith(template.rootFolder + '/') && rule.target !== template.rootFolder) {
+                errors.push(`Rule ${index}: target '${rule.target}' must start with rootFolder '${template.rootFolder}/'`);
+              }
             }
           }
 
