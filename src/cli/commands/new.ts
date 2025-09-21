@@ -4,7 +4,7 @@
  */
 
 import { Command } from 'commander';
-import { join, resolve } from 'path';
+import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
@@ -89,10 +89,57 @@ async function handleNewCommand(projectName: string, options: NewCommandOptions)
       console.log(chalk.blue('Using template:'), options.template);
     }
   } else {
-    // TODO: Prompt user to select from available templates
-    console.log(chalk.yellow('No template specified. Use --template option.'));
-    console.log(chalk.gray('Example: scaffold new my-project --template node-typescript'));
-    return;
+    // Load available templates and prompt user to select
+    try {
+      const library = await templateService.loadTemplates();
+
+      if (library.templates.length === 0) {
+        console.log(chalk.yellow('No templates found.'));
+        console.log(chalk.gray('Use "scaffold template create" to create your first template.'));
+        console.log(chalk.gray('Or specify a template with: scaffold new my-project --template <template-name>'));
+        return;
+      }
+
+      if (verbose) {
+        console.log(chalk.blue('Found'), library.templates.length, 'available templates');
+      }
+
+      // Create choices for inquirer
+      const templateChoices = library.templates.map(template => ({
+        name: `${template.name} - ${template.description}`,
+        value: template.id,
+        short: template.name,
+      }));
+
+      const { selectedTemplates } = await inquirer.prompt([
+        {
+          type: 'checkbox',
+          name: 'selectedTemplates',
+          message: 'Select templates to apply (use spacebar to select, enter to confirm):',
+          choices: templateChoices,
+          validate: (input: string[]): string | boolean => {
+            if (input.length === 0) {
+              return 'You must select at least one template';
+            }
+            return true;
+          },
+        },
+      ]);
+
+      templateIds = selectedTemplates;
+
+      if (verbose) {
+        console.log(chalk.blue('Selected templates:'), templateIds);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Failed to load templates')) {
+        console.log(chalk.yellow('No templates found.'));
+        console.log(chalk.gray('Use "scaffold template create" to create your first template.'));
+        console.log(chalk.gray('Or specify a template with: scaffold new my-project --template <template-name>'));
+        return;
+      }
+      throw error;
+    }
   }
 
   // Parse variables if provided

@@ -38,6 +38,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProjectService = void 0;
 const path = __importStar(require("path"));
+const os = __importStar(require("os"));
 const crypto_1 = require("crypto");
 const variable_substitution_service_1 = require("./variable-substitution.service");
 class ProjectService {
@@ -629,7 +630,96 @@ class ProjectService {
         await this.updateProjectManifest(projectPath, manifest);
     }
     async cleanProject(projectPath) {
-        throw new Error('Not implemented');
+        const targetPath = projectPath || process.cwd();
+        const resolvedPath = this.fileService.resolvePath(targetPath);
+        try {
+            const cleanupTasks = [];
+            // 1. Clean up .scaffold-temp directory if it exists
+            const scaffoldTempPath = this.fileService.resolvePath(resolvedPath, '.scaffold-temp');
+            if (await this.fileService.exists(scaffoldTempPath)) {
+                cleanupTasks.push({
+                    type: 'temp-directory',
+                    path: scaffoldTempPath,
+                    action: async () => {
+                        await this.fileService.deletePath(scaffoldTempPath, { recursive: true, force: true });
+                    }
+                });
+            }
+            // 2. Find and clean up backup files (*.scaffold-backup)
+            try {
+                const entries = await this.fileService.readDirectory(resolvedPath);
+                for (const entry of entries) {
+                    if (entry.endsWith('.scaffold-backup')) {
+                        const backupFilePath = this.fileService.resolvePath(resolvedPath, entry);
+                        cleanupTasks.push({
+                            type: 'backup-file',
+                            path: backupFilePath,
+                            action: async () => {
+                                await this.fileService.deletePath(backupFilePath, { force: true });
+                            }
+                        });
+                    }
+                }
+            }
+            catch (error) {
+                // Directory might not be readable or might not exist, which is acceptable
+                // Only warn if this is a real error and not just "directory doesn't exist"
+                if (await this.fileService.exists(resolvedPath)) {
+                    // Directory exists but couldn't read it - this might be a permission issue
+                    // We'll continue with other cleanup tasks
+                }
+            }
+            // 3. Clean up any cached template data in global temp directory
+            const globalTempPath = this.fileService.resolvePath(process.cwd(), '.scaffold-temp');
+            if (await this.fileService.exists(globalTempPath)) {
+                cleanupTasks.push({
+                    type: 'global-temp',
+                    path: globalTempPath,
+                    action: async () => {
+                        await this.fileService.deletePath(globalTempPath, { recursive: true, force: true });
+                    }
+                });
+            }
+            // Execute cleanup tasks
+            if (cleanupTasks.length === 0) {
+                if (this.fileService.isDryRun) {
+                    console.log('[DRY RUN] No temporary files or backup files found to clean');
+                }
+                return;
+            }
+            if (this.fileService.isDryRun) {
+                console.log(`[DRY RUN] Would clean ${cleanupTasks.length} items:`);
+                for (const task of cleanupTasks) {
+                    console.log(`[DRY RUN]   - ${task.type}: ${task.path}`);
+                }
+                return;
+            }
+            // Check if we should log verbose output based on configuration
+            const shouldLogVerbose = this.configService?.get('preferences.verboseOutput') || false;
+            if (shouldLogVerbose) {
+                console.log(`Cleaning up ${cleanupTasks.length} temporary items...`);
+            }
+            for (const task of cleanupTasks) {
+                try {
+                    if (shouldLogVerbose) {
+                        console.log(`  Cleaning ${task.type}: ${task.path}`);
+                    }
+                    await task.action();
+                }
+                catch (cleanupError) {
+                    // Log the error but continue with other cleanup tasks
+                    if (shouldLogVerbose) {
+                        console.log(`  Warning: Failed to clean ${task.type} at ${task.path}: ${cleanupError instanceof Error ? cleanupError.message : 'Unknown error'}`);
+                    }
+                }
+            }
+            if (shouldLogVerbose) {
+                console.log('Cleanup completed successfully');
+            }
+        }
+        catch (error) {
+            throw new Error(`Failed to clean project at '${resolvedPath}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
     /**
      * Find the nearest project manifest by searching upward from the given path
@@ -804,10 +894,10 @@ class ProjectService {
      */
     async findTemplateById(templateId) {
         try {
-            const template = await this.templateService.getTemplate(templateId);
+            await this.templateService.getTemplate(templateId);
             // The TemplateService should provide the path, but for now we'll reconstruct it
             // This is based on the pattern seen in TemplateService
-            const templatesDir = this.fileService.resolvePath(require('os').homedir(), '.scaffold', 'templates');
+            const templatesDir = this.fileService.resolvePath(os.homedir(), '.scaffold', 'templates');
             return this.fileService.resolvePath(templatesDir, templateId);
         }
         catch (error) {

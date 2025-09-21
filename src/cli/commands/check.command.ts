@@ -41,7 +41,6 @@ export function createCheckCommand(): Command {
 
 async function handleCheckCommand(projectPath: string, options: CheckCommandOptions): Promise<void> {
   const verbose = options.verbose || false;
-  const strictMode = options.strictMode || false;
   const format = options.format || 'table';
 
   // Determine target path

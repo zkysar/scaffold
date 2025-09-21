@@ -42,7 +42,6 @@ export function createConfigCommand(): Command {
 
 async function handleConfigCommand(action: string, key: string, value: string, options: ConfigCommandOptions): Promise<void> {
   const verbose = options.verbose || false;
-  const dryRun = options.dryRun || false;
 
   if (verbose) {
     console.log(chalk.blue('Config action:'), action);
@@ -56,10 +55,10 @@ async function handleConfigCommand(action: string, key: string, value: string, o
   try {
     switch (action.toLowerCase()) {
       case 'list':
-        await handleListConfig(configService, options);
+        await handleListConfig();
         break;
       case 'get':
-        await handleGetConfig(configService, key, options);
+        await handleGetConfig(key);
         break;
       case 'set':
         await handleSetConfig(configService, key, value, options);
@@ -84,12 +83,12 @@ async function handleConfigCommand(action: string, key: string, value: string, o
   }
 }
 
-async function handleListConfig(configService: ConfigurationService, options: ConfigCommandOptions): Promise<void> {
+async function handleListConfig(): Promise<void> {
   console.log(chalk.green('Configuration Settings:'));
   console.log(chalk.gray('(Implementation pending - would list all configuration settings)'));
 }
 
-async function handleGetConfig(configService: ConfigurationService, key: string, options: ConfigCommandOptions): Promise<void> {
+async function handleGetConfig(key: string): Promise<void> {
   if (!key) {
     console.error(chalk.red('Error:'), 'Configuration key is required for get action');
     console.log(chalk.gray('Usage: scaffold config get <key>'));

@@ -35,8 +35,6 @@ function createTemplateCommand() {
 }
 async function handleTemplateCommand(action, name, options) {
     const verbose = options.verbose || false;
-    const dryRun = options.dryRun || false;
-    const force = options.force || false;
     if (verbose) {
         console.log(chalk_1.default.blue('Template action:'), action);
         if (name)

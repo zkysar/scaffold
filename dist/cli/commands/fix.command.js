@@ -51,76 +51,71 @@ async function handleFixCommand(projectPath, options) {
     const fileSystemService = new services_1.FileSystemService();
     const templateService = new services_1.TemplateService();
     const projectService = new services_1.ProjectService(templateService, fileSystemService);
-    try {
-        // Check if this is a scaffold-managed project
-        const manifest = await projectService.loadProjectManifest(targetPath);
-        if (!manifest) {
-            console.log(chalk_1.default.yellow('Not a scaffold-managed project.'));
-            console.log(chalk_1.default.gray('No .scaffold/manifest.json file found.'));
-            console.log(chalk_1.default.gray('Use "scaffold new" to create a new project or "scaffold extend" to add templates.'));
-            return;
-        }
-        if (verbose) {
-            console.log(chalk_1.default.blue('Project name:'), manifest.projectName);
-            console.log(chalk_1.default.blue('Applied templates:'), manifest.templates.map(t => `${t.name}@${t.version}`).join(', '));
-        }
-        // Fix the project
-        const report = await projectService.fixProject(targetPath, dryRun);
-        // Display results
-        console.log(chalk_1.default.bold('Project Fix Report'));
-        console.log('─'.repeat(50));
-        if (report.valid) {
-            console.log(chalk_1.default.green('✓ Project structure is valid - no fixes needed'));
-        }
-        else {
-            // Display errors that couldn't be fixed
-            if (report.errors.length > 0) {
-                console.log(chalk_1.default.red('Remaining Errors:'));
-                for (const error of report.errors) {
-                    console.log(chalk_1.default.red('  ✗'), error.message);
-                    if (error.suggestion) {
-                        console.log(chalk_1.default.gray(`    Suggestion: ${error.suggestion}`));
-                    }
+    // Check if this is a scaffold-managed project
+    const manifest = await projectService.loadProjectManifest(targetPath);
+    if (!manifest) {
+        console.log(chalk_1.default.yellow('Not a scaffold-managed project.'));
+        console.log(chalk_1.default.gray('No .scaffold/manifest.json file found.'));
+        console.log(chalk_1.default.gray('Use "scaffold new" to create a new project or "scaffold extend" to add templates.'));
+        return;
+    }
+    if (verbose) {
+        console.log(chalk_1.default.blue('Project name:'), manifest.projectName);
+        console.log(chalk_1.default.blue('Applied templates:'), manifest.templates.map(t => `${t.name}@${t.version}`).join(', '));
+    }
+    // Fix the project
+    const report = await projectService.fixProject(targetPath, dryRun);
+    // Display results
+    console.log(chalk_1.default.bold('Project Fix Report'));
+    console.log('─'.repeat(50));
+    if (report.valid) {
+        console.log(chalk_1.default.green('✓ Project structure is valid - no fixes needed'));
+    }
+    else {
+        // Display errors that couldn't be fixed
+        if (report.errors.length > 0) {
+            console.log(chalk_1.default.red('Remaining Errors:'));
+            for (const error of report.errors) {
+                console.log(chalk_1.default.red('  ✗'), error.message);
+                if (error.suggestion) {
+                    console.log(chalk_1.default.gray(`    Suggestion: ${error.suggestion}`));
                 }
-                console.log('');
-            }
-            // Display warnings
-            if (report.warnings.length > 0) {
-                console.log(chalk_1.default.yellow('Warnings:'));
-                for (const warning of report.warnings) {
-                    console.log(chalk_1.default.yellow('  ⚠'), warning.message);
-                    if (warning.suggestion) {
-                        console.log(chalk_1.default.gray(`    Suggestion: ${warning.suggestion}`));
-                    }
-                }
-                console.log('');
-            }
-        }
-        // Display suggestions
-        if (report.suggestions && report.suggestions.length > 0) {
-            console.log(chalk_1.default.blue('Summary:'));
-            for (const suggestion of report.suggestions) {
-                console.log(chalk_1.default.gray(`  • ${suggestion}`));
             }
             console.log('');
         }
-        // Display stats
-        console.log(chalk_1.default.blue('Statistics:'));
-        console.log(chalk_1.default.gray(`  Files checked: ${report.stats.filesChecked}`));
-        console.log(chalk_1.default.gray(`  Folders checked: ${report.stats.foldersChecked}`));
-        console.log(chalk_1.default.gray(`  Errors: ${report.stats.errorCount}`));
-        console.log(chalk_1.default.gray(`  Warnings: ${report.stats.warningCount}`));
-        console.log(chalk_1.default.gray(`  Duration: ${report.stats.duration}ms`));
-        // Set exit code based on results
-        if (report.stats.errorCount > 0) {
-            process.exit(1);
-        }
-        else if (report.stats.warningCount > 0) {
-            process.exit(2);
+        // Display warnings
+        if (report.warnings.length > 0) {
+            console.log(chalk_1.default.yellow('Warnings:'));
+            for (const warning of report.warnings) {
+                console.log(chalk_1.default.yellow('  ⚠'), warning.message);
+                if (warning.suggestion) {
+                    console.log(chalk_1.default.gray(`    Suggestion: ${warning.suggestion}`));
+                }
+            }
+            console.log('');
         }
     }
-    catch (error) {
-        throw error;
+    // Display suggestions
+    if (report.suggestions && report.suggestions.length > 0) {
+        console.log(chalk_1.default.blue('Summary:'));
+        for (const suggestion of report.suggestions) {
+            console.log(chalk_1.default.gray(`  • ${suggestion}`));
+        }
+        console.log('');
+    }
+    // Display stats
+    console.log(chalk_1.default.blue('Statistics:'));
+    console.log(chalk_1.default.gray(`  Files checked: ${report.stats.filesChecked}`));
+    console.log(chalk_1.default.gray(`  Folders checked: ${report.stats.foldersChecked}`));
+    console.log(chalk_1.default.gray(`  Errors: ${report.stats.errorCount}`));
+    console.log(chalk_1.default.gray(`  Warnings: ${report.stats.warningCount}`));
+    console.log(chalk_1.default.gray(`  Duration: ${report.stats.duration}ms`));
+    // Set exit code based on results
+    if (report.stats.errorCount > 0) {
+        process.exit(1);
+    }
+    else if (report.stats.warningCount > 0) {
+        process.exit(2);
     }
 }
 //# sourceMappingURL=fix.command.js.map

@@ -35,7 +35,6 @@ function createCheckCommand() {
 }
 async function handleCheckCommand(projectPath, options) {
     const verbose = options.verbose || false;
-    const strictMode = options.strictMode || false;
     const format = options.format || 'table';
     // Determine target path
     const targetPath = projectPath ? (0, path_1.resolve)(projectPath) : (0, path_1.resolve)(process.cwd());

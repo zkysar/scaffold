@@ -160,7 +160,7 @@ class TemplateService {
             throw new Error(`Failed to delete template '${id}': ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
-    async installTemplate(source, templateId) {
+    async installTemplate() {
         throw new Error('Remote template installation not yet implemented');
     }
     async validateTemplate(template) {

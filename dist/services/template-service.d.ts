@@ -66,7 +66,7 @@ export declare class TemplateService implements ITemplateService {
     createTemplate(template: Template): Promise<void>;
     updateTemplate(template: Template): Promise<void>;
     deleteTemplate(id: string): Promise<void>;
-    installTemplate(source: TemplateSource, templateId: string): Promise<void>;
+    installTemplate(): Promise<void>;
     validateTemplate(template: Template): Promise<string[]>;
     getTemplateDependencies(templateId: string): Promise<Template[]>;
     exportTemplate(templateId: string, outputPath: string): Promise<void>;

@@ -10,7 +10,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createCleanCommand = createCleanCommand;
 const commander_1 = require("commander");
 const chalk_1 = __importDefault(require("chalk"));
-const services_1 = require("../../services");
 function createCleanCommand() {
     const command = new commander_1.Command('clean');
     command
@@ -37,10 +36,9 @@ async function handleCleanCommand(options) {
     if (verbose) {
         console.log(chalk_1.default.blue('Clean options:'), JSON.stringify(options, null, 2));
     }
-    const fileSystemService = new services_1.FileSystemService();
     // Determine what to clean
-    let cleanAll = options.all || false;
-    let cleanCache = options.cache || cleanAll;
+    const cleanAll = options.all || false;
+    const cleanCache = options.cache || cleanAll;
     let cleanTemp = options.temp || cleanAll;
     // If no specific options provided, clean temp files by default
     if (!cleanCache && !cleanTemp) {
