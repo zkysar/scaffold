@@ -6,7 +6,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('Demo Templates', () => {
-  const templatesDir = path.resolve(__dirname, '../../..');
+  const templatesDir = path.resolve(
+    __dirname,
+    '../../../demo-templates/resources'
+  );
 
   const templates = ['react-typescript', 'nodejs-api', 'python-fastapi'];
 

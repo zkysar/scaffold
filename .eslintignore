@@ -7,6 +7,4 @@ coverage/
 docker/
 tests/
 jest.config.js
-react-typescript/
-nodejs-api/
-python-fastapi/
+demo-templates/

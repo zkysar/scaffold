@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "templatesPath": ".scaffold/templates",
+  "preferences": {
+    "defaultTemplate": "react-typescript",
+    "autoInstallDependencies": false,
+    "enableCompletion": true
+  }
+}

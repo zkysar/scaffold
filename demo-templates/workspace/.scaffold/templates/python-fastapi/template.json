@@ -1,0 +1,101 @@
+{
+  "name": "python-fastapi",
+  "version": "1.0.0",
+  "description": "Python FastAPI microservice",
+  "author": "Scaffold CLI",
+  "folders": [
+    {
+      "path": "app",
+      "description": "Application code"
+    },
+    {
+      "path": "app/routers",
+      "description": "API routers"
+    },
+    {
+      "path": "app/models",
+      "description": "Pydantic models"
+    },
+    {
+      "path": "tests",
+      "description": "Test files"
+    }
+  ],
+  "files": [
+    {
+      "path": "requirements.txt",
+      "template": "files/requirements.txt",
+      "description": "Python dependencies"
+    },
+    {
+      "path": "README.md",
+      "template": "files/README.md",
+      "description": "Documentation"
+    },
+    {
+      "path": ".gitignore",
+      "template": "files/.gitignore",
+      "description": "Git ignore"
+    },
+    {
+      "path": ".env.example",
+      "template": "files/.env.example",
+      "description": "Environment example"
+    },
+    {
+      "path": "main.py",
+      "template": "files/main.py",
+      "description": "Application entry"
+    },
+    {
+      "path": "app/__init__.py",
+      "template": "files/__init__.py",
+      "description": "App init"
+    },
+    {
+      "path": "app/config.py",
+      "template": "files/config.py",
+      "description": "Configuration"
+    },
+    {
+      "path": "app/routers/health.py",
+      "template": "files/health.py",
+      "description": "Health router"
+    },
+    {
+      "path": "Dockerfile",
+      "template": "files/Dockerfile",
+      "description": "Docker config"
+    }
+  ],
+  "variables": [
+    {
+      "name": "PROJECT_NAME",
+      "description": "Project name",
+      "default": "fastapi-service",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    {
+      "name": "API_TITLE",
+      "description": "API title",
+      "default": "FastAPI Service"
+    },
+    {
+      "name": "API_VERSION",
+      "description": "API version",
+      "default": "1.0.0"
+    },
+    {
+      "name": "PORT",
+      "description": "Server port",
+      "default": "8000",
+      "pattern": "^[0-9]{4,5}$"
+    }
+  ],
+  "rules": {
+    "fileNaming": "snake_case",
+    "maxFileSize": 100000,
+    "allowedExtensions": [".py", ".txt", ".md", ".yml", ".yaml"],
+    "requiredFiles": ["requirements.txt", "main.py"]
+  }
+}
