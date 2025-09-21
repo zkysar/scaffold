@@ -1,0 +1,559 @@
+/**
+ * Service for managing shell completion functionality
+ */
+
+import { existsSync, readFileSync, writeFileSync, unlinkSync, statSync } from 'fs';
+import { join, dirname } from 'path';
+import { homedir } from 'os';
+import { execSync } from 'child_process';
+import type {
+  ShellType,
+  CompletionConfig,
+  CompletionContext,
+  CompletionResult,
+  ShellCompletionScript,
+  CommandMetadata,
+} from '../models';
+
+export class CompletionService {
+  private readonly configDir: string;
+  private readonly configFile: string;
+
+  constructor() {
+    this.configDir = join(homedir(), '.config', 'scaffold');
+    this.configFile = join(this.configDir, 'completion.json');
+  }
+
+  /**
+   * Get current completion configuration
+   */
+  async getCompletionConfig(): Promise<CompletionConfig | null> {
+    try {
+      if (!existsSync(this.configFile)) {
+        return null;
+      }
+
+      const data = readFileSync(this.configFile, 'utf8');
+      const config = JSON.parse(data);
+
+      // Convert date strings back to Date objects
+      if (config.installDate) {
+        config.installDate = new Date(config.installDate);
+      }
+
+      return config;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Save completion configuration
+   */
+  async saveCompletionConfig(config: CompletionConfig): Promise<void> {
+    // Ensure config directory exists
+    const fs = await import('fs-extra');
+    await fs.ensureDir(this.configDir);
+
+    writeFileSync(this.configFile, JSON.stringify(config, null, 2), 'utf8');
+  }
+
+  /**
+   * Detect the current shell type
+   */
+  detectShell(): ShellType | null {
+    const shell = process.env.SHELL;
+    if (!shell) return null;
+
+    if (shell.includes('bash')) return 'bash';
+    if (shell.includes('zsh')) return 'zsh';
+    if (shell.includes('fish')) return 'fish';
+
+    return null;
+  }
+
+  /**
+   * Get shell-specific completion script
+   */
+  getCompletionScript(shellType: ShellType): ShellCompletionScript {
+    const scripts = {
+      bash: this.getBashScript(),
+      zsh: this.getZshScript(),
+      fish: this.getFishScript(),
+    };
+
+    return {
+      shellType,
+      script: scripts[shellType],
+      installInstructions: this.getInstallInstructions(shellType),
+    };
+  }
+
+  /**
+   * Install completion for the specified shell
+   */
+  async installCompletion(shellType: ShellType, force: boolean = false): Promise<string> {
+    const config = await this.getCompletionConfig();
+
+    if (config && config.isEnabled && !force) {
+      throw new Error(`Completion is already installed for ${shellType}. Use --force to reinstall.`);
+    }
+
+    const installPath = this.getInstallPath(shellType);
+    const script = this.getCompletionScript(shellType);
+
+    // Ensure install directory exists
+    const fs = await import('fs-extra');
+    await fs.ensureDir(dirname(installPath));
+
+    // Write completion script
+    writeFileSync(installPath, script.script, 'utf8');
+
+    // Update configuration
+    const newConfig: CompletionConfig = {
+      shellType,
+      installedVersion: this.getScaffoldVersion(),
+      installPath,
+      installDate: new Date(),
+      isEnabled: true,
+    };
+
+    await this.saveCompletionConfig(newConfig);
+
+    return installPath;
+  }
+
+  /**
+   * Uninstall completion
+   */
+  async uninstallCompletion(): Promise<boolean> {
+    const config = await this.getCompletionConfig();
+
+    if (!config || !config.isEnabled) {
+      return false; // Nothing to uninstall
+    }
+
+    // Remove completion script file
+    if (config.installPath && existsSync(config.installPath)) {
+      unlinkSync(config.installPath);
+    }
+
+    // Update configuration
+    const updatedConfig: CompletionConfig = {
+      ...config,
+      isEnabled: false,
+      installPath: null,
+      installDate: null,
+    };
+
+    await this.saveCompletionConfig(updatedConfig);
+
+    return true;
+  }
+
+  /**
+   * Check completion status
+   */
+  async getCompletionStatus(): Promise<{
+    isInstalled: boolean;
+    isEnabled: boolean;
+    shellType: ShellType | null;
+    installPath: string | null;
+    installDate: Date | null;
+    version: string | null;
+    isUpToDate: boolean;
+  }> {
+    const config = await this.getCompletionConfig();
+    const currentVersion = this.getScaffoldVersion();
+
+    if (!config) {
+      return {
+        isInstalled: false,
+        isEnabled: false,
+        shellType: null,
+        installPath: null,
+        installDate: null,
+        version: null,
+        isUpToDate: false,
+      };
+    }
+
+    const isUpToDate = config.installedVersion === currentVersion;
+    const isInstalled = config.installPath ? existsSync(config.installPath) : false;
+
+    return {
+      isInstalled,
+      isEnabled: config.isEnabled && isInstalled,
+      shellType: config.shellType,
+      installPath: config.installPath,
+      installDate: config.installDate,
+      version: config.installedVersion,
+      isUpToDate,
+    };
+  }
+
+  /**
+   * Generate completions for the current context
+   */
+  async generateCompletions(context: CompletionContext): Promise<CompletionResult> {
+    const metadata = this.getCommandMetadata();
+
+    // Parse the command line to determine context
+    const commandParts = context.commandLine.slice(1); // Remove 'scaffold'
+
+    if (commandParts.length === 0 || context.currentWord.startsWith('-')) {
+      // Complete top-level commands or global options
+      return this.getTopLevelCompletions(context, metadata);
+    }
+
+    // Complete subcommands or command-specific options
+    return this.getSubcommandCompletions(context, metadata, commandParts);
+  }
+
+  private getBashScript(): string {
+    return `
+_scaffold_completion() {
+    local cur prev words cword
+    _init_completion || return
+
+    # Get completion suggestions from scaffold CLI
+    local suggestions=$(scaffold completion --bash-completion "\${COMP_WORDS[@]}" "\${COMP_CWORD}")
+
+    if [[ -n "\${suggestions}" ]]; then
+        COMPREPLY=( \$(compgen -W "\${suggestions}" -- "\${cur}") )
+    fi
+}
+
+complete -F _scaffold_completion scaffold
+`.trim();
+  }
+
+  private getZshScript(): string {
+    return `
+#compdef scaffold
+
+_scaffold() {
+    local context state line
+    typeset -A opt_args
+
+    # Get completion suggestions from scaffold CLI
+    local suggestions=(\${(f)"\$(scaffold completion --zsh-completion "\${words[@]}" "\${CURRENT}")"})
+
+    if [[ -n "\${suggestions}" ]]; then
+        _describe 'commands' suggestions
+    fi
+}
+
+_scaffold "\$@"
+`.trim();
+  }
+
+  private getFishScript(): string {
+    return `
+function __scaffold_complete
+    set -l cmd (commandline -opc)
+    set -l cursor (commandline -C)
+
+    # Get completion suggestions from scaffold CLI
+    scaffold completion --fish-completion $cmd $cursor
+end
+
+complete -c scaffold -f -a "(__scaffold_complete)"
+`.trim();
+  }
+
+  private getInstallInstructions(shellType: ShellType): string {
+    const installPath = this.getInstallPath(shellType);
+
+    switch (shellType) {
+      case 'bash':
+        return `To enable completion, add this line to your ~/.bashrc:
+source ${installPath}
+
+Or reload your shell: source ~/.bashrc`;
+
+      case 'zsh':
+        return `To enable completion, ensure ${dirname(installPath)} is in your fpath and add this to your ~/.zshrc:
+autoload -U compinit && compinit
+
+Or reload your shell: source ~/.zshrc`;
+
+      case 'fish':
+        return `Completion will be automatically available in new Fish shell sessions.
+To enable in current session: source ${installPath}`;
+
+      default:
+        return `Manual installation required for ${shellType}`;
+    }
+  }
+
+  private getInstallPath(shellType: ShellType): string {
+    const home = homedir();
+
+    switch (shellType) {
+      case 'bash':
+        return join(home, '.local', 'share', 'bash-completion', 'completions', 'scaffold');
+      case 'zsh':
+        return join(home, '.zsh', 'completions', '_scaffold');
+      case 'fish':
+        return join(home, '.config', 'fish', 'completions', 'scaffold.fish');
+      default:
+        throw new Error(`Unsupported shell: ${shellType}`);
+    }
+  }
+
+  private getScaffoldVersion(): string {
+    try {
+      // Try to get version from package.json
+      const packagePath = join(__dirname, '..', '..', 'package.json');
+      if (existsSync(packagePath)) {
+        const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
+        return packageJson.version || '0.0.0';
+      }
+      return '0.0.0';
+    } catch {
+      return '0.0.0';
+    }
+  }
+
+  private getCommandMetadata(): CommandMetadata {
+    // This would normally be generated from the CLI structure
+    // For now, return a static structure based on existing commands
+    return {
+      name: 'scaffold',
+      description: 'A generic project structure management CLI tool',
+      subcommands: [
+        {
+          name: 'new',
+          aliases: ['n'],
+          description: 'Create new project',
+          subcommands: [],
+          options: [
+            { long: '--template', short: '-t', description: 'Template to use', valueRequired: true, valueType: 'string', defaultValue: null, choices: null },
+            { long: '--name', short: '-n', description: 'Project name', valueRequired: true, valueType: 'string', defaultValue: null, choices: null },
+          ],
+          arguments: [
+            { name: 'project', required: true, variadic: false, completionType: 'path', completionProvider: null, choices: null },
+          ],
+          dynamicCompletionProvider: null,
+        },
+        {
+          name: 'template',
+          aliases: ['t'],
+          description: 'Manage templates',
+          subcommands: [
+            {
+              name: 'list',
+              aliases: [],
+              description: 'List available templates',
+              subcommands: [],
+              options: [],
+              arguments: [],
+              dynamicCompletionProvider: null,
+            },
+          ],
+          options: [],
+          arguments: [],
+          dynamicCompletionProvider: null,
+        },
+        {
+          name: 'check',
+          aliases: ['c'],
+          description: 'Validate project structure',
+          subcommands: [],
+          options: [
+            { long: '--verbose', short: null, description: 'Show detailed output', valueRequired: false, valueType: 'boolean', defaultValue: false, choices: null },
+            { long: '--strict', short: null, description: 'Use strict mode', valueRequired: false, valueType: 'boolean', defaultValue: false, choices: null },
+          ],
+          arguments: [
+            { name: 'project', required: false, variadic: false, completionType: 'path', completionProvider: null, choices: null },
+          ],
+          dynamicCompletionProvider: null,
+        },
+        {
+          name: 'fix',
+          aliases: [],
+          description: 'Fix project structure issues',
+          subcommands: [],
+          options: [
+            { long: '--verbose', short: null, description: 'Show detailed output', valueRequired: false, valueType: 'boolean', defaultValue: false, choices: null },
+          ],
+          arguments: [
+            { name: 'project', required: false, variadic: false, completionType: 'path', completionProvider: null, choices: null },
+          ],
+          dynamicCompletionProvider: null,
+        },
+        {
+          name: 'extend',
+          aliases: [],
+          description: 'Add templates to existing project',
+          subcommands: [],
+          options: [],
+          arguments: [
+            { name: 'project', required: true, variadic: false, completionType: 'path', completionProvider: null, choices: null },
+          ],
+          dynamicCompletionProvider: null,
+        },
+        {
+          name: 'show',
+          aliases: [],
+          description: 'Show project information',
+          subcommands: [],
+          options: [],
+          arguments: [
+            { name: 'project', required: false, variadic: false, completionType: 'path', completionProvider: null, choices: null },
+          ],
+          dynamicCompletionProvider: null,
+        },
+        {
+          name: 'config',
+          aliases: [],
+          description: 'Manage configuration',
+          subcommands: [],
+          options: [],
+          arguments: [],
+          dynamicCompletionProvider: null,
+        },
+        {
+          name: 'clean',
+          aliases: [],
+          description: 'Cleanup temporary files',
+          subcommands: [],
+          options: [],
+          arguments: [],
+          dynamicCompletionProvider: null,
+        },
+        {
+          name: 'completion',
+          aliases: [],
+          description: 'Manage shell completion',
+          subcommands: [
+            {
+              name: 'install',
+              aliases: [],
+              description: 'Install shell completion',
+              subcommands: [],
+              options: [
+                { long: '--shell', short: '-s', description: 'Shell type', valueRequired: true, valueType: 'string', defaultValue: null, choices: ['bash', 'zsh', 'fish'] },
+                { long: '--force', short: '-f', description: 'Force reinstall', valueRequired: false, valueType: 'boolean', defaultValue: false, choices: null },
+              ],
+              arguments: [],
+              dynamicCompletionProvider: null,
+            },
+            {
+              name: 'uninstall',
+              aliases: [],
+              description: 'Remove shell completion',
+              subcommands: [],
+              options: [],
+              arguments: [],
+              dynamicCompletionProvider: null,
+            },
+            {
+              name: 'status',
+              aliases: [],
+              description: 'Check completion status',
+              subcommands: [],
+              options: [],
+              arguments: [],
+              dynamicCompletionProvider: null,
+            },
+            {
+              name: 'script',
+              aliases: [],
+              description: 'Output completion script',
+              subcommands: [],
+              options: [
+                { long: '--shell', short: '-s', description: 'Shell type', valueRequired: true, valueType: 'string', defaultValue: null, choices: ['bash', 'zsh', 'fish'] },
+              ],
+              arguments: [],
+              dynamicCompletionProvider: null,
+            },
+          ],
+          options: [],
+          arguments: [],
+          dynamicCompletionProvider: null,
+        },
+      ],
+      options: [
+        { long: '--verbose', short: null, description: 'Show detailed output', valueRequired: false, valueType: 'boolean', defaultValue: false, choices: null },
+        { long: '--dry-run', short: null, description: 'Show what would be done', valueRequired: false, valueType: 'boolean', defaultValue: false, choices: null },
+        { long: '--no-color', short: null, description: 'Disable colored output', valueRequired: false, valueType: 'boolean', defaultValue: false, choices: null },
+        { long: '--help', short: '-h', description: 'Show help', valueRequired: false, valueType: 'boolean', defaultValue: false, choices: null },
+        { long: '--version', short: '-V', description: 'Show version', valueRequired: false, valueType: 'boolean', defaultValue: false, choices: null },
+      ],
+    };
+  }
+
+  private getTopLevelCompletions(context: CompletionContext, metadata: CommandMetadata): CompletionResult {
+    const suggestions: string[] = [];
+
+    // Add subcommands
+    for (const subcommand of metadata.subcommands) {
+      suggestions.push(subcommand.name);
+      suggestions.push(...subcommand.aliases);
+    }
+
+    // Add global options if current word starts with -
+    if (context.currentWord.startsWith('-')) {
+      for (const option of metadata.options) {
+        suggestions.push(option.long);
+        if (option.short) {
+          suggestions.push(option.short);
+        }
+      }
+    }
+
+    return {
+      suggestions: suggestions.filter(s => s.startsWith(context.currentWord)),
+      hasMore: false,
+      source: 'static',
+    };
+  }
+
+  private getSubcommandCompletions(context: CompletionContext, metadata: CommandMetadata, commandParts: string[]): CompletionResult {
+    // Find the subcommand
+    let currentCommand = metadata;
+    let subcommand = null;
+
+    for (const part of commandParts) {
+      if (part.startsWith('-')) continue; // Skip options
+
+      subcommand = currentCommand.subcommands.find(sub =>
+        sub.name === part || sub.aliases.includes(part)
+      );
+
+      if (subcommand) {
+        currentCommand = subcommand as any;
+      } else {
+        break;
+      }
+    }
+
+    const suggestions: string[] = [];
+
+    if (subcommand) {
+      // Add subcommand's subcommands
+      for (const sub of subcommand.subcommands) {
+        suggestions.push(sub.name);
+        suggestions.push(...sub.aliases);
+      }
+
+      // Add subcommand's options if current word starts with -
+      if (context.currentWord.startsWith('-')) {
+        for (const option of subcommand.options) {
+          suggestions.push(option.long);
+          if (option.short) {
+            suggestions.push(option.short);
+          }
+        }
+      }
+    }
+
+    return {
+      suggestions: suggestions.filter(s => s.startsWith(context.currentWord)),
+      hasMore: false,
+      source: 'static',
+    };
+  }
+}

@@ -585,7 +585,18 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     if (command) commandPath.push(command);
     if (subcommand) commandPath.push(subcommand);
 
-    return registry.getCommandOptions(commandPath);
+    const allOptions = registry.getCommandOptions(commandPath);
+
+    // Extract already-used flags from the command line
+    const usedFlags = new Set<string>();
+    for (const word of context.commandLine) {
+      if (word.startsWith('-') && word !== context.currentWord) {
+        usedFlags.add(word);
+      }
+    }
+
+    // Filter out already-used flags
+    return allOptions.filter(option => !usedFlags.has(option));
   }
 
   private async getOptionValueCompletions(context: CompletionContext): Promise<string[]> {
