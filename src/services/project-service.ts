@@ -86,7 +86,7 @@ export class ProjectService implements IProjectService {
       throw new Error('Target path must be a non-empty string');
     }
 
-    const projectPath = this.fileService.resolvePath(targetPath, projectName);
+    const projectPath = targetPath;
     const allVariables = { ...(variables || {}), PROJECT_NAME: projectName };
 
     try {
