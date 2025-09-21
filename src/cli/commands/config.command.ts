@@ -70,10 +70,10 @@ async function handleConfigCommand(
   try {
     switch (action.toLowerCase()) {
       case 'list':
-        await handleListConfig();
+        await handleListConfig(configService, options);
         break;
       case 'get':
-        await handleGetConfig(key);
+        await handleGetConfig(configService, key, options);
         break;
       case 'set':
         await handleSetConfig(configService, key, value, options);
@@ -102,7 +102,7 @@ async function handleConfigCommand(
   }
 }
 
-async function handleListConfig(): Promise<void> {
+async function handleListConfig(_configService: ConfigurationService, _options: ConfigCommandOptions): Promise<void> {
   console.log(chalk.green('Configuration Settings:'));
   console.log(
     chalk.gray(
@@ -111,7 +111,7 @@ async function handleListConfig(): Promise<void> {
   );
 }
 
-async function handleGetConfig(key: string): Promise<void> {
+async function handleGetConfig(_configService: ConfigurationService, key: string, _options: ConfigCommandOptions): Promise<void> {
   if (!key) {
     console.error(
       chalk.red('Error:'),
