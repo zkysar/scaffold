@@ -7,7 +7,6 @@ import { Command } from 'commander';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
-import inquirer from 'inquirer';
 import { ProjectService, TemplateService, FileSystemService } from '../../services';
 
 interface ExtendCommandOptions {
