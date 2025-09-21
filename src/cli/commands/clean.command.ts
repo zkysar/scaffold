@@ -5,7 +5,6 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { FileSystemService } from '../../services';
 
 interface CleanCommandOptions {
   verbose?: boolean;
@@ -45,11 +44,10 @@ async function handleCleanCommand(options: CleanCommandOptions): Promise<void> {
     console.log(chalk.blue('Clean options:'), JSON.stringify(options, null, 2));
   }
 
-  const fileSystemService = new FileSystemService();
 
   // Determine what to clean
-  let cleanAll = options.all || false;
-  let cleanCache = options.cache || cleanAll;
+  const cleanAll = options.all || false;
+  const cleanCache = options.cache || cleanAll;
   let cleanTemp = options.temp || cleanAll;
 
   // If no specific options provided, clean temp files by default

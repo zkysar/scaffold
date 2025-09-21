@@ -12,8 +12,6 @@ import type {
   TemplateLibrary,
   TemplateSummary,
   TemplateSource,
-  TemplateVariable,
-  Rule,
 } from '../models';
 
 export interface ITemplateService {
@@ -229,7 +227,7 @@ export class TemplateService implements ITemplateService {
     }
   }
 
-  async installTemplate(source: TemplateSource, templateId: string): Promise<void> {
+  async installTemplate(): Promise<void> {
     throw new Error('Remote template installation not yet implemented');
   }
 
