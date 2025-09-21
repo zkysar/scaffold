@@ -4,13 +4,20 @@
  */
 
 import { createTemplateCommand } from '../../../src/cli/commands/template.command';
-import { createMockFileSystem, createMockConsole, CommandResult } from '../../helpers/cli-helpers';
+import {
+  createMockFileSystem,
+  createMockConsole,
+  CommandResult,
+} from '../../helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
 
 // Helper function to execute command and capture result
-async function executeCommand(command: Command, args: string[]): Promise<CommandResult> {
-  return new Promise((resolve) => {
+async function executeCommand(
+  command: Command,
+  args: string[]
+): Promise<CommandResult> {
+  return new Promise(resolve => {
     const originalExit = process.exit;
     let exitCode = 0;
 
@@ -27,7 +34,11 @@ async function executeCommand(command: Command, args: string[]): Promise<Command
       // If we get here, command succeeded
       resolve({ code: 0, message: '', data: null });
     } catch (error) {
-      resolve({ code: 1, message: error instanceof Error ? error.message : String(error), data: null });
+      resolve({
+        code: 1,
+        message: error instanceof Error ? error.message : String(error),
+        data: null,
+      });
     } finally {
       process.exit = originalExit;
     }
@@ -55,14 +66,14 @@ describe('scaffold template command contract', () => {
           'react.json': JSON.stringify({
             name: 'react',
             version: '1.2.0',
-            description: 'React application template'
+            description: 'React application template',
           }),
           'node.json': JSON.stringify({
             name: 'node',
             version: '2.0.1',
-            description: 'Node.js service template'
-          })
-        }
+            description: 'Node.js service template',
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
@@ -82,9 +93,9 @@ describe('scaffold template command contract', () => {
           'react.json': JSON.stringify({
             name: 'react',
             version: '1.2.0',
-            description: 'React application template'
-          })
-        }
+            description: 'React application template',
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
@@ -100,7 +111,7 @@ describe('scaffold template command contract', () => {
     it('should handle empty template directory', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
-        '/home/.scaffold/templates': {}
+        '/home/.scaffold/templates': {},
       });
       mockFs(mockFileSystem);
 
@@ -118,31 +129,32 @@ describe('scaffold template command contract', () => {
     it('should create new template interactively', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
-        '/home/.scaffold/templates': {}
+        '/home/.scaffold/templates': {},
       });
       mockFs(mockFileSystem);
 
       // Mock inquirer prompts
-      const mockPrompt = jest.fn()
+      const mockPrompt = jest
+        .fn()
         .mockResolvedValueOnce({
           name: 'my-template',
           version: '1.0.0',
-          description: 'My custom template'
+          description: 'My custom template',
         })
         .mockResolvedValueOnce({
           addFolder: true,
-          folderPath: 'src'
+          folderPath: 'src',
         })
         .mockResolvedValueOnce({
-          addFolder: false
+          addFolder: false,
         })
         .mockResolvedValueOnce({
           addFile: true,
           filePath: 'package.json',
-          fileTemplate: '{"name": "{{projectName}}"}'
+          fileTemplate: '{"name": "{{projectName}}"}',
         })
         .mockResolvedValueOnce({
-          addFile: false
+          addFile: false,
         });
       jest.doMock('inquirer', () => ({ prompt: mockPrompt }));
 
@@ -161,15 +173,18 @@ describe('scaffold template command contract', () => {
         '/home/.scaffold/templates': {
           'existing-template.json': JSON.stringify({
             name: 'existing-template',
-            version: '1.0.0'
-          })
-        }
+            version: '1.0.0',
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createTemplateCommand();
-      const result = await executeCommand(command, ['create', 'existing-template']);
+      const result = await executeCommand(command, [
+        'create',
+        'existing-template',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
@@ -198,20 +213,21 @@ describe('scaffold template command contract', () => {
             folders: ['src'],
             files: [],
             variables: [],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
       // Mock inquirer prompts for updating
-      const mockPrompt = jest.fn()
+      const mockPrompt = jest
+        .fn()
         .mockResolvedValueOnce({
           updateField: 'version',
-          newValue: '1.1.0'
+          newValue: '1.1.0',
         })
         .mockResolvedValueOnce({
-          continue: false
+          continue: false,
         });
       jest.doMock('inquirer', () => ({ prompt: mockPrompt }));
 
@@ -227,13 +243,16 @@ describe('scaffold template command contract', () => {
     it('should fail when template does not exist', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
-        '/home/.scaffold/templates': {}
+        '/home/.scaffold/templates': {},
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createTemplateCommand();
-      const result = await executeCommand(command, ['update', 'nonexistent-template']);
+      const result = await executeCommand(command, [
+        'update',
+        'nonexistent-template',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
@@ -248,9 +267,9 @@ describe('scaffold template command contract', () => {
         '/home/.scaffold/templates': {
           'deleteme.json': JSON.stringify({
             name: 'deleteme',
-            version: '1.0.0'
-          })
-        }
+            version: '1.0.0',
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
@@ -273,15 +292,19 @@ describe('scaffold template command contract', () => {
         '/home/.scaffold/templates': {
           'deleteme.json': JSON.stringify({
             name: 'deleteme',
-            version: '1.0.0'
-          })
-        }
+            version: '1.0.0',
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createTemplateCommand();
-      const result = await executeCommand(command, ['delete', 'deleteme', '--force']);
+      const result = await executeCommand(command, [
+        'delete',
+        'deleteme',
+        '--force',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
@@ -291,7 +314,7 @@ describe('scaffold template command contract', () => {
     it('should fail when template does not exist', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
-        '/home/.scaffold/templates': {}
+        '/home/.scaffold/templates': {},
       });
       mockFs(mockFileSystem);
 
@@ -310,9 +333,9 @@ describe('scaffold template command contract', () => {
         '/home/.scaffold/templates': {
           'keepme.json': JSON.stringify({
             name: 'keepme',
-            version: '1.0.0'
-          })
-        }
+            version: '1.0.0',
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
@@ -336,15 +359,19 @@ describe('scaffold template command contract', () => {
           'builtin-template.json': JSON.stringify({
             name: 'builtin-template',
             version: '1.0.0',
-            builtin: true
-          })
-        }
+            builtin: true,
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createTemplateCommand();
-      const result = await executeCommand(command, ['delete', 'builtin-template', '--force']);
+      const result = await executeCommand(command, [
+        'delete',
+        'builtin-template',
+        '--force',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
@@ -362,19 +389,24 @@ describe('scaffold template command contract', () => {
         folders: ['src/components', 'public', 'tests'],
         files: [
           { path: 'package.json', template: '{"name": "{{projectName}}"}' },
-          { path: 'src/App.tsx', template: 'export default function App() {}' }
+          { path: 'src/App.tsx', template: 'export default function App() {}' },
         ],
         variables: [
           { name: 'projectName', type: 'string', required: true },
-          { name: 'author', type: 'string', required: false, default: 'Anonymous' }
+          {
+            name: 'author',
+            type: 'string',
+            required: false,
+            default: 'Anonymous',
+          },
         ],
-        rules: { strict: true }
+        rules: { strict: true },
       };
 
       const mockFileSystem = createMockFileSystem({
         '/home/.scaffold/templates': {
-          'react-app.json': JSON.stringify(templateData)
-        }
+          'react-app.json': JSON.stringify(templateData),
+        },
       });
       mockFs(mockFileSystem);
 
@@ -395,13 +427,13 @@ describe('scaffold template command contract', () => {
         folders: [],
         files: [],
         variables: [],
-        rules: { strict: true }
+        rules: { strict: true },
       };
 
       const mockFileSystem = createMockFileSystem({
         '/home/.scaffold/templates': {
-          'simple-template.json': JSON.stringify(templateData)
-        }
+          'simple-template.json': JSON.stringify(templateData),
+        },
       });
       mockFs(mockFileSystem);
 
@@ -417,7 +449,7 @@ describe('scaffold template command contract', () => {
     it('should fail when template does not exist', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
-        '/home/.scaffold/templates': {}
+        '/home/.scaffold/templates': {},
       });
       mockFs(mockFileSystem);
 

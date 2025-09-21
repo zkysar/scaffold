@@ -52,12 +52,19 @@ export interface IFileSystemService {
   /**
    * Create a file with content and proper permissions
    */
-  createFile(filePath: string, content: string, options?: FileOperationOptions): Promise<void>;
+  createFile(
+    filePath: string,
+    content: string,
+    options?: FileOperationOptions
+  ): Promise<void>;
 
   /**
    * Create directories recursively
    */
-  createDirectory(dirPath: string, options?: FileOperationOptions): Promise<void>;
+  createDirectory(
+    dirPath: string,
+    options?: FileOperationOptions
+  ): Promise<void>;
 
   /**
    * Copy files and directories
@@ -87,7 +94,11 @@ export interface IFileSystemService {
   /**
    * Write JSON file with atomic operation
    */
-  writeJson(filePath: string, data: any, options?: JsonWriteOptions): Promise<void>;
+  writeJson(
+    filePath: string,
+    data: any,
+    options?: JsonWriteOptions
+  ): Promise<void>;
 
   /**
    * Read file content as string
@@ -97,7 +108,11 @@ export interface IFileSystemService {
   /**
    * Write file content with atomic operation
    */
-  writeFile(filePath: string, content: string, options?: FileOperationOptions): Promise<void>;
+  writeFile(
+    filePath: string,
+    content: string,
+    options?: FileOperationOptions
+  ): Promise<void>;
 
   /**
    * Get file stats
@@ -167,7 +182,11 @@ export interface IFileSystemService {
   /**
    * Move/rename a file or directory
    */
-  move(source: string, dest: string, options?: FileOperationOptions): Promise<void>;
+  move(
+    source: string,
+    dest: string,
+    options?: FileOperationOptions
+  ): Promise<void>;
 }
 
 export class FileSystemService implements IFileSystemService {
@@ -188,7 +207,11 @@ export class FileSystemService implements IFileSystemService {
     this._isDryRun = enabled;
   }
 
-  async createFile(filePath: string, content: string, options: FileOperationOptions = {}): Promise<void> {
+  async createFile(
+    filePath: string,
+    content: string,
+    options: FileOperationOptions = {}
+  ): Promise<void> {
     const resolvedPath = this.resolvePath(filePath);
 
     if (this._isDryRun) {
@@ -201,8 +224,10 @@ export class FileSystemService implements IFileSystemService {
         await this.ensureDirectory(path.dirname(resolvedPath));
       }
 
-      if (!options.overwrite && await this.exists(resolvedPath)) {
-        throw new Error(`File already exists and overwrite is disabled: ${resolvedPath}`);
+      if (!options.overwrite && (await this.exists(resolvedPath))) {
+        throw new Error(
+          `File already exists and overwrite is disabled: ${resolvedPath}`
+        );
       }
 
       if (options.atomic) {
@@ -220,14 +245,18 @@ export class FileSystemService implements IFileSystemService {
       }
     } catch (error) {
       throw this.enhanceError(error, `Failed to create file: ${resolvedPath}`, {
-        suggestion: 'Ensure the parent directory exists and you have write permissions.',
+        suggestion:
+          'Ensure the parent directory exists and you have write permissions.',
         path: resolvedPath,
-        operation: 'createFile'
+        operation: 'createFile',
       });
     }
   }
 
-  async createDirectory(dirPath: string, options: FileOperationOptions = {}): Promise<void> {
+  async createDirectory(
+    dirPath: string,
+    options: FileOperationOptions = {}
+  ): Promise<void> {
     const resolvedPath = this.resolvePath(dirPath);
 
     if (this._isDryRun) {
@@ -242,15 +271,24 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
-      throw this.enhanceError(error, `Failed to create directory: ${resolvedPath}`, {
-        suggestion: 'Ensure you have write permissions in the parent directory.',
-        path: resolvedPath,
-        operation: 'createDirectory'
-      });
+      throw this.enhanceError(
+        error,
+        `Failed to create directory: ${resolvedPath}`,
+        {
+          suggestion:
+            'Ensure you have write permissions in the parent directory.',
+          path: resolvedPath,
+          operation: 'createDirectory',
+        }
+      );
     }
   }
 
-  async copyPath(source: string, dest: string, options: CopyOptions = {}): Promise<void> {
+  async copyPath(
+    source: string,
+    dest: string,
+    options: CopyOptions = {}
+  ): Promise<void> {
     const resolvedSource = this.resolvePath(source);
     const resolvedDest = this.resolvePath(dest);
 
@@ -260,7 +298,7 @@ export class FileSystemService implements IFileSystemService {
     }
 
     try {
-      if (!await this.exists(resolvedSource)) {
+      if (!(await this.exists(resolvedSource))) {
         throw new Error(`Source path does not exist: ${resolvedSource}`);
       }
 
@@ -273,20 +311,28 @@ export class FileSystemService implements IFileSystemService {
         preserveTimestamps: options.preserveTimestamps,
         dereference: options.dereference,
         errorOnExist: options.errorOnExist,
-        filter: options.filter
+        filter: options.filter,
       };
 
       await fs.copy(resolvedSource, resolvedDest, copyOptions);
     } catch (error) {
-      throw this.enhanceError(error, `Failed to copy: ${resolvedSource} -> ${resolvedDest}`, {
-        suggestion: 'Ensure source exists and you have read/write permissions.',
-        path: resolvedSource,
-        operation: 'copyPath'
-      });
+      throw this.enhanceError(
+        error,
+        `Failed to copy: ${resolvedSource} -> ${resolvedDest}`,
+        {
+          suggestion:
+            'Ensure source exists and you have read/write permissions.',
+          path: resolvedSource,
+          operation: 'copyPath',
+        }
+      );
     }
   }
 
-  async deletePath(targetPath: string, options: DeleteOptions = {}): Promise<void> {
+  async deletePath(
+    targetPath: string,
+    options: DeleteOptions = {}
+  ): Promise<void> {
     const resolvedPath = this.resolvePath(targetPath);
 
     if (this._isDryRun) {
@@ -295,7 +341,7 @@ export class FileSystemService implements IFileSystemService {
     }
 
     try {
-      if (!await this.exists(resolvedPath)) {
+      if (!(await this.exists(resolvedPath))) {
         if (!options.force) {
           throw new Error(`Path does not exist: ${resolvedPath}`);
         }
@@ -320,7 +366,9 @@ export class FileSystemService implements IFileSystemService {
         } catch (error) {
           lastError = error as Error;
           if (attempt < maxRetries - 1) {
-            await new Promise(resolve => setTimeout(resolve, 100 * (attempt + 1)));
+            await new Promise(resolve =>
+              setTimeout(resolve, 100 * (attempt + 1))
+            );
           }
         }
       }
@@ -332,7 +380,7 @@ export class FileSystemService implements IFileSystemService {
           ? 'Ensure you have write permissions and no files are in use.'
           : 'For directories, use recursive option or ensure directory is empty.',
         path: resolvedPath,
-        operation: 'deletePath'
+        operation: 'deletePath',
       });
     }
   }
@@ -359,21 +407,29 @@ export class FileSystemService implements IFileSystemService {
     const resolvedPath = this.resolvePath(filePath);
 
     try {
-      if (!await this.exists(resolvedPath)) {
+      if (!(await this.exists(resolvedPath))) {
         throw new Error(`JSON file does not exist: ${resolvedPath}`);
       }
 
       return await fs.readJson(resolvedPath);
     } catch (error) {
-      throw this.enhanceError(error, `Failed to read JSON file: ${resolvedPath}`, {
-        suggestion: 'Ensure the file exists and contains valid JSON.',
-        path: resolvedPath,
-        operation: 'readJson'
-      });
+      throw this.enhanceError(
+        error,
+        `Failed to read JSON file: ${resolvedPath}`,
+        {
+          suggestion: 'Ensure the file exists and contains valid JSON.',
+          path: resolvedPath,
+          operation: 'readJson',
+        }
+      );
     }
   }
 
-  async writeJson(filePath: string, data: any, options: JsonWriteOptions = {}): Promise<void> {
+  async writeJson(
+    filePath: string,
+    data: any,
+    options: JsonWriteOptions = {}
+  ): Promise<void> {
     const resolvedPath = this.resolvePath(filePath);
 
     if (this._isDryRun) {
@@ -386,13 +442,15 @@ export class FileSystemService implements IFileSystemService {
         await this.ensureDirectory(path.dirname(resolvedPath));
       }
 
-      if (!options.overwrite && await this.exists(resolvedPath)) {
-        throw new Error(`JSON file already exists and overwrite is disabled: ${resolvedPath}`);
+      if (!options.overwrite && (await this.exists(resolvedPath))) {
+        throw new Error(
+          `JSON file already exists and overwrite is disabled: ${resolvedPath}`
+        );
       }
 
       const jsonOptions = {
         spaces: options.spaces || 2,
-        replacer: options.replacer
+        replacer: options.replacer,
       };
 
       if (options.atomic) {
@@ -412,19 +470,27 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
-      throw this.enhanceError(error, `Failed to write JSON file: ${resolvedPath}`, {
-        suggestion: 'Ensure the parent directory exists and you have write permissions.',
-        path: resolvedPath,
-        operation: 'writeJson'
-      });
+      throw this.enhanceError(
+        error,
+        `Failed to write JSON file: ${resolvedPath}`,
+        {
+          suggestion:
+            'Ensure the parent directory exists and you have write permissions.',
+          path: resolvedPath,
+          operation: 'writeJson',
+        }
+      );
     }
   }
 
-  async readFile(filePath: string, encoding: BufferEncoding = 'utf8'): Promise<string> {
+  async readFile(
+    filePath: string,
+    encoding: BufferEncoding = 'utf8'
+  ): Promise<string> {
     const resolvedPath = this.resolvePath(filePath);
 
     try {
-      if (!await this.exists(resolvedPath)) {
+      if (!(await this.exists(resolvedPath))) {
         throw new Error(`File does not exist: ${resolvedPath}`);
       }
 
@@ -433,12 +499,16 @@ export class FileSystemService implements IFileSystemService {
       throw this.enhanceError(error, `Failed to read file: ${resolvedPath}`, {
         suggestion: 'Ensure the file exists and you have read permissions.',
         path: resolvedPath,
-        operation: 'readFile'
+        operation: 'readFile',
       });
     }
   }
 
-  async writeFile(filePath: string, content: string, options: FileOperationOptions = {}): Promise<void> {
+  async writeFile(
+    filePath: string,
+    content: string,
+    options: FileOperationOptions = {}
+  ): Promise<void> {
     const resolvedPath = this.resolvePath(filePath);
 
     if (this._isDryRun) {
@@ -451,8 +521,10 @@ export class FileSystemService implements IFileSystemService {
         await this.ensureDirectory(path.dirname(resolvedPath));
       }
 
-      if (!options.overwrite && await this.exists(resolvedPath)) {
-        throw new Error(`File already exists and overwrite is disabled: ${resolvedPath}`);
+      if (!options.overwrite && (await this.exists(resolvedPath))) {
+        throw new Error(
+          `File already exists and overwrite is disabled: ${resolvedPath}`
+        );
       }
 
       if (options.atomic) {
@@ -470,9 +542,10 @@ export class FileSystemService implements IFileSystemService {
       }
     } catch (error) {
       throw this.enhanceError(error, `Failed to write file: ${resolvedPath}`, {
-        suggestion: 'Ensure the parent directory exists and you have write permissions.',
+        suggestion:
+          'Ensure the parent directory exists and you have write permissions.',
         path: resolvedPath,
-        operation: 'writeFile'
+        operation: 'writeFile',
       });
     }
   }
@@ -483,11 +556,15 @@ export class FileSystemService implements IFileSystemService {
     try {
       return await fs.stat(resolvedPath);
     } catch (error) {
-      throw this.enhanceError(error, `Failed to get stats for: ${resolvedPath}`, {
-        suggestion: 'Ensure the path exists and you have read permissions.',
-        path: resolvedPath,
-        operation: 'stat'
-      });
+      throw this.enhanceError(
+        error,
+        `Failed to get stats for: ${resolvedPath}`,
+        {
+          suggestion: 'Ensure the path exists and you have read permissions.',
+          path: resolvedPath,
+          operation: 'stat',
+        }
+      );
     }
   }
 
@@ -522,21 +599,26 @@ export class FileSystemService implements IFileSystemService {
     const resolvedPath = this.resolvePath(dirPath);
 
     try {
-      if (!await this.exists(resolvedPath)) {
+      if (!(await this.exists(resolvedPath))) {
         throw new Error(`Directory does not exist: ${resolvedPath}`);
       }
 
-      if (!await this.isDirectory(resolvedPath)) {
+      if (!(await this.isDirectory(resolvedPath))) {
         throw new Error(`Path is not a directory: ${resolvedPath}`);
       }
 
       return await fs.readdir(resolvedPath);
     } catch (error) {
-      throw this.enhanceError(error, `Failed to read directory: ${resolvedPath}`, {
-        suggestion: 'Ensure the directory exists and you have read permissions.',
-        path: resolvedPath,
-        operation: 'readDirectory'
-      });
+      throw this.enhanceError(
+        error,
+        `Failed to read directory: ${resolvedPath}`,
+        {
+          suggestion:
+            'Ensure the directory exists and you have read permissions.',
+          path: resolvedPath,
+          operation: 'readDirectory',
+        }
+      );
     }
   }
 
@@ -546,7 +628,9 @@ export class FileSystemService implements IFileSystemService {
     const backupPath = path.join(this.backupDir, backupId);
 
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would create backup: ${backupId} for paths: ${paths.join(', ')}`);
+      console.log(
+        `[DRY RUN] Would create backup: ${backupId} for paths: ${paths.join(', ')}`
+      );
       return backupId;
     }
 
@@ -557,7 +641,7 @@ export class FileSystemService implements IFileSystemService {
         id: backupId,
         timestamp,
         paths: paths.map(p => this.resolvePath(p)),
-        description
+        description,
       };
 
       // Copy each path to backup
@@ -566,7 +650,9 @@ export class FileSystemService implements IFileSystemService {
         if (await this.exists(resolvedSource)) {
           const relativePath = path.relative(process.cwd(), resolvedSource);
           const backupTarget = path.join(backupPath, 'data', relativePath);
-          await this.copyPath(resolvedSource, backupTarget, { overwrite: true });
+          await this.copyPath(resolvedSource, backupTarget, {
+            overwrite: true,
+          });
         }
       }
 
@@ -576,12 +662,19 @@ export class FileSystemService implements IFileSystemService {
       return backupId;
     } catch (error) {
       // Cleanup failed backup
-      await this.deletePath(backupPath, { recursive: true, force: true }).catch(() => {});
+      await this.deletePath(backupPath, { recursive: true, force: true }).catch(
+        () => {}
+      );
 
-      throw this.enhanceError(error, `Failed to create backup for paths: ${paths.join(', ')}`, {
-        suggestion: 'Ensure all source paths exist and you have read permissions.',
-        operation: 'backup'
-      });
+      throw this.enhanceError(
+        error,
+        `Failed to create backup for paths: ${paths.join(', ')}`,
+        {
+          suggestion:
+            'Ensure all source paths exist and you have read permissions.',
+          operation: 'backup',
+        }
+      );
     }
   }
 
@@ -594,12 +687,12 @@ export class FileSystemService implements IFileSystemService {
     }
 
     try {
-      if (!await this.exists(backupPath)) {
+      if (!(await this.exists(backupPath))) {
         throw new Error(`Backup does not exist: ${backupId}`);
       }
 
       const backupInfoPath = path.join(backupPath, 'info.json');
-      if (!await this.exists(backupInfoPath)) {
+      if (!(await this.exists(backupInfoPath))) {
         throw new Error(`Backup metadata is missing: ${backupId}`);
       }
 
@@ -616,16 +709,21 @@ export class FileSystemService implements IFileSystemService {
         }
       }
     } catch (error) {
-      throw this.enhanceError(error, `Failed to restore from backup: ${backupId}`, {
-        suggestion: 'Ensure the backup exists and you have write permissions to restore locations.',
-        operation: 'restore'
-      });
+      throw this.enhanceError(
+        error,
+        `Failed to restore from backup: ${backupId}`,
+        {
+          suggestion:
+            'Ensure the backup exists and you have write permissions to restore locations.',
+          operation: 'restore',
+        }
+      );
     }
   }
 
   async listBackups(): Promise<BackupInfo[]> {
     try {
-      if (!await this.exists(this.backupDir)) {
+      if (!(await this.exists(this.backupDir))) {
         return [];
       }
 
@@ -647,8 +745,9 @@ export class FileSystemService implements IFileSystemService {
       return backups.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     } catch (error) {
       throw this.enhanceError(error, 'Failed to list backups', {
-        suggestion: 'Ensure you have read permissions for the backup directory.',
-        operation: 'listBackups'
+        suggestion:
+          'Ensure you have read permissions for the backup directory.',
+        operation: 'listBackups',
       });
     }
   }
@@ -662,7 +761,7 @@ export class FileSystemService implements IFileSystemService {
     }
 
     try {
-      if (!await this.exists(backupPath)) {
+      if (!(await this.exists(backupPath))) {
         throw new Error(`Backup does not exist: ${backupId}`);
       }
 
@@ -670,7 +769,7 @@ export class FileSystemService implements IFileSystemService {
     } catch (error) {
       throw this.enhanceError(error, `Failed to delete backup: ${backupId}`, {
         suggestion: 'Ensure the backup exists and you have write permissions.',
-        operation: 'deleteBackup'
+        operation: 'deleteBackup',
       });
     }
   }
@@ -697,14 +796,19 @@ export class FileSystemService implements IFileSystemService {
       await fs.ensureDir(this.resolvePath(dirPath));
     } catch (error) {
       throw this.enhanceError(error, `Failed to ensure directory: ${dirPath}`, {
-        suggestion: 'Ensure you have write permissions in the parent directory.',
+        suggestion:
+          'Ensure you have write permissions in the parent directory.',
         path: dirPath,
-        operation: 'ensureDirectory'
+        operation: 'ensureDirectory',
       });
     }
   }
 
-  async move(source: string, dest: string, options: FileOperationOptions = {}): Promise<void> {
+  async move(
+    source: string,
+    dest: string,
+    options: FileOperationOptions = {}
+  ): Promise<void> {
     const resolvedSource = this.resolvePath(source);
     const resolvedDest = this.resolvePath(dest);
 
@@ -714,7 +818,7 @@ export class FileSystemService implements IFileSystemService {
     }
 
     try {
-      if (!await this.exists(resolvedSource)) {
+      if (!(await this.exists(resolvedSource))) {
         throw new Error(`Source path does not exist: ${resolvedSource}`);
       }
 
@@ -722,24 +826,37 @@ export class FileSystemService implements IFileSystemService {
         await this.ensureDirectory(path.dirname(resolvedDest));
       }
 
-      if (!options.overwrite && await this.exists(resolvedDest)) {
-        throw new Error(`Destination already exists and overwrite is disabled: ${resolvedDest}`);
+      if (!options.overwrite && (await this.exists(resolvedDest))) {
+        throw new Error(
+          `Destination already exists and overwrite is disabled: ${resolvedDest}`
+        );
       }
 
-      await fs.move(resolvedSource, resolvedDest, { overwrite: options.overwrite });
-    } catch (error) {
-      throw this.enhanceError(error, `Failed to move: ${resolvedSource} -> ${resolvedDest}`, {
-        suggestion: 'Ensure source exists and you have read/write permissions.',
-        path: resolvedSource,
-        operation: 'move'
+      await fs.move(resolvedSource, resolvedDest, {
+        overwrite: options.overwrite,
       });
+    } catch (error) {
+      throw this.enhanceError(
+        error,
+        `Failed to move: ${resolvedSource} -> ${resolvedDest}`,
+        {
+          suggestion:
+            'Ensure source exists and you have read/write permissions.',
+          path: resolvedSource,
+          operation: 'move',
+        }
+      );
     }
   }
 
   /**
    * Write file atomically using temporary file
    */
-  private async writeFileAtomic(filePath: string, content: string, options: FileOperationOptions = {}): Promise<void> {
+  private async writeFileAtomic(
+    filePath: string,
+    content: string,
+    options: FileOperationOptions = {}
+  ): Promise<void> {
     const tempPath = `${filePath}.tmp.${Date.now()}.${Math.random().toString(36).substr(2, 9)}`;
 
     try {
@@ -760,18 +877,22 @@ export class FileSystemService implements IFileSystemService {
   /**
    * Enhance error with additional context and recovery suggestions
    */
-  private enhanceError(originalError: any, message: string, context: {
-    suggestion?: string;
-    path?: string;
-    operation?: string;
-  }): Error {
+  private enhanceError(
+    originalError: any,
+    message: string,
+    context: {
+      suggestion?: string;
+      path?: string;
+      operation?: string;
+    }
+  ): Error {
     const error = new Error(`${message}\n${context.suggestion || ''}`);
 
     // Add context as properties
     Object.assign(error, {
       operation: context.operation,
       path: context.path,
-      originalError
+      originalError,
     });
 
     // Preserve original error details in stack trace

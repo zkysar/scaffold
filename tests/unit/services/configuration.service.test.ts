@@ -7,13 +7,18 @@ import * as path from 'path';
 import * as os from 'os';
 import { ConfigurationService } from '../../../src/services/configuration.service';
 import { ConfigLevel } from '../../../src/models';
-import type { ScaffoldConfig, UserPreferences, PathConfiguration, DefaultSettings } from '../../../src/models';
+import type {
+  ScaffoldConfig,
+  UserPreferences,
+  PathConfiguration,
+  DefaultSettings,
+} from '../../../src/models';
 import { createMockImplementation } from '../../helpers/test-utils';
 
 // Mock os module
 jest.mock('os', () => ({
   ...jest.requireActual('os'),
-  homedir: jest.fn(() => '/home/user')
+  homedir: jest.fn(() => '/home/user'),
 }));
 
 describe('ConfigurationService', () => {
@@ -22,7 +27,6 @@ describe('ConfigurationService', () => {
   const mockHomeDir = '/home/user';
   const mockWorkspaceRoot = '/workspace';
   const mockProjectRoot = '/workspace/project';
-
 
   const mockGlobalConfig: ScaffoldConfig = {
     id: 'global-config-123',
@@ -33,16 +37,16 @@ describe('ConfigurationService', () => {
       colorOutput: true,
       verboseOutput: false,
       confirmDestructive: true,
-      backupBeforeSync: true
+      backupBeforeSync: true,
     },
     paths: {
       templatesDir: path.join(mockHomeDir, '.scaffold', 'templates'),
       cacheDir: path.join(mockHomeDir, '.scaffold', 'cache'),
-      backupDir: path.join(mockHomeDir, '.scaffold', 'backups')
+      backupDir: path.join(mockHomeDir, '.scaffold', 'backups'),
     },
     defaults: {
-      gitIgnore: true
-    }
+      gitIgnore: true,
+    },
   };
 
   const mockWorkspaceConfig: ScaffoldConfig = {
@@ -54,16 +58,16 @@ describe('ConfigurationService', () => {
       colorOutput: true,
       verboseOutput: true, // Override global
       confirmDestructive: true,
-      backupBeforeSync: true
+      backupBeforeSync: true,
     },
     paths: {
       templatesDir: './templates',
       cacheDir: './.scaffold/cache',
-      backupDir: './.scaffold/backups'
+      backupDir: './.scaffold/backups',
     },
     defaults: {
-      gitIgnore: true
-    }
+      gitIgnore: true,
+    },
   };
 
   const mockProjectConfig: ScaffoldConfig = {
@@ -75,16 +79,16 @@ describe('ConfigurationService', () => {
       colorOutput: false, // Override workspace/global
       verboseOutput: true,
       confirmDestructive: false, // Override workspace/global
-      backupBeforeSync: true
+      backupBeforeSync: true,
     },
     paths: {
       templatesDir: './templates',
       cacheDir: './.scaffold/cache',
-      backupDir: './.scaffold/backups'
+      backupDir: './.scaffold/backups',
     },
     defaults: {
-      gitIgnore: false // Override workspace/global
-    }
+      gitIgnore: false, // Override workspace/global
+    },
   };
 
   beforeEach(() => {
@@ -92,24 +96,27 @@ describe('ConfigurationService', () => {
     const mockFileSystem = {
       [mockHomeDir]: {
         '.scaffold': {
-          'config.json': JSON.stringify(mockGlobalConfig)
-        }
+          'config.json': JSON.stringify(mockGlobalConfig),
+        },
       },
       [mockWorkspaceRoot]: {
         '.scaffold': {
-          'config.json': JSON.stringify(mockWorkspaceConfig)
-        }
+          'config.json': JSON.stringify(mockWorkspaceConfig),
+        },
       },
       [mockProjectRoot]: {
         '.scaffold': {
-          'config.json': JSON.stringify(mockProjectConfig)
-        }
-      }
+          'config.json': JSON.stringify(mockProjectConfig),
+        },
+      },
     };
 
     mockFs(mockFileSystem);
 
-    configService = new ConfigurationService(mockProjectRoot, mockWorkspaceRoot);
+    configService = new ConfigurationService(
+      mockProjectRoot,
+      mockWorkspaceRoot
+    );
   });
 
   afterEach(() => {
@@ -140,13 +147,13 @@ describe('ConfigurationService', () => {
       // Remove global config file
       mockFs({
         [mockHomeDir]: {
-          '.scaffold': {}
+          '.scaffold': {},
         },
         [mockWorkspaceRoot]: {
           '.scaffold': {
-            'config.json': JSON.stringify(mockWorkspaceConfig)
-          }
-        }
+            'config.json': JSON.stringify(mockWorkspaceConfig),
+          },
+        },
       });
 
       await configService.loadConfiguration();
@@ -161,9 +168,9 @@ describe('ConfigurationService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'config.json': JSON.stringify(mockGlobalConfig)
-          }
-        }
+            'config.json': JSON.stringify(mockGlobalConfig),
+          },
+        },
       });
 
       await configService.loadConfiguration();
@@ -177,9 +184,9 @@ describe('ConfigurationService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'config.json': 'invalid json content'
-          }
-        }
+            'config.json': 'invalid json content',
+          },
+        },
       });
 
       await configService.loadConfiguration();
@@ -205,10 +212,16 @@ describe('ConfigurationService', () => {
     });
 
     it('should get value from specific scope', () => {
-      const value = configService.get('preferences.colorOutput', ConfigLevel.GLOBAL);
+      const value = configService.get(
+        'preferences.colorOutput',
+        ConfigLevel.GLOBAL
+      );
       expect(value).toBe(true);
 
-      const projectValue = configService.get('preferences.colorOutput', ConfigLevel.PROJECT);
+      const projectValue = configService.get(
+        'preferences.colorOutput',
+        ConfigLevel.PROJECT
+      );
       expect(projectValue).toBe(false);
     });
 
@@ -222,7 +235,9 @@ describe('ConfigurationService', () => {
       expect(verboseOutput).toBe(true); // From workspace/project config
 
       // Falls back to global
-      const backupBeforeSync = configService.get('preferences.backupBeforeSync');
+      const backupBeforeSync = configService.get(
+        'preferences.backupBeforeSync'
+      );
       expect(backupBeforeSync).toBe(true); // From global config
     });
 
@@ -276,35 +291,69 @@ describe('ConfigurationService', () => {
     });
 
     it('should set value at specified scope', async () => {
-      await configService.set('preferences.colorOutput', false, ConfigLevel.GLOBAL);
+      await configService.set(
+        'preferences.colorOutput',
+        false,
+        ConfigLevel.GLOBAL
+      );
 
-      const value = configService.get('preferences.colorOutput', ConfigLevel.GLOBAL);
+      const value = configService.get(
+        'preferences.colorOutput',
+        ConfigLevel.GLOBAL
+      );
       expect(value).toBe(false);
     });
 
     it('should create nested objects for deep keys', async () => {
-      await configService.set('custom.nested.value', 'test', ConfigLevel.GLOBAL);
+      await configService.set(
+        'custom.nested.value',
+        'test',
+        ConfigLevel.GLOBAL
+      );
 
-      const value = configService.get('custom.nested.value', ConfigLevel.GLOBAL);
+      const value = configService.get(
+        'custom.nested.value',
+        ConfigLevel.GLOBAL
+      );
       expect(value).toBe('test');
     });
 
     it('should load configuration if not already loaded', async () => {
-      const uninitializedService = new ConfigurationService(mockProjectRoot, mockWorkspaceRoot);
+      const uninitializedService = new ConfigurationService(
+        mockProjectRoot,
+        mockWorkspaceRoot
+      );
 
-      await uninitializedService.set('preferences.test', true, ConfigLevel.GLOBAL);
+      await uninitializedService.set(
+        'preferences.test',
+        true,
+        ConfigLevel.GLOBAL
+      );
 
-      const value = uninitializedService.get('preferences.test', ConfigLevel.GLOBAL);
+      const value = uninitializedService.get(
+        'preferences.test',
+        ConfigLevel.GLOBAL
+      );
       expect(value).toBe(true);
     });
 
     it('should create default config for missing scope', async () => {
-      const serviceWithoutProject = new ConfigurationService(undefined, mockWorkspaceRoot);
+      const serviceWithoutProject = new ConfigurationService(
+        undefined,
+        mockWorkspaceRoot
+      );
       await serviceWithoutProject.loadConfiguration();
 
-      await serviceWithoutProject.set('test.value', 'test', ConfigLevel.PROJECT);
+      await serviceWithoutProject.set(
+        'test.value',
+        'test',
+        ConfigLevel.PROJECT
+      );
 
-      const value = serviceWithoutProject.get('test.value', ConfigLevel.PROJECT);
+      const value = serviceWithoutProject.get(
+        'test.value',
+        ConfigLevel.PROJECT
+      );
       expect(value).toBe('test');
     });
   });
@@ -345,8 +394,14 @@ describe('ConfigurationService', () => {
 
     it('should reset configuration to defaults', async () => {
       // Modify config first
-      await configService.set('preferences.colorOutput', false, ConfigLevel.GLOBAL);
-      expect(configService.get('preferences.colorOutput', ConfigLevel.GLOBAL)).toBe(false);
+      await configService.set(
+        'preferences.colorOutput',
+        false,
+        ConfigLevel.GLOBAL
+      );
+      expect(
+        configService.get('preferences.colorOutput', ConfigLevel.GLOBAL)
+      ).toBe(false);
 
       // Reset to defaults
       await configService.reset(ConfigLevel.GLOBAL);
@@ -360,35 +415,41 @@ describe('ConfigurationService', () => {
   describe('getConfigPath', () => {
     it('should return correct paths for each scope', () => {
       const globalPath = configService.getConfigPath(ConfigLevel.GLOBAL);
-      expect(globalPath).toBe(path.join(mockHomeDir, '.scaffold', 'config.json'));
+      expect(globalPath).toBe(
+        path.join(mockHomeDir, '.scaffold', 'config.json')
+      );
 
       const workspacePath = configService.getConfigPath(ConfigLevel.WORKSPACE);
-      expect(workspacePath).toBe(path.join(mockWorkspaceRoot, '.scaffold', 'config.json'));
+      expect(workspacePath).toBe(
+        path.join(mockWorkspaceRoot, '.scaffold', 'config.json')
+      );
 
       const projectPath = configService.getConfigPath(ConfigLevel.PROJECT);
-      expect(projectPath).toBe(path.join(mockProjectRoot, '.scaffold', 'config.json'));
+      expect(projectPath).toBe(
+        path.join(mockProjectRoot, '.scaffold', 'config.json')
+      );
     });
 
     it('should throw error for workspace scope without workspace root', () => {
       const serviceWithoutWorkspace = new ConfigurationService(mockProjectRoot);
 
-      expect(() => serviceWithoutWorkspace.getConfigPath(ConfigLevel.WORKSPACE)).toThrow(
-        'Workspace root not set'
-      );
+      expect(() =>
+        serviceWithoutWorkspace.getConfigPath(ConfigLevel.WORKSPACE)
+      ).toThrow('Workspace root not set');
     });
 
     it('should throw error for project scope without project root', () => {
       const serviceWithoutProject = new ConfigurationService();
 
-      expect(() => serviceWithoutProject.getConfigPath(ConfigLevel.PROJECT)).toThrow(
-        'Project root not set'
-      );
+      expect(() =>
+        serviceWithoutProject.getConfigPath(ConfigLevel.PROJECT)
+      ).toThrow('Project root not set');
     });
 
     it('should throw error for unknown scope', () => {
-      expect(() => configService.getConfigPath('unknown' as ConfigLevel)).toThrow(
-        'Unknown config scope'
-      );
+      expect(() =>
+        configService.getConfigPath('unknown' as ConfigLevel)
+      ).toThrow('Unknown config scope');
     });
   });
 
@@ -411,7 +472,7 @@ describe('ConfigurationService', () => {
       const promises = [
         configService.set('test1', 'value1', ConfigLevel.GLOBAL),
         configService.set('test2', 'value2', ConfigLevel.GLOBAL),
-        configService.set('test3', 'value3', ConfigLevel.GLOBAL)
+        configService.set('test3', 'value3', ConfigLevel.GLOBAL),
       ];
 
       await Promise.all(promises);
@@ -426,9 +487,9 @@ describe('ConfigurationService', () => {
       const serviceWithoutProject = new ConfigurationService();
       await serviceWithoutProject.loadConfiguration();
 
-      await expect(serviceWithoutProject.saveConfiguration(ConfigLevel.PROJECT)).rejects.toThrow(
-        'No configuration found for scope'
-      );
+      await expect(
+        serviceWithoutProject.saveConfiguration(ConfigLevel.PROJECT)
+      ).rejects.toThrow('No configuration found for scope');
     });
   });
 
@@ -446,9 +507,15 @@ describe('ConfigurationService', () => {
     it('should return false for unloaded configurations', () => {
       const uninitializedService = new ConfigurationService();
 
-      expect(uninitializedService.hasConfiguration(ConfigLevel.GLOBAL)).toBe(false);
-      expect(uninitializedService.hasConfiguration(ConfigLevel.WORKSPACE)).toBe(false);
-      expect(uninitializedService.hasConfiguration(ConfigLevel.PROJECT)).toBe(false);
+      expect(uninitializedService.hasConfiguration(ConfigLevel.GLOBAL)).toBe(
+        false
+      );
+      expect(uninitializedService.hasConfiguration(ConfigLevel.WORKSPACE)).toBe(
+        false
+      );
+      expect(uninitializedService.hasConfiguration(ConfigLevel.PROJECT)).toBe(
+        false
+      );
     });
   });
 
@@ -490,9 +557,9 @@ describe('ConfigurationService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'config.json': JSON.stringify(mockGlobalConfig)
-          }
-        }
+            'config.json': JSON.stringify(mockGlobalConfig),
+          },
+        },
       });
 
       return globalOnlyService.loadConfiguration().then(() => {
@@ -509,9 +576,9 @@ describe('ConfigurationService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'config.json': JSON.stringify({ invalid: 'config' })
-          }
-        }
+            'config.json': JSON.stringify({ invalid: 'config' }),
+          },
+        },
       });
 
       await configService.loadConfiguration();
@@ -527,16 +594,16 @@ describe('ConfigurationService', () => {
       const oldConfig = {
         // Missing some required fields
         preferences: {
-          colorOutput: false
-        }
+          colorOutput: false,
+        },
       };
 
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'config.json': JSON.stringify(oldConfig)
-          }
-        }
+            'config.json': JSON.stringify(oldConfig),
+          },
+        },
       });
 
       await configService.loadConfiguration();
@@ -607,9 +674,9 @@ describe('ConfigurationService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'config.json': '{}'
-          }
-        }
+            'config.json': '{}',
+          },
+        },
       });
 
       await configService.loadConfiguration();
@@ -633,7 +700,11 @@ describe('ConfigurationService', () => {
       await configService.loadConfiguration();
 
       const specialValue = 'value with spaces & symbols !@#$%^&*()';
-      await configService.set('special.value', specialValue, ConfigLevel.GLOBAL);
+      await configService.set(
+        'special.value',
+        specialValue,
+        ConfigLevel.GLOBAL
+      );
 
       const value = configService.get('special.value', ConfigLevel.GLOBAL);
       expect(value).toBe(specialValue);
@@ -646,7 +717,10 @@ describe('ConfigurationService', () => {
       await configService.set('undefined.value', undefined, ConfigLevel.GLOBAL);
 
       const nullValue = configService.get('null.value', ConfigLevel.GLOBAL);
-      const undefinedValue = configService.get('undefined.value', ConfigLevel.GLOBAL);
+      const undefinedValue = configService.get(
+        'undefined.value',
+        ConfigLevel.GLOBAL
+      );
 
       expect(nullValue).toBeNull();
       expect(undefinedValue).toBeUndefined();

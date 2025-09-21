@@ -20,7 +20,7 @@ program.configureOutput({
 });
 
 // Global error handling
-program.exitOverride((err) => {
+program.exitOverride(err => {
   if (err.code === 'commander.help' || err.code === 'commander.version') {
     process.exit(0);
   }
