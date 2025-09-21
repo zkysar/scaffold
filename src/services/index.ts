@@ -7,5 +7,7 @@ export * from './project-service';
 export * from './file-system.service';
 export * from './configuration.service';
 export * from './variable-substitution.service';
+export * from './identifier-service';
+export * from './template-identifier-service';
 export * from './completion-service';
 export * from './completion-providers';
