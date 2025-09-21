@@ -14,7 +14,8 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist coverage .scaffold-temp"
+    "clean": "rm -rf dist coverage .scaffold-temp",
+    "prepare": "husky"
   },
   "keywords": [
     "cli",
@@ -48,10 +49,18 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^8.54.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "lint-staged": "^16.1.6",
     "mock-fs": "^5.2.0",
     "prettier": "^3.1.0",
     "ts-jest": "^29.1.1",
     "typescript": "^5.3.2"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }

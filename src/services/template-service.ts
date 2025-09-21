@@ -129,7 +129,9 @@ export class TemplateService implements ITemplateService {
         lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
-      throw new Error(`Failed to load templates: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to load templates: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -156,16 +158,19 @@ export class TemplateService implements ITemplateService {
     const library = await this.loadTemplates();
     const lowercaseQuery = query.toLowerCase();
 
-    return library.templates.filter(template =>
-      template.name.toLowerCase().includes(lowercaseQuery) ||
-      template.description.toLowerCase().includes(lowercaseQuery)
+    return library.templates.filter(
+      template =>
+        template.name.toLowerCase().includes(lowercaseQuery) ||
+        template.description.toLowerCase().includes(lowercaseQuery)
     );
   }
 
   async createTemplate(template: Template): Promise<void> {
     const validationErrors = await this.validateTemplate(template);
     if (validationErrors.length > 0) {
-      throw new Error(`Template validation failed: ${validationErrors.join(', ')}`);
+      throw new Error(
+        `Template validation failed: ${validationErrors.join(', ')}`
+      );
     }
 
     await this.ensureDirectoriesExist();
@@ -188,7 +193,9 @@ export class TemplateService implements ITemplateService {
   async updateTemplate(template: Template): Promise<void> {
     const validationErrors = await this.validateTemplate(template);
     if (validationErrors.length > 0) {
-      throw new Error(`Template validation failed: ${validationErrors.join(', ')}`);
+      throw new Error(
+        `Template validation failed: ${validationErrors.join(', ')}`
+      );
     }
 
     await this.ensureDirectoriesExist();
@@ -223,7 +230,9 @@ export class TemplateService implements ITemplateService {
     try {
       await fs.remove(templatePath);
     } catch (error) {
-      throw new Error(`Failed to delete template '${id}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to delete template '${id}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -256,11 +265,22 @@ export class TemplateService implements ITemplateService {
       errors.push('Template rootFolder is required and must be a string');
     } else {
       // Validate rootFolder - allow "." for current directory or a simple directory name
-      if (template.rootFolder !== '.' && !/^[a-zA-Z0-9_-]+$/.test(template.rootFolder)) {
-        errors.push('Template rootFolder must be "." or a simple directory name (alphanumeric, underscore, hyphen only)');
+      if (
+        template.rootFolder !== '.' &&
+        !/^[a-zA-Z0-9_-]+$/.test(template.rootFolder)
+      ) {
+        errors.push(
+          'Template rootFolder must be "." or a simple directory name (alphanumeric, underscore, hyphen only)'
+        );
       }
-      if (template.rootFolder !== '.' && (template.rootFolder.startsWith('.') || template.rootFolder.startsWith('-'))) {
-        errors.push('Template rootFolder cannot start with a dot or hyphen (except for ".")');
+      if (
+        template.rootFolder !== '.' &&
+        (template.rootFolder.startsWith('.') ||
+          template.rootFolder.startsWith('-'))
+      ) {
+        errors.push(
+          'Template rootFolder cannot start with a dot or hyphen (except for ".")'
+        );
       }
     }
 
@@ -298,7 +318,9 @@ export class TemplateService implements ITemplateService {
           }
         }
         if (!file.sourcePath && !file.content) {
-          errors.push(`File ${index}: either sourcePath or content must be provided`);
+          errors.push(
+            `File ${index}: either sourcePath or content must be provided`
+          );
         }
       });
     }
@@ -309,15 +331,21 @@ export class TemplateService implements ITemplateService {
       const variableNames = new Set<string>();
       template.variables.forEach((variable, index) => {
         if (!variable.name || typeof variable.name !== 'string') {
-          errors.push(`Variable ${index}: name is required and must be a string`);
+          errors.push(
+            `Variable ${index}: name is required and must be a string`
+          );
         } else if (variableNames.has(variable.name)) {
-          errors.push(`Variable ${index}: duplicate variable name '${variable.name}'`);
+          errors.push(
+            `Variable ${index}: duplicate variable name '${variable.name}'`
+          );
         } else {
           variableNames.add(variable.name);
         }
 
         if (!variable.description || typeof variable.description !== 'string') {
-          errors.push(`Variable ${index}: description is required and must be a string`);
+          errors.push(
+            `Variable ${index}: description is required and must be a string`
+          );
         }
 
         if (typeof variable.required !== 'boolean') {
@@ -345,8 +373,14 @@ export class TemplateService implements ITemplateService {
         errors.push('Template rules.allowExtraFolders must be a boolean');
       }
 
-      if (!['skip', 'replace', 'prompt', 'merge'].includes(template.rules.conflictResolution)) {
-        errors.push('Template rules.conflictResolution must be one of: skip, replace, prompt, merge');
+      if (
+        !['skip', 'replace', 'prompt', 'merge'].includes(
+          template.rules.conflictResolution
+        )
+      ) {
+        errors.push(
+          'Template rules.conflictResolution must be one of: skip, replace, prompt, merge'
+        );
       }
 
       if (!Array.isArray(template.rules.excludePatterns)) {
@@ -401,7 +435,9 @@ export class TemplateService implements ITemplateService {
     const dependencies: Template[] = [];
     const visited = new Set<string>();
 
-    const collectDependencies = async (currentTemplate: Template): Promise<void> => {
+    const collectDependencies = async (
+      currentTemplate: Template
+    ): Promise<void> => {
       if (!currentTemplate.dependencies) {
         return;
       }
@@ -418,7 +454,9 @@ export class TemplateService implements ITemplateService {
           dependencies.push(depTemplate);
           await collectDependencies(depTemplate);
         } catch (error) {
-          throw new Error(`Failed to resolve dependency '${depId}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+          throw new Error(
+            `Failed to resolve dependency '${depId}': ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
         }
       }
     };
@@ -455,12 +493,14 @@ export class TemplateService implements ITemplateService {
 
       await fs.writeJson(outputPath, exportData, { spaces: 2 });
     } catch (error) {
-      throw new Error(`Failed to export template '${templateId}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to export template '${templateId}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   async importTemplate(archivePath: string): Promise<Template> {
-    if (!await fs.pathExists(archivePath)) {
+    if (!(await fs.pathExists(archivePath))) {
       throw new Error(`Archive file '${archivePath}' does not exist`);
     }
 
@@ -481,10 +521,16 @@ export class TemplateService implements ITemplateService {
       await this.saveTemplate(template);
 
       if (exportData.files && typeof exportData.files === 'object') {
-        const templateFilesDir = path.join(this.templatesDir, template.id, 'files');
+        const templateFilesDir = path.join(
+          this.templatesDir,
+          template.id,
+          'files'
+        );
         await fs.ensureDir(templateFilesDir);
 
-        for (const [relativePath, content] of Object.entries(exportData.files)) {
+        for (const [relativePath, content] of Object.entries(
+          exportData.files
+        )) {
           if (typeof content === 'string') {
             const filePath = path.join(templateFilesDir, relativePath);
             await fs.ensureDir(path.dirname(filePath));
@@ -495,14 +541,16 @@ export class TemplateService implements ITemplateService {
 
       return template;
     } catch (error) {
-      throw new Error(`Failed to import template: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to import template: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   async loadTemplate(templatePath: string): Promise<Template> {
     const templateJsonPath = path.join(templatePath, 'template.json');
 
-    if (!await fs.pathExists(templateJsonPath)) {
+    if (!(await fs.pathExists(templateJsonPath))) {
       throw new Error(`Template definition not found at ${templateJsonPath}`);
     }
 
@@ -517,7 +565,9 @@ export class TemplateService implements ITemplateService {
       return templateJson as Template;
     } catch (error) {
       if (error instanceof SyntaxError) {
-        throw new Error(`Invalid JSON in template definition: ${error.message}`);
+        throw new Error(
+          `Invalid JSON in template definition: ${error.message}`
+        );
       }
       throw error;
     }
@@ -531,7 +581,9 @@ export class TemplateService implements ITemplateService {
       await fs.ensureDir(templateDir);
       await fs.writeJson(templateJsonPath, template, { spaces: 2 });
     } catch (error) {
-      throw new Error(`Failed to save template '${template.id}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to save template '${template.id}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -540,13 +592,17 @@ export class TemplateService implements ITemplateService {
       await fs.ensureDir(this.templatesDir);
       await fs.ensureDir(this.cacheDir);
     } catch (error) {
-      throw new Error(`Failed to create scaffold directories: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to create scaffold directories: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   private async getTemplateDirectories(): Promise<string[]> {
     try {
-      const entries = await fs.readdir(this.templatesDir, { withFileTypes: true });
+      const entries = await fs.readdir(this.templatesDir, {
+        withFileTypes: true,
+      });
       return entries
         .filter(entry => entry.isDirectory())
         .map(entry => path.join(this.templatesDir, entry.name));

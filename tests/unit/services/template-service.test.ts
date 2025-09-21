@@ -6,13 +6,20 @@ import mockFs from 'mock-fs';
 import * as path from 'path';
 import * as os from 'os';
 import { TemplateService } from '../../../src/services/template-service';
-import type { Template, TemplateLibrary, TemplateSummary } from '../../../src/models';
-import { createMockImplementation, assertDefined } from '../../helpers/test-utils';
+import type {
+  Template,
+  TemplateLibrary,
+  TemplateSummary,
+} from '../../../src/models';
+import {
+  createMockImplementation,
+  assertDefined,
+} from '../../helpers/test-utils';
 
 // Mock os module
 jest.mock('os', () => ({
   ...jest.requireActual('os'),
-  homedir: jest.fn(() => '/home/user')
+  homedir: jest.fn(() => '/home/user'),
 }));
 
 describe('TemplateService', () => {
@@ -20,7 +27,6 @@ describe('TemplateService', () => {
   const mockHomeDir = '/home/user';
   const templatesDir = path.join(mockHomeDir, '.scaffold', 'templates');
   const cacheDir = path.join(mockHomeDir, '.scaffold', 'cache');
-
 
   // Mock template data
   const mockTemplate: Template = {
@@ -37,42 +43,42 @@ describe('TemplateService', () => {
         path: 'src',
         description: 'Source code directory',
         permissions: '755',
-        gitkeep: false
+        gitkeep: false,
       },
       {
         path: 'tests',
         description: 'Test directory',
         permissions: '755',
-        gitkeep: true
-      }
+        gitkeep: true,
+      },
     ],
     files: [
       {
         path: 'package.json',
         content: '{\n  "name": "{{PROJECT_NAME}}",\n  "version": "1.0.0"\n}',
         permissions: '644',
-        variables: true
+        variables: true,
       },
       {
         path: 'README.md',
         sourcePath: 'README.template.md',
         permissions: '644',
-        variables: true
-      }
+        variables: true,
+      },
     ],
     variables: [
       {
         name: 'PROJECT_NAME',
         description: 'The name of the project',
         required: true,
-        pattern: '^[a-zA-Z0-9_-]+$'
+        pattern: '^[a-zA-Z0-9_-]+$',
       },
       {
         name: 'AUTHOR',
         description: 'Author of the project',
         required: false,
-        default: 'Anonymous'
-      }
+        default: 'Anonymous',
+      },
     ],
     rules: {
       strictMode: false,
@@ -90,19 +96,19 @@ describe('TemplateService', () => {
           fix: {
             action: 'create',
             content: '{"name": "default-project", "version": "1.0.0"}',
-            autoFix: true
+            autoFix: true,
           },
-          severity: 'error'
-        }
-      ]
+          severity: 'error',
+        },
+      ],
     },
-    dependencies: []
+    dependencies: [],
   };
 
   const invalidTemplate = {
     // Missing required fields
     name: 'Invalid Template',
-    description: 'Missing required fields'
+    description: 'Missing required fields',
   };
 
   beforeEach(() => {
@@ -110,20 +116,21 @@ describe('TemplateService', () => {
     const mockFileSystem = {
       [mockHomeDir]: {
         '.scaffold': {
-          'templates': {
+          templates: {
             'test-template-123': {
               'template.json': JSON.stringify(mockTemplate),
-              'files': {
-                'README.template.md': '# {{PROJECT_NAME}}\n\nAuthor: {{AUTHOR}}'
-              }
+              files: {
+                'README.template.md':
+                  '# {{PROJECT_NAME}}\n\nAuthor: {{AUTHOR}}',
+              },
             },
             'invalid-template': {
-              'template.json': JSON.stringify(invalidTemplate)
-            }
+              'template.json': JSON.stringify(invalidTemplate),
+            },
           },
-          'cache': {}
-        }
-      }
+          cache: {},
+        },
+      },
     };
 
     mockFs(mockFileSystem);
@@ -164,10 +171,10 @@ describe('TemplateService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {},
-            'cache': {}
-          }
-        }
+            templates: {},
+            cache: {},
+          },
+        },
       });
 
       const library = await templateService.loadTemplates();
@@ -179,7 +186,7 @@ describe('TemplateService', () => {
     it('should create directories if they do not exist', async () => {
       // Setup no .scaffold directory
       mockFs({
-        [mockHomeDir]: {}
+        [mockHomeDir]: {},
       });
 
       const library = await templateService.loadTemplates();
@@ -285,11 +292,13 @@ describe('TemplateService', () => {
       id: 'new-template-456',
       name: 'New Template',
       created: undefined as any, // Will be set by service
-      updated: undefined as any  // Will be set by service
+      updated: undefined as any, // Will be set by service
     };
 
     it('should create valid template', async () => {
-      await expect(templateService.createTemplate(newTemplate)).resolves.not.toThrow();
+      await expect(
+        templateService.createTemplate(newTemplate)
+      ).resolves.not.toThrow();
 
       // Verify template was created
       const created = await templateService.getTemplate('new-template-456');
@@ -301,9 +310,9 @@ describe('TemplateService', () => {
     it('should throw error for duplicate template ID', async () => {
       const duplicateTemplate = { ...mockTemplate, name: 'Duplicate' };
 
-      await expect(templateService.createTemplate(duplicateTemplate)).rejects.toThrow(
-        "Template with ID 'test-template-123' already exists"
-      );
+      await expect(
+        templateService.createTemplate(duplicateTemplate)
+      ).rejects.toThrow("Template with ID 'test-template-123' already exists");
     });
 
     it('should throw error for invalid template', async () => {
@@ -312,9 +321,9 @@ describe('TemplateService', () => {
         id: '', // Invalid ID
       };
 
-      await expect(templateService.createTemplate(invalidTemplate)).rejects.toThrow(
-        'Template validation failed'
-      );
+      await expect(
+        templateService.createTemplate(invalidTemplate)
+      ).rejects.toThrow('Template validation failed');
     });
   });
 
@@ -323,10 +332,12 @@ describe('TemplateService', () => {
       const updatedTemplate = {
         ...mockTemplate,
         name: 'Updated Template',
-        description: 'Updated description'
+        description: 'Updated description',
       };
 
-      await expect(templateService.updateTemplate(updatedTemplate)).resolves.not.toThrow();
+      await expect(
+        templateService.updateTemplate(updatedTemplate)
+      ).resolves.not.toThrow();
 
       const template = await templateService.getTemplate('test-template-123');
       expect(template.name).toBe('Updated Template');
@@ -338,7 +349,7 @@ describe('TemplateService', () => {
       const originalCreated = mockTemplate.created;
       const updatedTemplate = {
         ...mockTemplate,
-        name: 'Updated Template'
+        name: 'Updated Template',
       };
 
       await templateService.updateTemplate(updatedTemplate);
@@ -350,39 +361,41 @@ describe('TemplateService', () => {
     it('should throw error for non-existent template', async () => {
       const nonExistentTemplate = {
         ...mockTemplate,
-        id: 'non-existent-789'
+        id: 'non-existent-789',
       };
 
-      await expect(templateService.updateTemplate(nonExistentTemplate)).rejects.toThrow(
-        "Template with ID 'non-existent-789' not found"
-      );
+      await expect(
+        templateService.updateTemplate(nonExistentTemplate)
+      ).rejects.toThrow("Template with ID 'non-existent-789' not found");
     });
 
     it('should throw error for invalid template', async () => {
       const invalidTemplate = {
         ...mockTemplate,
-        version: 'invalid-version' // Invalid semver
+        version: 'invalid-version', // Invalid semver
       };
 
-      await expect(templateService.updateTemplate(invalidTemplate)).rejects.toThrow(
-        'Template validation failed'
-      );
+      await expect(
+        templateService.updateTemplate(invalidTemplate)
+      ).rejects.toThrow('Template validation failed');
     });
   });
 
   describe('deleteTemplate', () => {
     it('should delete existing template', async () => {
-      await expect(templateService.deleteTemplate('test-template-123')).resolves.not.toThrow();
+      await expect(
+        templateService.deleteTemplate('test-template-123')
+      ).resolves.not.toThrow();
 
-      await expect(templateService.getTemplate('test-template-123')).rejects.toThrow(
-        "Template with ID 'test-template-123' not found"
-      );
+      await expect(
+        templateService.getTemplate('test-template-123')
+      ).rejects.toThrow("Template with ID 'test-template-123' not found");
     });
 
     it('should throw error for non-existent template', async () => {
-      await expect(templateService.deleteTemplate('non-existent')).rejects.toThrow(
-        "Template with ID 'non-existent' not found"
-      );
+      await expect(
+        templateService.deleteTemplate('non-existent')
+      ).rejects.toThrow("Template with ID 'non-existent' not found");
     });
 
     it('should throw error for invalid template ID', async () => {
@@ -401,36 +414,48 @@ describe('TemplateService', () => {
 
     it('should return errors for missing required fields', async () => {
       const invalidTemplate = {
-        name: 'Invalid Template'
+        name: 'Invalid Template',
       } as Template;
 
       const errors = await templateService.validateTemplate(invalidTemplate);
 
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors).toContain(expect.stringMatching(/Template ID is required/));
-      expect(errors).toContain(expect.stringMatching(/Template version is required/));
+      expect(errors).toContain(
+        expect.stringMatching(/Template ID is required/)
+      );
+      expect(errors).toContain(
+        expect.stringMatching(/Template version is required/)
+      );
     });
 
     it('should validate semantic version', async () => {
       const invalidTemplate = {
         ...mockTemplate,
-        version: 'not-a-version'
+        version: 'not-a-version',
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
 
-      expect(errors).toContain(expect.stringMatching(/Template version must be a valid semantic version/));
+      expect(errors).toContain(
+        expect.stringMatching(
+          /Template version must be a valid semantic version/
+        )
+      );
     });
 
     it('should validate rootFolder format', async () => {
       const invalidTemplate = {
         ...mockTemplate,
-        rootFolder: 'invalid/path'
+        rootFolder: 'invalid/path',
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
 
-      expect(errors).toContain(expect.stringMatching(/Template rootFolder must be a simple directory name/));
+      expect(errors).toContain(
+        expect.stringMatching(
+          /Template rootFolder must be a simple directory name/
+        )
+      );
     });
 
     it('should validate folder paths are relative', async () => {
@@ -486,7 +511,9 @@ describe('TemplateService', () => {
 
       const errors = await templateService.validateTemplate(invalidTemplate);
 
-      expect(errors).toContain(expect.stringMatching(/either sourcePath or content must be provided/));
+      expect(errors).toContain(
+        expect.stringMatching(/either sourcePath or content must be provided/)
+      );
     });
 
     it('should validate variable names are unique', async () => {
@@ -496,19 +523,21 @@ describe('TemplateService', () => {
           {
             name: 'DUPLICATE',
             description: 'First variable',
-            required: true
+            required: true,
           },
           {
             name: 'DUPLICATE',
             description: 'Second variable',
-            required: false
-          }
-        ]
+            required: false,
+          },
+        ],
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
 
-      expect(errors).toContain(expect.stringMatching(/duplicate variable name/));
+      expect(errors).toContain(
+        expect.stringMatching(/duplicate variable name/)
+      );
     });
 
     it('should validate rule IDs are unique', async () => {
@@ -524,7 +553,7 @@ describe('TemplateService', () => {
               type: 'required_file' as const,
               target: 'file1.txt',
               fix: { action: 'create' as const, autoFix: true },
-              severity: 'error' as const
+              severity: 'error' as const,
             },
             {
               id: 'duplicate-rule',
@@ -533,10 +562,10 @@ describe('TemplateService', () => {
               type: 'required_file' as const,
               target: 'file2.txt',
               fix: { action: 'create' as const, autoFix: true },
-              severity: 'error' as const
-            }
-          ]
-        }
+              severity: 'error' as const,
+            },
+          ],
+        },
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
@@ -547,7 +576,8 @@ describe('TemplateService', () => {
 
   describe('getTemplateDependencies', () => {
     it('should return empty array for template with no dependencies', async () => {
-      const dependencies = await templateService.getTemplateDependencies('test-template-123');
+      const dependencies =
+        await templateService.getTemplateDependencies('test-template-123');
 
       expect(dependencies).toHaveLength(0);
     });
@@ -557,58 +587,58 @@ describe('TemplateService', () => {
       const template1 = {
         ...mockTemplate,
         id: 'template-1',
-        dependencies: ['template-2']
+        dependencies: ['template-2'],
       };
       const template2 = {
         ...mockTemplate,
         id: 'template-2',
-        dependencies: ['template-1']
+        dependencies: ['template-1'],
       };
 
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {
+            templates: {
               'template-1': {
-                'template.json': JSON.stringify(template1)
+                'template.json': JSON.stringify(template1),
               },
               'template-2': {
-                'template.json': JSON.stringify(template2)
-              }
+                'template.json': JSON.stringify(template2),
+              },
             },
-            'cache': {}
-          }
-        }
+            cache: {},
+          },
+        },
       });
 
-      await expect(templateService.getTemplateDependencies('template-1')).rejects.toThrow(
-        "Failed to resolve dependency 'template-2'"
-      );
+      await expect(
+        templateService.getTemplateDependencies('template-1')
+      ).rejects.toThrow("Failed to resolve dependency 'template-2'");
     });
 
     it('should throw error for missing dependency', async () => {
       const templateWithDeps = {
         ...mockTemplate,
         id: 'template-with-deps',
-        dependencies: ['missing-template']
+        dependencies: ['missing-template'],
       };
 
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {
+            templates: {
               'template-with-deps': {
-                'template.json': JSON.stringify(templateWithDeps)
-              }
+                'template.json': JSON.stringify(templateWithDeps),
+              },
             },
-            'cache': {}
-          }
-        }
+            cache: {},
+          },
+        },
       });
 
-      await expect(templateService.getTemplateDependencies('template-with-deps')).rejects.toThrow(
-        "Failed to resolve dependency 'missing-template'"
-      );
+      await expect(
+        templateService.getTemplateDependencies('template-with-deps')
+      ).rejects.toThrow("Failed to resolve dependency 'missing-template'");
     });
   });
 
@@ -616,13 +646,15 @@ describe('TemplateService', () => {
     it('should export template with files', async () => {
       const outputPath = '/tmp/export.json';
 
-      await expect(templateService.exportTemplate('test-template-123', outputPath)).resolves.not.toThrow();
+      await expect(
+        templateService.exportTemplate('test-template-123', outputPath)
+      ).resolves.not.toThrow();
     });
 
     it('should throw error for non-existent template', async () => {
-      await expect(templateService.exportTemplate('non-existent', '/tmp/export.json')).rejects.toThrow(
-        "Template with ID 'non-existent' not found"
-      );
+      await expect(
+        templateService.exportTemplate('non-existent', '/tmp/export.json')
+      ).rejects.toThrow("Template with ID 'non-existent' not found");
     });
   });
 
@@ -631,29 +663,30 @@ describe('TemplateService', () => {
       const exportData = {
         template: {
           ...mockTemplate,
-          id: 'imported-template'
+          id: 'imported-template',
         },
         files: {
-          'README.template.md': '# Imported Template'
-        }
+          'README.template.md': '# Imported Template',
+        },
       };
 
       const archivePath = '/tmp/import.json';
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {
+            templates: {
               'test-template-123': {
                 'template.json': JSON.stringify(mockTemplate),
-                'files': {
-                  'README.template.md': '# {{PROJECT_NAME}}\n\nAuthor: {{AUTHOR}}'
-                }
-              }
+                files: {
+                  'README.template.md':
+                    '# {{PROJECT_NAME}}\n\nAuthor: {{AUTHOR}}',
+                },
+              },
             },
-            'cache': {}
-          }
+            cache: {},
+          },
         },
-        [archivePath]: JSON.stringify(exportData)
+        [archivePath]: JSON.stringify(exportData),
       });
 
       const imported = await templateService.importTemplate(archivePath);
@@ -663,9 +696,9 @@ describe('TemplateService', () => {
     });
 
     it('should throw error for non-existent archive', async () => {
-      await expect(templateService.importTemplate('/tmp/missing.json')).rejects.toThrow(
-        "Archive file '/tmp/missing.json' does not exist"
-      );
+      await expect(
+        templateService.importTemplate('/tmp/missing.json')
+      ).rejects.toThrow("Archive file '/tmp/missing.json' does not exist");
     });
 
     it('should throw error for invalid export file', async () => {
@@ -673,18 +706,19 @@ describe('TemplateService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {
+            templates: {
               'test-template-123': {
                 'template.json': JSON.stringify(mockTemplate),
-                'files': {
-                  'README.template.md': '# {{PROJECT_NAME}}\n\nAuthor: {{AUTHOR}}'
-                }
-              }
+                files: {
+                  'README.template.md':
+                    '# {{PROJECT_NAME}}\n\nAuthor: {{AUTHOR}}',
+                },
+              },
             },
-            'cache': {}
-          }
+            cache: {},
+          },
         },
-        [archivePath]: JSON.stringify({ invalid: 'data' })
+        [archivePath]: JSON.stringify({ invalid: 'data' }),
       });
 
       await expect(templateService.importTemplate(archivePath)).rejects.toThrow(
@@ -695,25 +729,26 @@ describe('TemplateService', () => {
     it('should throw error for duplicate template ID', async () => {
       const exportData = {
         template: mockTemplate, // Same ID as existing template
-        files: {}
+        files: {},
       };
 
       const archivePath = '/tmp/duplicate.json';
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {
+            templates: {
               'test-template-123': {
                 'template.json': JSON.stringify(mockTemplate),
-                'files': {
-                  'README.template.md': '# {{PROJECT_NAME}}\n\nAuthor: {{AUTHOR}}'
-                }
-              }
+                files: {
+                  'README.template.md':
+                    '# {{PROJECT_NAME}}\n\nAuthor: {{AUTHOR}}',
+                },
+              },
             },
-            'cache': {}
-          }
+            cache: {},
+          },
         },
-        [archivePath]: JSON.stringify(exportData)
+        [archivePath]: JSON.stringify(exportData),
       });
 
       await expect(templateService.importTemplate(archivePath)).rejects.toThrow(
@@ -736,11 +771,11 @@ describe('TemplateService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {},
-            'cache': {}
-          }
+            templates: {},
+            cache: {},
+          },
         },
-        [templatePath]: {}
+        [templatePath]: {},
       });
 
       await expect(templateService.loadTemplate(templatePath)).rejects.toThrow(
@@ -753,13 +788,13 @@ describe('TemplateService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {},
-            'cache': {}
-          }
+            templates: {},
+            cache: {},
+          },
         },
         [templatePath]: {
-          'template.json': 'invalid json content'
-        }
+          'template.json': 'invalid json content',
+        },
       });
 
       await expect(templateService.loadTemplate(templatePath)).rejects.toThrow(
@@ -772,13 +807,13 @@ describe('TemplateService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {},
-            'cache': {}
-          }
+            templates: {},
+            cache: {},
+          },
         },
         [templatePath]: {
-          'template.json': JSON.stringify(invalidTemplate)
-        }
+          'template.json': JSON.stringify(invalidTemplate),
+        },
       });
 
       await expect(templateService.loadTemplate(templatePath)).rejects.toThrow(
@@ -792,10 +827,12 @@ describe('TemplateService', () => {
       const newTemplate = {
         ...mockTemplate,
         id: 'saved-template',
-        name: 'Saved Template'
+        name: 'Saved Template',
       };
 
-      await expect(templateService.saveTemplate(newTemplate)).resolves.not.toThrow();
+      await expect(
+        templateService.saveTemplate(newTemplate)
+      ).resolves.not.toThrow();
 
       // Verify template was saved
       const saved = await templateService.getTemplate('saved-template');
@@ -807,19 +844,21 @@ describe('TemplateService', () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {},
-            'cache': {}
-          }
-        }
+            templates: {},
+            cache: {},
+          },
+        },
       });
 
       const newTemplate = {
         ...mockTemplate,
         id: 'new-template',
-        name: 'New Template'
+        name: 'New Template',
       };
 
-      await expect(templateService.saveTemplate(newTemplate)).resolves.not.toThrow();
+      await expect(
+        templateService.saveTemplate(newTemplate)
+      ).resolves.not.toThrow();
     });
   });
 
@@ -836,21 +875,23 @@ describe('TemplateService', () => {
       // Mock fs to throw permission error
       mockFs({});
 
-      await expect(templateService.loadTemplates()).rejects.toThrow('Failed to load templates');
+      await expect(templateService.loadTemplates()).rejects.toThrow(
+        'Failed to load templates'
+      );
     });
 
     it('should handle corrupted template files gracefully', async () => {
       mockFs({
         [mockHomeDir]: {
           '.scaffold': {
-            'templates': {
+            templates: {
               'corrupted-template': {
-                'template.json': 'corrupted content {{'
-              }
+                'template.json': 'corrupted content {{',
+              },
             },
-            'cache': {}
-          }
-        }
+            cache: {},
+          },
+        },
       });
 
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();

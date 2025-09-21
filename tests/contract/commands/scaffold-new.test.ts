@@ -4,13 +4,20 @@
  */
 
 import { createNewCommand } from '../../../src/cli/commands/new';
-import { createMockFileSystem, createMockConsole, CommandResult } from '../../helpers/cli-helpers';
+import {
+  createMockFileSystem,
+  createMockConsole,
+  CommandResult,
+} from '../../helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
 
 // Helper function to execute command and capture result
-async function executeCommand(command: Command, args: string[]): Promise<CommandResult> {
-  return new Promise((resolve) => {
+async function executeCommand(
+  command: Command,
+  args: string[]
+): Promise<CommandResult> {
+  return new Promise(resolve => {
     const originalExit = process.exit;
     let exitCode = 0;
 
@@ -27,7 +34,11 @@ async function executeCommand(command: Command, args: string[]): Promise<Command
       // If we get here, command succeeded
       resolve({ code: 0, message: '', data: null });
     } catch (error) {
-      resolve({ code: 1, message: error instanceof Error ? error.message : String(error), data: null });
+      resolve({
+        code: 1,
+        message: error instanceof Error ? error.message : String(error),
+        data: null,
+      });
     } finally {
       process.exit = originalExit;
     }
@@ -59,20 +70,23 @@ describe('scaffold new command contract', () => {
             version: '1.0.0',
             folders: ['src', 'tests'],
             files: [
-              { path: 'package.json', template: '{"name": "{{projectName}}"}' }
+              { path: 'package.json', template: '{"name": "{{projectName}}"}' },
             ],
             variables: [
-              { name: 'projectName', type: 'string', required: true }
+              { name: 'projectName', type: 'string', required: true },
             ],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createNewCommand();
-      const result = await executeCommand(command, ['test-project', '--dry-run']);
+      const result = await executeCommand(command, [
+        'test-project',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -90,28 +104,36 @@ describe('scaffold new command contract', () => {
             version: '1.0.0',
             folders: ['src/components', 'public'],
             files: [
-              { path: 'src/App.tsx', template: 'export default function App() {}' }
+              {
+                path: 'src/App.tsx',
+                template: 'export default function App() {}',
+              },
             ],
             variables: [],
-            rules: { strict: true }
+            rules: { strict: true },
           }),
           'typescript.json': JSON.stringify({
             name: 'typescript',
             version: '1.0.0',
             folders: [],
             files: [
-              { path: 'tsconfig.json', template: '{"compilerOptions": {}}' }
+              { path: 'tsconfig.json', template: '{"compilerOptions": {}}' },
             ],
             variables: [],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createNewCommand();
-      const result = await executeCommand(command, ['test-project', '--template', 'react', '--dry-run']);
+      const result = await executeCommand(command, [
+        'test-project',
+        '--template',
+        'react',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -127,21 +149,22 @@ describe('scaffold new command contract', () => {
             name: 'default',
             version: '1.0.0',
             folders: ['src'],
-            files: [
-              { path: 'README.md', template: '# {{projectName}}' }
-            ],
+            files: [{ path: 'README.md', template: '# {{projectName}}' }],
             variables: [
-              { name: 'projectName', type: 'string', required: true }
+              { name: 'projectName', type: 'string', required: true },
             ],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createNewCommand();
-      const result = await executeCommand(command, ['test-project', '--dry-run']);
+      const result = await executeCommand(command, [
+        'test-project',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -155,8 +178,8 @@ describe('scaffold new command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '/existing-project': {
-          'package.json': '{"name": "existing"}'
-        }
+          'package.json': '{"name": "existing"}',
+        },
       });
       mockFs(mockFileSystem);
 
@@ -173,13 +196,17 @@ describe('scaffold new command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '/test-project': {},
-        '/home/.scaffold/templates': {}
+        '/home/.scaffold/templates': {},
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createNewCommand();
-      const result = await executeCommand(command, ['test-project', '--template', 'nonexistent-template']);
+      const result = await executeCommand(command, [
+        'test-project',
+        '--template',
+        'nonexistent-template',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
@@ -191,14 +218,16 @@ describe('scaffold new command contract', () => {
       const mockFileSystem = createMockFileSystem({
         '/readonly-dir': mockFs.directory({
           mode: 0o444, // read-only
-          items: {}
-        })
+          items: {},
+        }),
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createNewCommand();
-      const result = await executeCommand(command, ['readonly-dir/test-project']);
+      const result = await executeCommand(command, [
+        'readonly-dir/test-project',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
@@ -218,9 +247,9 @@ describe('scaffold new command contract', () => {
             folders: [],
             files: [],
             variables: [],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
@@ -268,24 +297,35 @@ describe('scaffold new command contract', () => {
             version: '1.0.0',
             folders: [],
             files: [
-              { path: 'config.json', template: '{"author": "{{authorName}}"}' }
+              { path: 'config.json', template: '{"author": "{{authorName}}"}' },
             ],
             variables: [
-              { name: 'authorName', type: 'string', required: true, prompt: 'Enter author name' }
+              {
+                name: 'authorName',
+                type: 'string',
+                required: true,
+                prompt: 'Enter author name',
+              },
             ],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
       // Mock inquirer prompt
-      const mockPrompt = jest.fn().mockResolvedValue({ authorName: 'John Doe' });
+      const mockPrompt = jest
+        .fn()
+        .mockResolvedValue({ authorName: 'John Doe' });
       jest.doMock('inquirer', () => ({ prompt: mockPrompt }));
 
       // Act
       const command = createNewCommand();
-      const result = await executeCommand(command, ['test-project', '--template', 'custom']);
+      const result = await executeCommand(command, [
+        'test-project',
+        '--template',
+        'custom',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);

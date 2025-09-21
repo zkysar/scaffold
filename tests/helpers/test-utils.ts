@@ -10,7 +10,11 @@ import { execSync } from 'child_process';
  * Create a temporary directory for testing
  */
 export function createTempDir(): string {
-  const tempDir = path.join(process.cwd(), '.scaffold-temp', `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+  const tempDir = path.join(
+    process.cwd(),
+    '.scaffold-temp',
+    `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  );
   fs.ensureDirSync(tempDir);
   return tempDir;
 }
@@ -53,14 +57,17 @@ export function createCallTracker<T extends (...args: any[]) => any>() {
     reset: () => {
       calls.length = 0;
       mockFn.mockClear();
-    }
+    },
   };
 }
 
 /**
  * Assert that a value is defined (not null or undefined)
  */
-export function assertDefined<T>(value: T | null | undefined, message?: string): asserts value is T {
+export function assertDefined<T>(
+  value: T | null | undefined,
+  message?: string
+): asserts value is T {
   if (value === null || value === undefined) {
     throw new Error(message || 'Expected value to be defined');
   }
@@ -109,7 +116,7 @@ export function createMockConsole() {
       warnings.length = 0;
       errors.length = 0;
       infos.length = 0;
-    }
+    },
   };
 }
 
@@ -123,7 +130,9 @@ export async function withTimeout<T>(
 ): Promise<T> {
   const timeout = new Promise<never>((_, reject) => {
     setTimeout(() => {
-      reject(new Error(errorMessage || `Operation timed out after ${timeoutMs}ms`));
+      reject(
+        new Error(errorMessage || `Operation timed out after ${timeoutMs}ms`)
+      );
     }, timeoutMs);
   });
 
@@ -148,7 +157,9 @@ export function expectObjectStructure(
     if (typeof expectedValue === 'object' && expectedValue !== null) {
       if (Array.isArray(expectedValue)) {
         if (!Array.isArray(actual[key])) {
-          throw new Error(`Expected array at ${currentPath}, got ${typeof actual[key]}`);
+          throw new Error(
+            `Expected array at ${currentPath}, got ${typeof actual[key]}`
+          );
         }
       } else {
         expectObjectStructure(actual[key], expectedValue, currentPath);

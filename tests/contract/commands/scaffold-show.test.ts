@@ -4,13 +4,20 @@
  */
 
 import { createShowCommand } from '../../../src/cli/commands/show.command';
-import { createMockFileSystem, createMockConsole, CommandResult } from '../../helpers/cli-helpers';
+import {
+  createMockFileSystem,
+  createMockConsole,
+  CommandResult,
+} from '../../helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
 
 // Helper function to execute command and capture result
-async function executeCommand(command: Command, args: string[]): Promise<CommandResult> {
-  return new Promise((resolve) => {
+async function executeCommand(
+  command: Command,
+  args: string[]
+): Promise<CommandResult> {
+  return new Promise(resolve => {
     const originalExit = process.exit;
     let exitCode = 0;
 
@@ -27,7 +34,11 @@ async function executeCommand(command: Command, args: string[]): Promise<Command
       // If we get here, command succeeded
       resolve({ code: 0, message: '', data: null });
     } catch (error) {
-      resolve({ code: 1, message: error instanceof Error ? error.message : String(error), data: null });
+      resolve({
+        code: 1,
+        message: error instanceof Error ? error.message : String(error),
+        data: null,
+      });
     } finally {
       process.exit = originalExit;
     }
@@ -58,18 +69,26 @@ describe('scaffold show command contract', () => {
               version: '1.0.0',
               projectName: 'test-project',
               templates: [
-                { name: 'react', version: '2.0.0', appliedAt: '2023-01-01T00:00:00.000Z' },
-                { name: 'typescript', version: '1.5.0', appliedAt: '2023-01-02T00:00:00.000Z' }
+                {
+                  name: 'react',
+                  version: '2.0.0',
+                  appliedAt: '2023-01-01T00:00:00.000Z',
+                },
+                {
+                  name: 'typescript',
+                  version: '1.5.0',
+                  appliedAt: '2023-01-02T00:00:00.000Z',
+                },
               ],
               variables: { author: 'John Doe', version: '2.0.0' },
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-02T00:00:00.000Z',
-              history: []
-            })
+              history: [],
+            }),
           },
-          'src': {},
-          'package.json': '{"name": "test-project"}'
-        }
+          src: {},
+          'package.json': '{"name": "test-project"}',
+        },
       });
       mockFs(mockFileSystem);
 
@@ -83,7 +102,9 @@ describe('scaffold show command contract', () => {
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('Project Information:');
-      expect(mockConsole.logs.join(' ')).toContain('Project Name: test-project');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Project Name: test-project'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Version: 1.0.0');
       expect(mockConsole.logs.join(' ')).toContain('Applied Templates:');
       expect(mockConsole.logs.join(' ')).toContain('react@2.0.0');
@@ -104,10 +125,10 @@ describe('scaffold show command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -121,7 +142,9 @@ describe('scaffold show command contract', () => {
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('Project Information:');
-      expect(mockConsole.logs.join(' ')).toContain('Project Name: example-project');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Project Name: example-project'
+      );
     });
 
     it('should handle non-scaffold-managed project gracefully', async () => {
@@ -129,8 +152,8 @@ describe('scaffold show command contract', () => {
       const mockFileSystem = createMockFileSystem({
         '/current/dir': {
           'package.json': '{"name": "regular-project"}',
-          'src': {}
-        }
+          src: {},
+        },
       });
       mockFs(mockFileSystem);
 
@@ -143,7 +166,9 @@ describe('scaffold show command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('This directory is not a scaffold-managed project');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'This directory is not a scaffold-managed project'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Use "scaffold new"');
     });
 
@@ -159,10 +184,10 @@ describe('scaffold show command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -171,11 +196,17 @@ describe('scaffold show command contract', () => {
 
       // Act
       const command = createShowCommand();
-      const result = await executeCommand(command, ['project', '--format', 'json']);
+      const result = await executeCommand(command, [
+        'project',
+        '--format',
+        'json',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('"projectName": "json-project"');
+      expect(mockConsole.logs.join(' ')).toContain(
+        '"projectName": "json-project"'
+      );
       expect(mockConsole.logs.join(' ')).toContain('"version": "1.0.0"');
     });
 
@@ -188,15 +219,19 @@ describe('scaffold show command contract', () => {
               version: '1.0.0',
               projectName: 'verbose-project',
               templates: [
-                { name: 'react', version: '2.0.0', appliedAt: '2023-01-01T12:00:00.000Z' }
+                {
+                  name: 'react',
+                  version: '2.0.0',
+                  appliedAt: '2023-01-01T12:00:00.000Z',
+                },
               ],
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T12:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -209,7 +244,9 @@ describe('scaffold show command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Applied: 2023-01-01T12:00:00.000Z');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Applied: 2023-01-01T12:00:00.000Z'
+      );
     });
   });
 
@@ -226,7 +263,7 @@ describe('scaffold show command contract', () => {
             folders: ['src/components'],
             files: [],
             variables: [],
-            rules: { strict: true }
+            rules: { strict: true },
           }),
           'typescript.json': JSON.stringify({
             name: 'typescript',
@@ -236,9 +273,9 @@ describe('scaffold show command contract', () => {
             folders: [],
             files: [],
             variables: [],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
@@ -250,16 +287,20 @@ describe('scaffold show command contract', () => {
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('Template Information:');
       expect(mockConsole.logs.join(' ')).toContain('react (react-template)');
-      expect(mockConsole.logs.join(' ')).toContain('typescript (typescript-template)');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'typescript (typescript-template)'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Version: 2.0.0');
-      expect(mockConsole.logs.join(' ')).toContain('Description: React application template');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Description: React application template'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Total: 2 templates');
     });
 
     it('should show templates alias', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
-        '/home/.scaffold/templates': {}
+        '/home/.scaffold/templates': {},
       });
       mockFs(mockFileSystem);
 
@@ -285,15 +326,19 @@ describe('scaffold show command contract', () => {
             folders: [],
             files: [],
             variables: [],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createShowCommand();
-      const result = await executeCommand(command, ['template', '--format', 'json']);
+      const result = await executeCommand(command, [
+        'template',
+        '--format',
+        'json',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -310,16 +355,16 @@ describe('scaffold show command contract', () => {
           paths: {
             templatesDir: '/home/.scaffold/templates',
             cacheDir: '/home/.scaffold/cache',
-            backupDir: '/home/.scaffold/backup'
+            backupDir: '/home/.scaffold/backup',
           },
           preferences: {
             strictModeDefault: true,
             colorOutput: true,
             verboseOutput: false,
             confirmDestructive: true,
-            backupBeforeSync: true
-          }
-        })
+            backupBeforeSync: true,
+          },
+        }),
       });
       mockFs(mockFileSystem);
 
@@ -329,10 +374,14 @@ describe('scaffold show command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Configuration Information:');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Configuration Information:'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Templates Directory:');
       expect(mockConsole.logs.join(' ')).toContain('Cache Directory:');
-      expect(mockConsole.logs.join(' ')).toContain('Strict Mode Default: Enabled');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Strict Mode Default: Enabled'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Color Output: Yes');
     });
 
@@ -347,7 +396,9 @@ describe('scaffold show command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Configuration Information:');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Configuration Information:'
+      );
     });
 
     it('should show configuration in JSON format', async () => {
@@ -357,7 +408,11 @@ describe('scaffold show command contract', () => {
 
       // Act
       const command = createShowCommand();
-      const result = await executeCommand(command, ['config', '--format', 'json']);
+      const result = await executeCommand(command, [
+        'config',
+        '--format',
+        'json',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -375,7 +430,9 @@ describe('scaffold show command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Configuration Information:');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Configuration Information:'
+      );
     });
   });
 
@@ -389,14 +446,18 @@ describe('scaffold show command contract', () => {
               version: '1.0.0',
               projectName: 'complete-project',
               templates: [
-                { name: 'react', version: '2.0.0', appliedAt: '2023-01-01T00:00:00.000Z' }
+                {
+                  name: 'react',
+                  version: '2.0.0',
+                  appliedAt: '2023-01-01T00:00:00.000Z',
+                },
               ],
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
+              history: [],
+            }),
+          },
         },
         '/home/.scaffold/templates': {
           'react.json': JSON.stringify({
@@ -407,9 +468,9 @@ describe('scaffold show command contract', () => {
             folders: [],
             files: [],
             variables: [],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
@@ -422,10 +483,14 @@ describe('scaffold show command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('=== Scaffold Information ===');
+      expect(mockConsole.logs.join(' ')).toContain(
+        '=== Scaffold Information ==='
+      );
       expect(mockConsole.logs.join(' ')).toContain('Project Information:');
       expect(mockConsole.logs.join(' ')).toContain('Template Information:');
-      expect(mockConsole.logs.join(' ')).toContain('Configuration Information:');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Configuration Information:'
+      );
     });
 
     it('should show all information in verbose mode', async () => {
@@ -440,10 +505,10 @@ describe('scaffold show command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -470,8 +535,12 @@ describe('scaffold show command contract', () => {
       // Assert
       expect(result.code).toBe(1);
       expect(mockConsole.errors.join(' ')).toContain('Error');
-      expect(mockConsole.errors.join(' ')).toContain('Unknown item: unknown-item');
-      expect(mockConsole.logs.join(' ')).toContain('Available items: project, template, config, all');
+      expect(mockConsole.errors.join(' ')).toContain(
+        'Unknown item: unknown-item'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Available items: project, template, config, all'
+      );
     });
 
     it('should handle malformed manifest gracefully', async () => {
@@ -479,9 +548,9 @@ describe('scaffold show command contract', () => {
       const mockFileSystem = createMockFileSystem({
         '/current/dir': {
           '.scaffold': {
-            'manifest.json': 'invalid json {'
-          }
-        }
+            'manifest.json': 'invalid json {',
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -535,11 +604,19 @@ describe('scaffold show command contract', () => {
 
       // Act - Test summary format
       const command1 = createShowCommand();
-      const result1 = await executeCommand(command1, ['project', '--format', 'summary']);
+      const result1 = await executeCommand(command1, [
+        'project',
+        '--format',
+        'summary',
+      ]);
 
       // Act - Test table format (default)
       const command2 = createShowCommand();
-      const result2 = await executeCommand(command2, ['project', '--format', 'table']);
+      const result2 = await executeCommand(command2, [
+        'project',
+        '--format',
+        'table',
+      ]);
 
       // Assert
       expect(result1.code).toBe(0);
@@ -557,7 +634,9 @@ describe('scaffold show command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('This directory is not a scaffold-managed project');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'This directory is not a scaffold-managed project'
+      );
     });
 
     it('should handle project with no templates', async () => {
@@ -572,10 +651,10 @@ describe('scaffold show command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -600,15 +679,19 @@ describe('scaffold show command contract', () => {
               version: '1.0.0',
               projectName: 'no-vars-project',
               templates: [
-                { name: 'react', version: '2.0.0', appliedAt: '2023-01-01T00:00:00.000Z' }
+                {
+                  name: 'react',
+                  version: '2.0.0',
+                  appliedAt: '2023-01-01T00:00:00.000Z',
+                },
               ],
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -621,7 +704,9 @@ describe('scaffold show command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Project Name: no-vars-project');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Project Name: no-vars-project'
+      );
       // Should not show Variables section when empty
     });
 
@@ -632,7 +717,12 @@ describe('scaffold show command contract', () => {
 
       // Act
       const command = createShowCommand();
-      const result = await executeCommand(command, ['config', '--verbose', '--format', 'json']);
+      const result = await executeCommand(command, [
+        'config',
+        '--verbose',
+        '--format',
+        'json',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);

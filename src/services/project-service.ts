@@ -24,7 +24,12 @@ export interface IProjectService {
   /**
    * Create a new project from a template
    */
-  createProject(projectName: string, templateIds: string[], targetPath: string, variables?: Record<string, string>): Promise<ProjectManifest>;
+  createProject(
+    projectName: string,
+    templateIds: string[],
+    targetPath: string,
+    variables?: Record<string, string>
+  ): Promise<ProjectManifest>;
 
   /**
    * Validate project structure against applied templates
@@ -39,7 +44,11 @@ export interface IProjectService {
   /**
    * Extend existing project with additional templates
    */
-  extendProject(projectPath: string, templateIds: string[], variables?: Record<string, string>): Promise<ProjectManifest>;
+  extendProject(
+    projectPath: string,
+    templateIds: string[],
+    variables?: Record<string, string>
+  ): Promise<ProjectManifest>;
 
   /**
    * Load project manifest from directory (.scaffold/manifest.json)
@@ -54,7 +63,10 @@ export interface IProjectService {
   /**
    * Save project manifest to directory (.scaffold/manifest.json)
    */
-  saveProjectManifest(projectPath: string, manifest: ProjectManifest): Promise<void>;
+  saveProjectManifest(
+    projectPath: string,
+    manifest: ProjectManifest
+  ): Promise<void>;
 
   /**
    * Clean up temporary files and caches for a project
@@ -68,12 +80,17 @@ export class ProjectService implements IProjectService {
   constructor(
     private readonly templateService: ITemplateService,
     private readonly fileService: IFileSystemService,
-    private readonly configService?: IConfigurationService,
+    private readonly configService?: IConfigurationService
   ) {
     this.variableService = new VariableSubstitutionService(this.fileService);
   }
 
-  async createProject(projectName: string, templateIds: string[], targetPath: string, variables?: Record<string, string>): Promise<ProjectManifest> {
+  async createProject(
+    projectName: string,
+    templateIds: string[],
+    targetPath: string,
+    variables?: Record<string, string>
+  ): Promise<ProjectManifest> {
     if (!projectName || typeof projectName !== 'string') {
       throw new Error('Project name must be a non-empty string');
     }
@@ -100,20 +117,33 @@ export class ProjectService implements IProjectService {
       // Check for rootFolder conflicts between templates
       const rootFolders = new Set<string>();
       for (const template of templates) {
-        const rootFolder = this.variableService.substituteInPath(template.rootFolder, allVariables);
+        const rootFolder = this.variableService.substituteInPath(
+          template.rootFolder,
+          allVariables
+        );
         if (rootFolders.has(rootFolder)) {
-          throw new Error(`Template conflict: Multiple templates use the same rootFolder '${rootFolder}'. Templates must use unique root folders.`);
+          throw new Error(
+            `Template conflict: Multiple templates use the same rootFolder '${rootFolder}'. Templates must use unique root folders.`
+          );
         }
         rootFolders.add(rootFolder);
       }
 
       // Validate all required variables are provided
       for (const template of templates) {
-        const validationResults = this.variableService.validateRequiredVariables(template, allVariables);
-        const errors = validationResults.filter(r => !r.valid && r.severity === 'error');
+        const validationResults =
+          this.variableService.validateRequiredVariables(
+            template,
+            allVariables
+          );
+        const errors = validationResults.filter(
+          r => !r.valid && r.severity === 'error'
+        );
         if (errors.length > 0) {
           const errorMessages = errors.map(e => e.message).join('; ');
-          throw new Error(`Template validation failed for '${template.name}': ${errorMessages}`);
+          throw new Error(
+            `Template validation failed for '${template.name}': ${errorMessages}`
+          );
         }
       }
 
@@ -121,7 +151,10 @@ export class ProjectService implements IProjectService {
       await this.ensureProjectDirectory(projectPath);
 
       // Initialize project manifest
-      const manifest = this.initializeProjectManifest(projectName, templateIds[0]);
+      const manifest = this.initializeProjectManifest(
+        projectName,
+        templateIds[0]
+      );
 
       // Apply each template
       for (const template of templates) {
@@ -132,11 +165,14 @@ export class ProjectService implements IProjectService {
           templateId: template.id,
           name: template.name,
           version: template.version,
-          rootFolder: this.variableService.substituteInPath(template.rootFolder, allVariables),
+          rootFolder: this.variableService.substituteInPath(
+            template.rootFolder,
+            allVariables
+          ),
           appliedBy: process.env.USER || 'unknown',
           appliedAt: new Date().toISOString(),
           status: 'active',
-          conflicts: []
+          conflicts: [],
         };
         manifest.templates.push(appliedTemplate);
       }
@@ -151,12 +187,14 @@ export class ProjectService implements IProjectService {
         action: 'create',
         templates: templateIds,
         user: process.env.USER || 'unknown',
-        changes: [{
-          id: randomUUID(),
-          type: 'added',
-          path: projectPath,
-          reason: 'Project created'
-        }]
+        changes: [
+          {
+            id: randomUUID(),
+            type: 'added',
+            path: projectPath,
+            reason: 'Project created',
+          },
+        ],
       };
       manifest.history.push(historyEntry);
 
@@ -168,7 +206,9 @@ export class ProjectService implements IProjectService {
 
       return manifest;
     } catch (error) {
-      throw new Error(`Failed to create project '${projectName}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to create project '${projectName}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -185,7 +225,9 @@ export class ProjectService implements IProjectService {
       // Load project manifest and find the actual project root
       const manifest = await this.getProjectManifest(projectPath);
       if (!manifest) {
-        throw new Error(`No project manifest found at '${projectPath}'. This directory is not a scaffold-managed project.`);
+        throw new Error(
+          `No project manifest found at '${projectPath}'. This directory is not a scaffold-managed project.`
+        );
       }
 
       // Find the actual project root where the manifest is located
@@ -207,7 +249,9 @@ export class ProjectService implements IProjectService {
         templatesChecked++;
 
         try {
-          const template = await this.templateService.getTemplate(appliedTemplate.templateId);
+          const template = await this.templateService.getTemplate(
+            appliedTemplate.templateId
+          );
 
           // Check required folders exist
           for (const folder of template.folders) {
@@ -218,7 +262,7 @@ export class ProjectService implements IProjectService {
             const folderPath = rootFolderPath === '.' ? relativePath : `${rootFolderPath}/${relativePath}`;
             const fullFolderPath = this.fileService.resolvePath(actualProjectPath, folderPath);
 
-            if (!await this.fileService.exists(fullFolderPath)) {
+            if (!(await this.fileService.exists(fullFolderPath))) {
               errors.push({
                 id: randomUUID(),
                 severity: 'error',
@@ -230,10 +274,10 @@ export class ProjectService implements IProjectService {
                 message: `Required directory '${folderPath}' does not exist`,
                 fix: {
                   action: 'create',
-                  autoFix: true
-                }
+                  autoFix: true,
+                },
               });
-            } else if (!await this.fileService.isDirectory(fullFolderPath)) {
+            } else if (!(await this.fileService.isDirectory(fullFolderPath))) {
               errors.push({
                 id: randomUUID(),
                 severity: 'error',
@@ -246,8 +290,8 @@ export class ProjectService implements IProjectService {
                 fix: {
                   action: 'delete',
                   message: 'Remove the file and create directory',
-                  autoFix: false
-                }
+                  autoFix: false,
+                },
               });
             }
           }
@@ -261,7 +305,7 @@ export class ProjectService implements IProjectService {
             const filePath = rootFolderPath === '.' ? relativePath : `${rootFolderPath}/${relativePath}`;
             const fullFilePath = this.fileService.resolvePath(actualProjectPath, filePath);
 
-            if (!await this.fileService.exists(fullFilePath)) {
+            if (!(await this.fileService.exists(fullFilePath))) {
               errors.push({
                 id: randomUUID(),
                 severity: 'error',
@@ -274,10 +318,10 @@ export class ProjectService implements IProjectService {
                 fix: {
                   action: 'create',
                   content: file.content || '',
-                  autoFix: true
-                }
+                  autoFix: true,
+                },
               });
-            } else if (!await this.fileService.isFile(fullFilePath)) {
+            } else if (!(await this.fileService.isFile(fullFilePath))) {
               errors.push({
                 id: randomUUID(),
                 severity: 'error',
@@ -290,8 +334,8 @@ export class ProjectService implements IProjectService {
                 fix: {
                   action: 'delete',
                   message: 'Remove the directory and create file',
-                  autoFix: false
-                }
+                  autoFix: false,
+                },
               });
             }
           }
@@ -304,7 +348,10 @@ export class ProjectService implements IProjectService {
             const rulePath = rootFolderPath === '.' ? relativeTarget : `${rootFolderPath}/${relativeTarget}`;
             const fullRulePath = this.fileService.resolvePath(actualProjectPath, rulePath);
 
-            if (rule.type === 'required_file' && !await this.fileService.exists(fullRulePath)) {
+            if (
+              rule.type === 'required_file' &&
+              !(await this.fileService.exists(fullRulePath))
+            ) {
               const validationError: ValidationError = {
                 id: randomUUID(),
                 severity: rule.severity === 'error' ? 'error' : 'critical',
@@ -314,13 +361,16 @@ export class ProjectService implements IProjectService {
                 expected: rule.description,
                 actual: 'File does not exist',
                 message: `Rule '${rule.name}' failed: ${rule.description}`,
-                fix: rule.fix
+                fix: rule.fix,
               };
 
               if (rule.severity === 'error') {
                 errors.push(validationError);
               }
-            } else if (rule.type === 'required_folder' && !await this.fileService.exists(fullRulePath)) {
+            } else if (
+              rule.type === 'required_folder' &&
+              !(await this.fileService.exists(fullRulePath))
+            ) {
               const validationError: ValidationError = {
                 id: randomUUID(),
                 severity: rule.severity === 'error' ? 'error' : 'critical',
@@ -330,13 +380,16 @@ export class ProjectService implements IProjectService {
                 expected: rule.description,
                 actual: 'Folder does not exist',
                 message: `Rule '${rule.name}' failed: ${rule.description}`,
-                fix: rule.fix
+                fix: rule.fix,
               };
 
               if (rule.severity === 'error') {
                 errors.push(validationError);
               }
-            } else if (rule.type === 'forbidden_file' && await this.fileService.exists(fullRulePath)) {
+            } else if (
+              rule.type === 'forbidden_file' &&
+              (await this.fileService.exists(fullRulePath))
+            ) {
               const validationError: ValidationError = {
                 id: randomUUID(),
                 severity: rule.severity === 'error' ? 'error' : 'critical',
@@ -346,7 +399,7 @@ export class ProjectService implements IProjectService {
                 expected: 'File should not exist',
                 actual: 'File exists',
                 message: `Rule '${rule.name}' failed: ${rule.description}`,
-                fix: rule.fix
+                fix: rule.fix,
               };
 
               if (rule.severity === 'error') {
@@ -357,7 +410,7 @@ export class ProjectService implements IProjectService {
                   template: template.name,
                   path: rulePath,
                   message: rule.description,
-                  suggestion: 'Consider removing this file'
+                  suggestion: 'Consider removing this file',
                 });
               }
             }
@@ -369,20 +422,25 @@ export class ProjectService implements IProjectService {
             template: appliedTemplate.name,
             path: appliedTemplate.templateId,
             message: `Template '${appliedTemplate.templateId}' could not be loaded`,
-            suggestion: error instanceof Error ? error.message : 'Unknown error'
+            suggestion:
+              error instanceof Error ? error.message : 'Unknown error',
           });
         }
       }
 
       // Check for extra files if strictMode is enabled in any template
-      const hasStrictTemplate = manifest.templates.some(async (appliedTemplate) => {
-        try {
-          const template = await this.templateService.getTemplate(appliedTemplate.templateId);
-          return template.rules.strictMode;
-        } catch {
-          return false;
+      const hasStrictTemplate = manifest.templates.some(
+        async appliedTemplate => {
+          try {
+            const template = await this.templateService.getTemplate(
+              appliedTemplate.templateId
+            );
+            return template.rules.strictMode;
+          } catch {
+            return false;
+          }
         }
-      });
+      );
 
       if (hasStrictTemplate) {
         warnings.push({
@@ -390,7 +448,7 @@ export class ProjectService implements IProjectService {
           template: 'system',
           path: actualProjectPath,
           message: 'Strict mode validation for extra files not yet implemented',
-          suggestion: 'Extra file detection will be added in future versions'
+          suggestion: 'Extra file detection will be added in future versions',
         });
       }
 
@@ -405,7 +463,7 @@ export class ProjectService implements IProjectService {
         rulesEvaluated: 0, // Will be implemented when rule evaluation is added
         errorCount: errors.length,
         warningCount: warnings.length,
-        duration: executionTime
+        duration: executionTime,
       };
 
       return {
@@ -414,19 +472,26 @@ export class ProjectService implements IProjectService {
         projectId: manifest.id,
         projectName: manifest.projectName,
         projectPath: actualProjectPath,
-        templates: manifest.templates.filter(t => t.status === 'active').map(t => t.templateId),
+        templates: manifest.templates
+          .filter(t => t.status === 'active')
+          .map(t => t.templateId),
         valid: errors.length === 0,
         errors,
         warnings,
         suggestions: [],
-        stats
+        stats,
       };
     } catch (error) {
-      throw new Error(`Failed to validate project at '${projectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to validate project at '${projectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  async fixProject(projectPath: string, dryRun?: boolean): Promise<ValidationReport> {
+  async fixProject(
+    projectPath: string,
+    dryRun?: boolean
+  ): Promise<ValidationReport> {
     if (!projectPath || typeof projectPath !== 'string') {
       throw new Error('Project path must be a non-empty string');
     }
@@ -470,7 +535,10 @@ export class ProjectService implements IProjectService {
         for (const error of validationReport.errors) {
           try {
             if (error.fix?.autoFix) {
-              const fullPath = this.fileService.resolvePath(actualProjectPath, error.path);
+              const fullPath = this.fileService.resolvePath(
+                actualProjectPath,
+                error.path
+              );
 
               if (error.fix.action === 'create') {
                 if (error.ruleId === 'required_folder') {
@@ -493,22 +561,34 @@ export class ProjectService implements IProjectService {
                       content = file.content;
                     } else if (file.sourcePath) {
                       // Read from template source file
-                      const templatePath = await this.findTemplateById(template.id);
+                      const templatePath = await this.findTemplateById(
+                        template.id
+                      );
                       if (templatePath) {
-                        const sourceFilePath = this.fileService.resolvePath(templatePath, 'files', file.sourcePath);
+                        const sourceFilePath = this.fileService.resolvePath(
+                          templatePath,
+                          'files',
+                          file.sourcePath
+                        );
                         if (await this.fileService.exists(sourceFilePath)) {
-                          content = await this.fileService.readFile(sourceFilePath);
+                          content =
+                            await this.fileService.readFile(sourceFilePath);
                         }
                       }
                     }
 
                     // Apply variable substitution if enabled
                     if (file.variables !== false && content) {
-                      content = this.variableService.substituteVariables(content, manifest.variables);
+                      content = this.variableService.substituteVariables(
+                        content,
+                        manifest.variables
+                      );
                     }
                   }
 
-                  await this.fileService.createFile(fullPath, content, { overwrite: true });
+                  await this.fileService.createFile(fullPath, content, {
+                    overwrite: true,
+                  });
                   filesFixed++;
                 }
 
@@ -527,7 +607,7 @@ export class ProjectService implements IProjectService {
                   template: 'fix',
                   path: error.path,
                   message: `Manual fix required: ${error.fix.message}`,
-                  suggestion: error.suggestion
+                  suggestion: error.suggestion,
                 });
               }
             }
@@ -539,13 +619,17 @@ export class ProjectService implements IProjectService {
               template: 'fix',
               path: error.path,
               message: `Failed to fix error: ${fixError instanceof Error ? fixError.message : 'Unknown error'}`,
-              suggestion: 'Manual intervention required'
+              suggestion: 'Manual intervention required',
             });
           }
         }
 
         // Update project manifest with fix history
-        if (!dryRun && (fixedErrors.length > 0 || remainingErrors.length !== validationReport.errors.length)) {
+        if (
+          !dryRun &&
+          (fixedErrors.length > 0 ||
+            remainingErrors.length !== validationReport.errors.length)
+        ) {
           const historyEntry: HistoryEntry = {
             id: randomUUID(),
             timestamp: new Date().toISOString(),
@@ -555,8 +639,8 @@ export class ProjectService implements IProjectService {
               id: randomUUID(),
               type: 'added' as const,
               path: error.path,
-              reason: `Fixed: ${error.message}`
-            }))
+              reason: `Fixed: ${error.message}`,
+            })),
           };
 
           manifest.history.push(historyEntry);
@@ -575,7 +659,7 @@ export class ProjectService implements IProjectService {
           rulesEvaluated: 0,
           errorCount: remainingErrors.length,
           warningCount: warnings.length,
-          duration: executionTime
+          duration: executionTime,
         };
 
         return {
@@ -584,27 +668,39 @@ export class ProjectService implements IProjectService {
           projectId: manifest.id,
           projectName: manifest.projectName,
           projectPath: actualProjectPath,
-          templates: manifest.templates.filter(t => t.status === 'active').map(t => t.templateId),
+          templates: manifest.templates
+            .filter(t => t.status === 'active')
+            .map(t => t.templateId),
           valid: remainingErrors.length === 0,
           errors: remainingErrors,
           warnings,
           suggestions: [
-            fixedErrors.length > 0 ? `Fixed ${fixedErrors.length} errors (${filesFixed} files, ${foldersFixed} folders)` : '',
-            remainingErrors.length > 0 ? `${remainingErrors.length} errors require manual attention` : '',
-            dryRun ? 'This was a dry run - no changes were made' : ''
+            fixedErrors.length > 0
+              ? `Fixed ${fixedErrors.length} errors (${filesFixed} files, ${foldersFixed} folders)`
+              : '',
+            remainingErrors.length > 0
+              ? `${remainingErrors.length} errors require manual attention`
+              : '',
+            dryRun ? 'This was a dry run - no changes were made' : '',
           ].filter(s => s.length > 0),
-          stats
+          stats,
         };
       } finally {
         // Restore original dry-run mode
         this.fileService.setDryRun(originalDryRun);
       }
     } catch (error) {
-      throw new Error(`Failed to fix project at '${projectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to fix project at '${projectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  async extendProject(projectPath: string, templateIds: string[], variables?: Record<string, string>): Promise<ProjectManifest> {
+  async extendProject(
+    projectPath: string,
+    templateIds: string[],
+    variables?: Record<string, string>
+  ): Promise<ProjectManifest> {
     if (!projectPath || typeof projectPath !== 'string') {
       throw new Error('Project path must be a non-empty string');
     }
@@ -617,7 +713,9 @@ export class ProjectService implements IProjectService {
       // Load existing project manifest
       const manifest = await this.getProjectManifest(projectPath);
       if (!manifest) {
-        throw new Error(`No project manifest found at '${projectPath}'. This directory is not a scaffold-managed project.`);
+        throw new Error(
+          `No project manifest found at '${projectPath}'. This directory is not a scaffold-managed project.`
+        );
       }
 
       // Find the actual project root where the manifest is located
@@ -625,7 +723,10 @@ export class ProjectService implements IProjectService {
       const actualProjectPath = nearestManifest?.projectPath || projectPath;
 
       // Merge variables with existing ones
-      const allVariables = { ...(manifest.variables || {}), ...(variables || {}) };
+      const allVariables = {
+        ...(manifest.variables || {}),
+        ...(variables || {}),
+      };
 
       // Validate all templates exist and collect them
       const templates: Template[] = [];
@@ -645,23 +746,38 @@ export class ProjectService implements IProjectService {
       // Check for conflicts between new templates and existing ones
       const newRootFolders = new Set<string>();
       for (const template of templates) {
-        const rootFolder = this.variableService.substituteInPath(template.rootFolder, allVariables);
+        const rootFolder = this.variableService.substituteInPath(
+          template.rootFolder,
+          allVariables
+        );
         if (existingRootFolders.has(rootFolder)) {
-          throw new Error(`Template conflict: Template '${template.name}' uses rootFolder '${rootFolder}' which is already used by an existing template in this project.`);
+          throw new Error(
+            `Template conflict: Template '${template.name}' uses rootFolder '${rootFolder}' which is already used by an existing template in this project.`
+          );
         }
         if (newRootFolders.has(rootFolder)) {
-          throw new Error(`Template conflict: Multiple new templates use the same rootFolder '${rootFolder}'. Templates must use unique root folders.`);
+          throw new Error(
+            `Template conflict: Multiple new templates use the same rootFolder '${rootFolder}'. Templates must use unique root folders.`
+          );
         }
         newRootFolders.add(rootFolder);
       }
 
       // Validate all required variables are provided
       for (const template of templates) {
-        const validationResults = this.variableService.validateRequiredVariables(template, allVariables);
-        const errors = validationResults.filter(r => !r.valid && r.severity === 'error');
+        const validationResults =
+          this.variableService.validateRequiredVariables(
+            template,
+            allVariables
+          );
+        const errors = validationResults.filter(
+          r => !r.valid && r.severity === 'error'
+        );
         if (errors.length > 0) {
           const errorMessages = errors.map(e => e.message).join('; ');
-          throw new Error(`Template validation failed for '${template.name}': ${errorMessages}`);
+          throw new Error(
+            `Template validation failed for '${template.name}': ${errorMessages}`
+          );
         }
       }
 
@@ -674,11 +790,14 @@ export class ProjectService implements IProjectService {
           templateId: template.id,
           name: template.name,
           version: template.version,
-          rootFolder: this.variableService.substituteInPath(template.rootFolder, allVariables),
+          rootFolder: this.variableService.substituteInPath(
+            template.rootFolder,
+            allVariables
+          ),
           appliedBy: process.env.USER || 'unknown',
           appliedAt: new Date().toISOString(),
           status: 'active',
-          conflicts: []
+          conflicts: [],
         };
         manifest.templates.push(appliedTemplate);
       }
@@ -697,8 +816,8 @@ export class ProjectService implements IProjectService {
           id: randomUUID(),
           type: 'added',
           path: templateId,
-          reason: 'Template extended to project'
-        }))
+          reason: 'Template extended to project',
+        })),
       };
       manifest.history.push(historyEntry);
 
@@ -710,15 +829,22 @@ export class ProjectService implements IProjectService {
 
       return manifest;
     } catch (error) {
-      throw new Error(`Failed to extend project at '${projectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to extend project at '${projectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  async loadProjectManifest(projectPath: string): Promise<ProjectManifest | null> {
+  async loadProjectManifest(
+    projectPath: string
+  ): Promise<ProjectManifest | null> {
     return this.getProjectManifest(projectPath);
   }
 
-  async saveProjectManifest(projectPath: string, manifest: ProjectManifest): Promise<void> {
+  async saveProjectManifest(
+    projectPath: string,
+    manifest: ProjectManifest
+  ): Promise<void> {
     await this.updateProjectManifest(projectPath, manifest);
   }
 
@@ -727,17 +853,27 @@ export class ProjectService implements IProjectService {
     const resolvedPath = this.fileService.resolvePath(targetPath);
 
     try {
-      const cleanupTasks: Array<{ type: string; path: string; action: () => Promise<void> }> = [];
+      const cleanupTasks: Array<{
+        type: string;
+        path: string;
+        action: () => Promise<void>;
+      }> = [];
 
       // 1. Clean up .scaffold-temp directory if it exists
-      const scaffoldTempPath = this.fileService.resolvePath(resolvedPath, '.scaffold-temp');
+      const scaffoldTempPath = this.fileService.resolvePath(
+        resolvedPath,
+        '.scaffold-temp'
+      );
       if (await this.fileService.exists(scaffoldTempPath)) {
         cleanupTasks.push({
           type: 'temp-directory',
           path: scaffoldTempPath,
           action: async () => {
-            await this.fileService.deletePath(scaffoldTempPath, { recursive: true, force: true });
-          }
+            await this.fileService.deletePath(scaffoldTempPath, {
+              recursive: true,
+              force: true,
+            });
+          },
         });
       }
 
@@ -746,13 +882,18 @@ export class ProjectService implements IProjectService {
         const entries = await this.fileService.readDirectory(resolvedPath);
         for (const entry of entries) {
           if (entry.endsWith('.scaffold-backup')) {
-            const backupFilePath = this.fileService.resolvePath(resolvedPath, entry);
+            const backupFilePath = this.fileService.resolvePath(
+              resolvedPath,
+              entry
+            );
             cleanupTasks.push({
               type: 'backup-file',
               path: backupFilePath,
               action: async () => {
-                await this.fileService.deletePath(backupFilePath, { force: true });
-              }
+                await this.fileService.deletePath(backupFilePath, {
+                  force: true,
+                });
+              },
             });
           }
         }
@@ -766,21 +907,29 @@ export class ProjectService implements IProjectService {
       }
 
       // 3. Clean up any cached template data in global temp directory
-      const globalTempPath = this.fileService.resolvePath(process.cwd(), '.scaffold-temp');
+      const globalTempPath = this.fileService.resolvePath(
+        process.cwd(),
+        '.scaffold-temp'
+      );
       if (await this.fileService.exists(globalTempPath)) {
         cleanupTasks.push({
           type: 'global-temp',
           path: globalTempPath,
           action: async () => {
-            await this.fileService.deletePath(globalTempPath, { recursive: true, force: true });
-          }
+            await this.fileService.deletePath(globalTempPath, {
+              recursive: true,
+              force: true,
+            });
+          },
         });
       }
 
       // Execute cleanup tasks
       if (cleanupTasks.length === 0) {
         if (this.fileService.isDryRun) {
-          console.log('[DRY RUN] No temporary files or backup files found to clean');
+          console.log(
+            '[DRY RUN] No temporary files or backup files found to clean'
+          );
         }
         return;
       }
@@ -794,7 +943,8 @@ export class ProjectService implements IProjectService {
       }
 
       // Check if we should log verbose output based on configuration
-      const shouldLogVerbose = this.configService?.get<boolean>('preferences.verboseOutput') || false;
+      const shouldLogVerbose =
+        this.configService?.get<boolean>('preferences.verboseOutput') || false;
 
       if (shouldLogVerbose) {
         console.log(`Cleaning up ${cleanupTasks.length} temporary items...`);
@@ -809,7 +959,9 @@ export class ProjectService implements IProjectService {
         } catch (cleanupError) {
           // Log the error but continue with other cleanup tasks
           if (shouldLogVerbose) {
-            console.log(`  Warning: Failed to clean ${task.type} at ${task.path}: ${cleanupError instanceof Error ? cleanupError.message : 'Unknown error'}`);
+            console.log(
+              `  Warning: Failed to clean ${task.type} at ${task.path}: ${cleanupError instanceof Error ? cleanupError.message : 'Unknown error'}`
+            );
           }
         }
       }
@@ -817,16 +969,19 @@ export class ProjectService implements IProjectService {
       if (shouldLogVerbose) {
         console.log('Cleanup completed successfully');
       }
-
     } catch (error) {
-      throw new Error(`Failed to clean project at '${resolvedPath}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to clean project at '${resolvedPath}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   /**
    * Find the nearest project manifest by searching upward from the given path
    */
-  private async findNearestManifest(startPath: string): Promise<{ manifestPath: string; projectPath: string } | null> {
+  private async findNearestManifest(
+    startPath: string
+  ): Promise<{ manifestPath: string; projectPath: string } | null> {
     let currentPath = this.fileService.resolvePath(startPath);
 
     // Limit search to prevent infinite loops (e.g., max 20 levels up)
@@ -834,7 +989,11 @@ export class ProjectService implements IProjectService {
     let level = 0;
 
     while (level < maxLevels) {
-      const manifestPath = this.fileService.resolvePath(currentPath, '.scaffold', 'manifest.json');
+      const manifestPath = this.fileService.resolvePath(
+        currentPath,
+        '.scaffold',
+        'manifest.json'
+      );
 
       if (await this.fileService.exists(manifestPath)) {
         return { manifestPath, projectPath: currentPath };
@@ -856,37 +1015,51 @@ export class ProjectService implements IProjectService {
   /**
    * Get project manifest from a project directory
    */
-  async getProjectManifest(projectPath: string): Promise<ProjectManifest | null> {
+  async getProjectManifest(
+    projectPath: string
+  ): Promise<ProjectManifest | null> {
     if (!projectPath || typeof projectPath !== 'string') {
       throw new Error('Project path must be a non-empty string');
     }
 
     // First try the exact path provided
-    const directManifestPath = this.fileService.resolvePath(projectPath, '.scaffold', 'manifest.json');
+    const directManifestPath = this.fileService.resolvePath(
+      projectPath,
+      '.scaffold',
+      'manifest.json'
+    );
 
     try {
       if (await this.fileService.exists(directManifestPath)) {
-        const manifestData = await this.fileService.readJson<ProjectManifest>(directManifestPath);
+        const manifestData =
+          await this.fileService.readJson<ProjectManifest>(directManifestPath);
         return manifestData;
       }
 
       // If not found, search upward for the nearest manifest
       const nearestManifest = await this.findNearestManifest(projectPath);
       if (nearestManifest) {
-        const manifestData = await this.fileService.readJson<ProjectManifest>(nearestManifest.manifestPath);
+        const manifestData = await this.fileService.readJson<ProjectManifest>(
+          nearestManifest.manifestPath
+        );
         return manifestData;
       }
 
       return null;
     } catch (error) {
-      throw new Error(`Failed to read project manifest from '${projectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to read project manifest from '${projectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   /**
    * Update project manifest in a project directory
    */
-  async updateProjectManifest(projectPath: string, manifest: ProjectManifest): Promise<void> {
+  async updateProjectManifest(
+    projectPath: string,
+    manifest: ProjectManifest
+  ): Promise<void> {
     if (!projectPath || typeof projectPath !== 'string') {
       throw new Error('Project path must be a non-empty string');
     }
@@ -899,23 +1072,32 @@ export class ProjectService implements IProjectService {
     // This ensures we update the correct manifest location
     const nearestManifest = await this.findNearestManifest(projectPath);
     const actualProjectPath = nearestManifest?.projectPath || projectPath;
-    const manifestPath = this.fileService.resolvePath(actualProjectPath, '.scaffold', 'manifest.json');
+    const manifestPath = this.fileService.resolvePath(
+      actualProjectPath,
+      '.scaffold',
+      'manifest.json'
+    );
 
     try {
       await this.fileService.writeJson(manifestPath, manifest, {
         spaces: 2,
         atomic: true,
-        createParentDirs: true
+        createParentDirs: true,
       });
     } catch (error) {
-      throw new Error(`Failed to write project manifest to '${actualProjectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to write project manifest to '${actualProjectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   /**
    * Initialize a new project manifest
    */
-  initializeProjectManifest(projectName: string, templateId: string): ProjectManifest {
+  initializeProjectManifest(
+    projectName: string,
+    templateId: string
+  ): ProjectManifest {
     if (!projectName || typeof projectName !== 'string') {
       throw new Error('Project name must be a non-empty string');
     }
@@ -934,7 +1116,7 @@ export class ProjectService implements IProjectService {
       updated: now,
       templates: [],
       variables: {},
-      history: []
+      history: [],
     };
   }
 
@@ -948,20 +1130,34 @@ export class ProjectService implements IProjectService {
 
     try {
       await this.fileService.ensureDirectory(projectPath);
-      await this.fileService.ensureDirectory(this.fileService.resolvePath(projectPath, '.scaffold'));
+      await this.fileService.ensureDirectory(
+        this.fileService.resolvePath(projectPath, '.scaffold')
+      );
     } catch (error) {
-      throw new Error(`Failed to ensure project directory structure at '${projectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to ensure project directory structure at '${projectPath}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   /**
    * Apply a template to a project directory
    */
-  private async applyTemplate(template: Template, projectPath: string, variables: Record<string, string>): Promise<void> {
+  private async applyTemplate(
+    template: Template,
+    projectPath: string,
+    variables: Record<string, string>
+  ): Promise<void> {
     try {
       // Ensure rootFolder exists first
-      const rootFolderPath = this.variableService.substituteInPath(template.rootFolder, variables);
-      const fullRootFolderPath = this.fileService.resolvePath(projectPath, rootFolderPath);
+      const rootFolderPath = this.variableService.substituteInPath(
+        template.rootFolder,
+        variables
+      );
+      const fullRootFolderPath = this.fileService.resolvePath(
+        projectPath,
+        rootFolderPath
+      );
       await this.fileService.createDirectory(fullRootFolderPath);
 
       // Create folders first
@@ -972,13 +1168,20 @@ export class ProjectService implements IProjectService {
         const fullFolderPath = this.fileService.resolvePath(projectPath, folderPath);
 
         await this.fileService.createDirectory(fullFolderPath, {
-          mode: folder.permissions ? parseInt(folder.permissions, 8) : undefined
+          mode: folder.permissions
+            ? parseInt(folder.permissions, 8)
+            : undefined,
         });
 
         // Add .gitkeep if specified and directory is empty
         if (folder.gitkeep) {
-          const gitkeepPath = this.fileService.resolvePath(fullFolderPath, '.gitkeep');
-          await this.fileService.createFile(gitkeepPath, '', { overwrite: false });
+          const gitkeepPath = this.fileService.resolvePath(
+            fullFolderPath,
+            '.gitkeep'
+          );
+          await this.fileService.createFile(gitkeepPath, '', {
+            overwrite: false,
+          });
         }
       }
 
@@ -998,10 +1201,16 @@ export class ProjectService implements IProjectService {
           // Read from template source file
           const templatePath = await this.findTemplateById(template.id);
           if (!templatePath) {
-            throw new Error(`Template path not found for template '${template.id}'`);
+            throw new Error(
+              `Template path not found for template '${template.id}'`
+            );
           }
 
-          const sourceFilePath = this.fileService.resolvePath(templatePath, 'files', file.sourcePath);
+          const sourceFilePath = this.fileService.resolvePath(
+            templatePath,
+            'files',
+            file.sourcePath
+          );
           if (await this.fileService.exists(sourceFilePath)) {
             content = await this.fileService.readFile(sourceFilePath);
           }
@@ -1009,16 +1218,21 @@ export class ProjectService implements IProjectService {
 
         // Apply variable substitution if enabled
         if (file.variables !== false && content) {
-          content = this.variableService.substituteVariables(content, variables);
+          content = this.variableService.substituteVariables(
+            content,
+            variables
+          );
         }
 
         await this.fileService.createFile(fullFilePath, content, {
           mode: file.permissions ? parseInt(file.permissions, 8) : undefined,
-          overwrite: true
+          overwrite: true,
         });
       }
     } catch (error) {
-      throw new Error(`Failed to apply template '${template.name}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to apply template '${template.name}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -1030,7 +1244,11 @@ export class ProjectService implements IProjectService {
       await this.templateService.getTemplate(templateId);
       // The TemplateService should provide the path, but for now we'll reconstruct it
       // This is based on the pattern seen in TemplateService
-      const templatesDir = this.fileService.resolvePath(os.homedir(), '.scaffold', 'templates');
+      const templatesDir = this.fileService.resolvePath(
+        os.homedir(),
+        '.scaffold',
+        'templates'
+      );
       return this.fileService.resolvePath(templatesDir, templateId);
     } catch (error) {
       return null;

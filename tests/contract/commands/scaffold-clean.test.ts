@@ -4,13 +4,20 @@
  */
 
 import { createCleanCommand } from '../../../src/cli/commands/clean.command';
-import { createMockFileSystem, createMockConsole, CommandResult } from '../../helpers/cli-helpers';
+import {
+  createMockFileSystem,
+  createMockConsole,
+  CommandResult,
+} from '../../helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
 
 // Helper function to execute command and capture result
-async function executeCommand(command: Command, args: string[]): Promise<CommandResult> {
-  return new Promise((resolve) => {
+async function executeCommand(
+  command: Command,
+  args: string[]
+): Promise<CommandResult> {
+  return new Promise(resolve => {
     const originalExit = process.exit;
     let exitCode = 0;
 
@@ -27,7 +34,11 @@ async function executeCommand(command: Command, args: string[]): Promise<Command
       // If we get here, command succeeded
       resolve({ code: 0, message: '', data: null });
     } catch (error) {
-      resolve({ code: 1, message: error instanceof Error ? error.message : String(error), data: null });
+      resolve({
+        code: 1,
+        message: error instanceof Error ? error.message : String(error),
+        data: null,
+      });
     } finally {
       process.exit = originalExit;
     }
@@ -55,13 +66,13 @@ describe('scaffold clean command contract', () => {
         '/current/dir': {
           '.scaffold-temp': {
             'project-1': { 'temp-file.txt': 'temp content' },
-            'backup-2': { 'backup.json': '{}' }
-          }
+            'backup-2': { 'backup.json': '{}' },
+          },
         },
         '/home/.scaffold/cache': {
-          'templates': { 'cached-template.json': '{}' },
-          'manifests': { 'cached-manifest.json': '{}' }
-        }
+          templates: { 'cached-template.json': '{}' },
+          manifests: { 'cached-manifest.json': '{}' },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -71,9 +82,15 @@ describe('scaffold clean command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Cleaning scaffold files...');
-      expect(mockConsole.logs.join(' ')).toContain('Cleaning temporary files...');
-      expect(mockConsole.logs.join(' ')).toContain('Cleanup completed successfully!');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleaning scaffold files...'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleaning temporary files...'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleanup completed successfully!'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Items cleaned: 2');
     });
 
@@ -81,9 +98,9 @@ describe('scaffold clean command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '/home/.scaffold/cache': {
-          'templates': { 'template1.json': '{}', 'template2.json': '{}' },
-          'manifests': { 'manifest1.json': '{}' }
-        }
+          templates: { 'template1.json': '{}', 'template2.json': '{}' },
+          manifests: { 'manifest1.json': '{}' },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -94,7 +111,9 @@ describe('scaffold clean command contract', () => {
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('Cleaning cache files...');
-      expect(mockConsole.logs.join(' ')).toContain('Cleanup completed successfully!');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleanup completed successfully!'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Items cleaned: 2');
     });
 
@@ -102,9 +121,9 @@ describe('scaffold clean command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'temp1': { 'file.txt': 'content' },
-          'temp2': { 'file.txt': 'content' }
-        }
+          temp1: { 'file.txt': 'content' },
+          temp2: { 'file.txt': 'content' },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -114,8 +133,12 @@ describe('scaffold clean command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Cleaning temporary files...');
-      expect(mockConsole.logs.join(' ')).toContain('Cleanup completed successfully!');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleaning temporary files...'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleanup completed successfully!'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Items cleaned: 2');
     });
 
@@ -123,11 +146,11 @@ describe('scaffold clean command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'temp1': { 'file.txt': 'content' }
+          temp1: { 'file.txt': 'content' },
         },
         '/home/.scaffold/cache': {
-          'templates': { 'template.json': '{}' }
-        }
+          templates: { 'template.json': '{}' },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -137,9 +160,13 @@ describe('scaffold clean command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Cleaning temporary files...');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleaning temporary files...'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Cleaning cache files...');
-      expect(mockConsole.logs.join(' ')).toContain('Cleanup completed successfully!');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleanup completed successfully!'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Items cleaned: 4');
     });
 
@@ -147,8 +174,8 @@ describe('scaffold clean command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'temp1': { 'file.txt': 'content' }
-        }
+          temp1: { 'file.txt': 'content' },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -159,7 +186,9 @@ describe('scaffold clean command contract', () => {
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('Clean options:');
-      expect(mockConsole.logs.join(' ')).toContain('Found 2 temp items to clean');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Found 2 temp items to clean'
+      );
       expect(mockConsole.logs.join(' ')).toContain('.scaffold-temp/project-1');
       expect(mockConsole.logs.join(' ')).toContain('.scaffold-temp/backup-2');
     });
@@ -168,11 +197,11 @@ describe('scaffold clean command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'temp1': { 'file.txt': 'content' }
+          temp1: { 'file.txt': 'content' },
         },
         '/home/.scaffold/cache': {
-          'templates': { 'template.json': '{}' }
-        }
+          templates: { 'template.json': '{}' },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -183,22 +212,30 @@ describe('scaffold clean command contract', () => {
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('DRY RUN - Would clean:');
-      expect(mockConsole.logs.join(' ')).toContain('Temporary files (.scaffold-temp/)');
-      expect(mockConsole.logs.join(' ')).toContain('Cache files (~/.scaffold/cache/)');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Temporary files (.scaffold-temp/)'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cache files (~/.scaffold/cache/)'
+      );
       // Should not show actual cleaning messages
-      expect(mockConsole.logs.join(' ')).not.toContain('Cleaning scaffold files...');
-      expect(mockConsole.logs.join(' ')).not.toContain('Cleanup completed successfully!');
+      expect(mockConsole.logs.join(' ')).not.toContain(
+        'Cleaning scaffold files...'
+      );
+      expect(mockConsole.logs.join(' ')).not.toContain(
+        'Cleanup completed successfully!'
+      );
     });
 
     it('should handle multiple cleanup types simultaneously', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'temp1': { 'file.txt': 'content' }
+          temp1: { 'file.txt': 'content' },
         },
         '/home/.scaffold/cache': {
-          'cache1': { 'file.json': '{}' }
-        }
+          cache1: { 'file.json': '{}' },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -208,7 +245,9 @@ describe('scaffold clean command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Cleaning temporary files...');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleaning temporary files...'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Cleaning cache files...');
       expect(mockConsole.logs.join(' ')).toContain('Items cleaned: 4');
     });
@@ -219,8 +258,8 @@ describe('scaffold clean command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'temp1': { 'file.txt': 'content' }
-        }
+          temp1: { 'file.txt': 'content' },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -230,7 +269,9 @@ describe('scaffold clean command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Cleanup completed successfully!');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleanup completed successfully!'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Items cleaned: 2');
     });
 
@@ -238,8 +279,8 @@ describe('scaffold clean command contract', () => {
       // Arrange - Create mock file system with no temp/cache files
       const mockFileSystem = createMockFileSystem({
         '/current/dir': {
-          'regular-file.txt': 'content'
-        }
+          'regular-file.txt': 'content',
+        },
       });
       mockFs(mockFileSystem);
 
@@ -265,7 +306,7 @@ describe('scaffold clean command contract', () => {
     it('should handle cleanup when directories do not exist', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
-        '/current/dir': {}
+        '/current/dir': {},
       });
       mockFs(mockFileSystem);
 
@@ -294,35 +335,47 @@ describe('scaffold clean command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'temp1': { 'file.txt': 'content' }
-        }
+          temp1: { 'file.txt': 'content' },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createCleanCommand();
-      const result = await executeCommand(command, ['--verbose', '--dry-run', '--all']);
+      const result = await executeCommand(command, [
+        '--verbose',
+        '--dry-run',
+        '--all',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('Clean options:');
       expect(mockConsole.logs.join(' ')).toContain('DRY RUN - Would clean:');
-      expect(mockConsole.logs.join(' ')).toContain('Temporary files (.scaffold-temp/)');
-      expect(mockConsole.logs.join(' ')).toContain('Cache files (~/.scaffold/cache/)');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Temporary files (.scaffold-temp/)'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cache files (~/.scaffold/cache/)'
+      );
     });
 
     it('should handle all options together', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'temp1': { 'file.txt': 'content' }
-        }
+          temp1: { 'file.txt': 'content' },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createCleanCommand();
-      const result = await executeCommand(command, ['--all', '--verbose', '--dry-run']);
+      const result = await executeCommand(command, [
+        '--all',
+        '--verbose',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -335,25 +388,31 @@ describe('scaffold clean command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'temp1': { 'file.txt': 'content' }
-        }
+          temp1: { 'file.txt': 'content' },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act - Using both --all and specific --temp and --cache options
       const command = createCleanCommand();
-      const result = await executeCommand(command, ['--all', '--temp', '--cache']);
+      const result = await executeCommand(command, [
+        '--all',
+        '--temp',
+        '--cache',
+      ]);
 
       // Assert - Should still work, with --all taking precedence
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Cleaning scaffold files...');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleaning scaffold files...'
+      );
     });
 
     it('should handle empty directories gracefully', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {},
-        '/home/.scaffold/cache': {}
+        '/home/.scaffold/cache': {},
       });
       mockFs(mockFileSystem);
 
@@ -382,9 +441,9 @@ describe('scaffold clean command contract', () => {
         '/readonly-temp': mockFs.directory({
           mode: 0o444, // read-only
           items: {
-            'temp-file.txt': 'content'
-          }
-        })
+            'temp-file.txt': 'content',
+          },
+        }),
       });
       mockFs(mockFileSystem);
 
@@ -394,7 +453,9 @@ describe('scaffold clean command contract', () => {
 
       // Assert - Should still complete, even if some files can't be cleaned
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Cleaning scaffold files...');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleaning scaffold files...'
+      );
     });
 
     it('should handle large numbers of files efficiently', async () => {
@@ -405,7 +466,7 @@ describe('scaffold clean command contract', () => {
       }
 
       const mockFileSystem = createMockFileSystem({
-        '.scaffold-temp': tempFiles
+        '.scaffold-temp': tempFiles,
       });
       mockFs(mockFileSystem);
 
@@ -415,7 +476,9 @@ describe('scaffold clean command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Cleanup completed successfully!');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleanup completed successfully!'
+      );
       // Should report cleaning the mock files (implementation returns 2 mock files)
       expect(mockConsole.logs.join(' ')).toContain('Items cleaned: 2');
     });
@@ -424,23 +487,23 @@ describe('scaffold clean command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'level1': {
-            'level2': {
-              'level3': {
-                'deep-file.txt': 'deep content'
-              }
-            }
-          }
+          level1: {
+            level2: {
+              level3: {
+                'deep-file.txt': 'deep content',
+              },
+            },
+          },
         },
         '/home/.scaffold/cache': {
-          'nested': {
-            'cache': {
-              'files': {
-                'cached.json': '{}'
-              }
-            }
-          }
-        }
+          nested: {
+            cache: {
+              files: {
+                'cached.json': '{}',
+              },
+            },
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -450,7 +513,9 @@ describe('scaffold clean command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Cleanup completed successfully!');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleanup completed successfully!'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Items cleaned: 4');
     });
 
@@ -459,8 +524,8 @@ describe('scaffold clean command contract', () => {
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
           'temp with spaces': { 'file with spaces.txt': 'content' },
-          'temp@special#chars': { 'file$with%special&chars.txt': 'content' }
-        }
+          'temp@special#chars': { 'file$with%special&chars.txt': 'content' },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -470,51 +535,84 @@ describe('scaffold clean command contract', () => {
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Found 2 temp items to clean');
-      expect(mockConsole.logs.join(' ')).toContain('Cleanup completed successfully!');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Found 2 temp items to clean'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleanup completed successfully!'
+      );
     });
 
     it('should handle simultaneous cache and temp cleaning efficiently', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '.scaffold-temp': {
-          'temp1': { 'file1.txt': 'content' },
-          'temp2': { 'file2.txt': 'content' }
+          temp1: { 'file1.txt': 'content' },
+          temp2: { 'file2.txt': 'content' },
         },
         '/home/.scaffold/cache': {
-          'cache1': { 'file1.json': '{}' },
-          'cache2': { 'file2.json': '{}' }
-        }
+          cache1: { 'file1.json': '{}' },
+          cache2: { 'file2.json': '{}' },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createCleanCommand();
-      const result = await executeCommand(command, ['--temp', '--cache', '--verbose']);
+      const result = await executeCommand(command, [
+        '--temp',
+        '--cache',
+        '--verbose',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Cleaning temporary files...');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Cleaning temporary files...'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Cleaning cache files...');
-      expect(mockConsole.logs.join(' ')).toContain('Found 2 temp items to clean');
-      expect(mockConsole.logs.join(' ')).toContain('Found 2 cache items to clean');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Found 2 temp items to clean'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Found 2 cache items to clean'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Items cleaned: 4');
     });
 
     it('should provide meaningful output for different cleanup scenarios', async () => {
       // Test different combinations of what exists and what gets cleaned
       const scenarios = [
-        { name: 'temp only', options: ['--temp'], expectedMessages: ['Cleaning temporary files...'] },
-        { name: 'cache only', options: ['--cache'], expectedMessages: ['Cleaning cache files...'] },
-        { name: 'all', options: ['--all'], expectedMessages: ['Cleaning temporary files...', 'Cleaning cache files...'] },
-        { name: 'default (temp)', options: [], expectedMessages: ['Cleaning temporary files...'] }
+        {
+          name: 'temp only',
+          options: ['--temp'],
+          expectedMessages: ['Cleaning temporary files...'],
+        },
+        {
+          name: 'cache only',
+          options: ['--cache'],
+          expectedMessages: ['Cleaning cache files...'],
+        },
+        {
+          name: 'all',
+          options: ['--all'],
+          expectedMessages: [
+            'Cleaning temporary files...',
+            'Cleaning cache files...',
+          ],
+        },
+        {
+          name: 'default (temp)',
+          options: [],
+          expectedMessages: ['Cleaning temporary files...'],
+        },
       ];
 
       for (const scenario of scenarios) {
         // Arrange
         const mockFileSystem = createMockFileSystem({
-          '.scaffold-temp': { 'temp1': { 'file.txt': 'content' } },
-          '/home/.scaffold/cache': { 'cache1': { 'file.json': '{}' } }
+          '.scaffold-temp': { temp1: { 'file.txt': 'content' } },
+          '/home/.scaffold/cache': { cache1: { 'file.json': '{}' } },
         });
         mockFs(mockFileSystem);
 
