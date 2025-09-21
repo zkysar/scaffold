@@ -62,7 +62,7 @@ export interface TemplateRules {
 }
 
 export interface Template {
-  id: string;                      // Unique identifier (UUID v4)
+  id: string;                      // SHA-256 hash of template content (64 characters)
   name: string;                    // Template name (human-readable)
   version: string;                 // Semantic version (e.g., "1.0.0")
   description: string;             // Human-readable description
@@ -74,7 +74,8 @@ export interface Template {
   files: FileDefinition[];         // File templates
   variables: TemplateVariable[];   // Replaceable variables
   rules: TemplateRules;           // Validation and behavior rules
-  dependencies?: string[];         // Other required template IDs
+  dependencies?: string[];         // Other required template SHAs
+  aliases?: string[];              // Human-readable aliases (stored separately, included for display)
 }
 
 export interface TemplateSource {
@@ -86,13 +87,14 @@ export interface TemplateSource {
 }
 
 export interface TemplateSummary {
-  id: string;                    // Reference to Template.id
+  id: string;                    // SHA-256 hash (same as Template.id)
   name: string;
   version: string;
   description: string;
   source: string;                // Which source provides this
   installed: boolean;            // Is it available locally
   lastUpdated: string;          // ISO 8601 date
+  aliases?: string[];           // Human-readable aliases for this template
 }
 
 export interface TemplateLibrary {

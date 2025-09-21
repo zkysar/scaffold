@@ -29,7 +29,8 @@ export interface ConflictRecord {
 }
 
 export interface AppliedTemplate {
-  templateId: string;             // Reference to Template.id
+  templateSha: string;            // SHA-256 hash of the template
+  templateAlias?: string;         // Optional: alias used when applied
   name: string;                   // Template name (for display)
   version: string;                // Version applied
   rootFolder: string;             // Root folder where template was applied

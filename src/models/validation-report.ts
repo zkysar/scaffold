@@ -7,7 +7,7 @@ import { RuleFix } from './template';
 export interface ValidationError {
   id: string;                    // Unique error identifier (UUID v4)
   severity: "error" | "critical";
-  templateId: string;            // Which template was violated
+  templateSha: string;           // SHA of template that was violated
   ruleId: string;                // Which specific rule was violated
   path: string;                  // Problem file/folder
   expected: string;              // What should be there

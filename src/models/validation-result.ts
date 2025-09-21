@@ -11,7 +11,7 @@ export interface ValidationResult {
   expected?: string;
   actual?: string;
   ruleId?: string;
-  templateId?: string;
+  templateSha?: string;
   suggestion?: string;
   fixable?: boolean;
 }
@@ -27,7 +27,7 @@ export interface ValidationContext {
 export interface ValidationOptions {
   includeWarnings?: boolean;
   includeInfo?: boolean;
-  templateIds?: string[];
+  templateShas?: string[];
   paths?: string[];
   skipContent?: boolean;
   skipPermissions?: boolean;

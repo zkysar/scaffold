@@ -7,7 +7,9 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { TemplateService } from '../../services';
-import type { Template, TemplateSummary } from '../../models';
+import { TemplateIdentifierService } from '../../services/template-identifier-service';
+import { shortSHA } from '../../lib/sha';
+import type { Template } from '../../models';
 
 interface TemplateCommandOptions {
   verbose?: boolean;
@@ -20,16 +22,20 @@ export function createTemplateCommand(): Command {
   const command = new Command('template');
 
   command
-    .description('Manage templates (create/list/delete/export/import)')
-    .argument('<action>', 'Action to perform (create|list|delete|export|import)')
-    .argument('[name]', 'Template name or file path (required for some actions)')
+    .description('Manage templates (create/list/delete/export/import/alias)')
+    .argument('<action>', 'Action to perform (create|list|delete|export|import|alias)')
+    .argument('[identifier]', 'Template SHA/alias or file path (required for some actions)')
+    .argument('[alias]', 'New alias (required for alias action)')
     .option('--verbose', 'Show detailed output')
     .option('--dry-run', 'Show what would be done without making changes')
     .option('--force', 'Force operation without confirmation')
     .option('-o, --output <path>', 'Output path for export operations')
-    .action(async (action: string, name: string, options: TemplateCommandOptions) => {
+    .action(async (action: string, identifier: string, aliasOrOptions?: string | TemplateCommandOptions, maybeOptions?: TemplateCommandOptions) => {
       try {
-        await handleTemplateCommand(action, name, options);
+        // Handle the overloaded arguments
+        const options = (action === 'alias' ? maybeOptions : aliasOrOptions) as TemplateCommandOptions || {};
+        const alias = action === 'alias' ? aliasOrOptions as string : undefined;
+        await handleTemplateCommand(action, identifier, alias, options);
       } catch (error) {
         console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -39,38 +45,41 @@ export function createTemplateCommand(): Command {
   return command;
 }
 
-async function handleTemplateCommand(action: string, name: string, options: TemplateCommandOptions): Promise<void> {
+async function handleTemplateCommand(action: string, identifier: string, alias: string | undefined, options: TemplateCommandOptions): Promise<void> {
   const verbose = options.verbose || false;
-  const dryRun = options.dryRun || false;
-  const force = options.force || false;
 
   if (verbose) {
     console.log(chalk.blue('Template action:'), action);
-    if (name) console.log(chalk.blue('Template name:'), name);
+    if (identifier) console.log(chalk.blue('Template identifier:'), identifier);
+    if (alias) console.log(chalk.blue('Alias:'), alias);
     console.log(chalk.blue('Options:'), JSON.stringify(options, null, 2));
   }
 
   const templateService = new TemplateService();
+  const identifierService = TemplateIdentifierService.getInstance();
 
   switch (action.toLowerCase()) {
     case 'list':
       await handleListTemplates(templateService, options);
       break;
     case 'create':
-      await handleCreateTemplate(templateService, name, options);
+      await handleCreateTemplate(templateService, identifier, options);
       break;
     case 'delete':
-      await handleDeleteTemplate(templateService, name, options);
+      await handleDeleteTemplate(templateService, identifier, options);
       break;
     case 'export':
-      await handleExportTemplate(templateService, name, options);
+      await handleExportTemplate(templateService, identifier, options);
       break;
     case 'import':
-      await handleImportTemplate(templateService, name, options);
+      await handleImportTemplate(templateService, identifier, options);
+      break;
+    case 'alias':
+      await handleAliasTemplate(identifierService, templateService, identifier, alias, options);
       break;
     default:
       console.error(chalk.red('Error:'), `Unknown action: ${action}`);
-      console.log(chalk.gray('Available actions: list, create, delete, export, import'));
+      console.log(chalk.gray('Available actions: list, create, delete, export, import, alias'));
       process.exit(1);
   }
 }
@@ -91,7 +100,11 @@ async function handleListTemplates(templateService: TemplateService, options: Te
     console.log('');
 
     for (const template of library.templates) {
-      console.log(chalk.bold(template.name), chalk.gray(`(${template.id})`));
+      const shortId = shortSHA(template.id, verbose ? 12 : 8);
+      const aliasStr = template.aliases && template.aliases.length > 0
+        ? ` (alias: ${template.aliases.map(a => `"${a}"`).join(', ')})`
+        : '';
+      console.log(chalk.bold(template.name), chalk.gray(`${shortId}${aliasStr}`));
       console.log(chalk.gray('  Version:'), template.version);
       console.log(chalk.gray('  Description:'), template.description);
       console.log(chalk.gray('  Location:'), `~/.scaffold/templates/${template.id}/template.json`);
@@ -175,7 +188,7 @@ async function handleCreateTemplate(templateService: TemplateService, name: stri
   ]);
 
   const template: Template = {
-    id: generateTemplateId(name),
+    id: '', // SHA will be computed by the service
     name,
     version: answers.version,
     description: answers.description,
@@ -203,13 +216,16 @@ async function handleCreateTemplate(templateService: TemplateService, name: stri
 
   try {
     await templateService.createTemplate(template);
+    // Template ID is now SHA computed by the service
+    const createdTemplate = await templateService.getTemplate(template.name);
     console.log(chalk.green('✓ Template created successfully!'));
-    console.log(chalk.blue('Template ID:'), template.id);
+    console.log(chalk.blue('Template SHA:'), shortSHA(createdTemplate.id));
     console.log(chalk.blue('Template Name:'), template.name);
     console.log(chalk.blue('Version:'), template.version);
 
     if (verbose) {
-      console.log(chalk.gray('Location:'), `~/.scaffold/templates/${template.id}/template.json`);
+      console.log(chalk.gray('Full SHA:'), createdTemplate.id);
+      console.log(chalk.gray('Location:'), `~/.scaffold/templates/${createdTemplate.id}/template.json`);
     }
   } catch (error) {
     if (error instanceof Error && error.message.includes('already exists')) {
@@ -251,7 +267,7 @@ async function handleDeleteTemplate(templateService: TemplateService, name: stri
         {
           type: 'confirm',
           name: 'confirm',
-          message: `Are you sure you want to delete template '${template.name}' (${template.id})?`,
+          message: `Are you sure you want to delete template '${template.name}' (${shortSHA(template.id)})?`,
           default: false,
         },
       ]);
@@ -264,7 +280,7 @@ async function handleDeleteTemplate(templateService: TemplateService, name: stri
 
     if (dryRun) {
       console.log(chalk.yellow('DRY RUN - Would delete template:'));
-      console.log(chalk.blue('  ID:'), template.id);
+      console.log(chalk.blue('  SHA:'), shortSHA(template.id));
       console.log(chalk.blue('  Name:'), template.name);
       console.log(chalk.blue('  Version:'), template.version);
       return;
@@ -272,7 +288,7 @@ async function handleDeleteTemplate(templateService: TemplateService, name: stri
 
     await templateService.deleteTemplate(template.id);
     console.log(chalk.green('✓ Template deleted successfully!'));
-    console.log(chalk.blue('Deleted:'), `${template.name} (${template.id})`);
+    console.log(chalk.blue('Deleted:'), `${template.name} (${shortSHA(template.id)})`);
   } catch (error) {
     if (error instanceof Error && error.message.includes('not found')) {
       console.error(chalk.red('Error:'), `Template '${name}' not found`);
@@ -350,12 +366,13 @@ async function handleImportTemplate(templateService: TemplateService, archivePat
   try {
     const template = await templateService.importTemplate(archivePath);
     console.log(chalk.green('✓ Template imported successfully!'));
-    console.log(chalk.blue('Template ID:'), template.id);
+    console.log(chalk.blue('Template SHA:'), shortSHA(template.id));
     console.log(chalk.blue('Template Name:'), template.name);
     console.log(chalk.blue('Version:'), template.version);
     console.log(chalk.blue('Description:'), template.description);
 
     if (verbose) {
+      console.log(chalk.gray('Full SHA:'), template.id);
       console.log(chalk.gray('Location:'), `~/.scaffold/templates/${template.id}/template.json`);
     }
   } catch (error) {
@@ -370,10 +387,52 @@ async function handleImportTemplate(templateService: TemplateService, archivePat
   }
 }
 
-function generateTemplateId(name: string): string {
-  // Generate template ID from name (kebab-case)
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+async function handleAliasTemplate(
+  identifierService: TemplateIdentifierService,
+  templateService: TemplateService,
+  identifier: string,
+  alias: string | undefined,
+  options: TemplateCommandOptions
+): Promise<void> {
+  if (!identifier) {
+    console.error(chalk.red('Error:'), 'Template SHA or existing alias is required');
+    console.log(chalk.gray('Usage: scaffold template alias <sha-or-alias> <new-alias>'));
+    process.exit(1);
+  }
+
+  if (!alias) {
+    console.error(chalk.red('Error:'), 'New alias is required');
+    console.log(chalk.gray('Usage: scaffold template alias <sha-or-alias> <new-alias>'));
+    process.exit(1);
+  }
+
+  try {
+    // Get the template to ensure it exists
+    const template = await templateService.getTemplate(identifier);
+
+    // Register the alias
+    await identifierService.registerAlias(template.id, alias);
+
+    console.log(chalk.green('✓ Alias registered successfully!'));
+    console.log(chalk.blue('Template:'), `${template.name} (${shortSHA(template.id)})`);
+    console.log(chalk.blue('New alias:'), alias);
+
+    // Show all aliases for this template
+    const allAliases = await identifierService.getAliases(template.id, [template.id]);
+    if (allAliases.length > 1) {
+      console.log(chalk.gray('All aliases:'), allAliases.map(a => `"${a}"`).join(', '));
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes('not found')) {
+        console.error(chalk.red('Error:'), `Template '${identifier}' not found`);
+      } else if (error.message.includes('already registered')) {
+        console.error(chalk.red('Error:'), error.message);
+      } else {
+        throw error;
+      }
+    } else {
+      throw error;
+    }
+  }
 }
