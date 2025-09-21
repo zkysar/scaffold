@@ -15,7 +15,9 @@ export interface MockFileSystem {
 /**
  * Create a mock file system structure for testing
  */
-export function createMockFileSystem(structure: MockFileSystem): MockFileSystem {
+export function createMockFileSystem(
+  structure: MockFileSystem
+): MockFileSystem {
   return structure;
 }
 
@@ -71,7 +73,7 @@ export function createMockConsole(): MockConsole {
       warnings.length = 0;
       errors.length = 0;
       infos.length = 0;
-    }
+    },
   };
 }
 
@@ -118,7 +120,7 @@ export class MockCliRunner {
       // For now, return a failing result to satisfy TDD principles
       return {
         code: 1,
-        message: `Command '${command}' not implemented yet`
+        message: `Command '${command}' not implemented yet`,
       };
     } finally {
       // Restore original console

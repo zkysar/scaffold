@@ -5,7 +5,12 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { ProjectService, TemplateService, ConfigurationService, FileSystemService } from '../../services';
+import {
+  ProjectService,
+  TemplateService,
+  ConfigurationService,
+  FileSystemService,
+} from '../../services';
 
 interface ShowCommandOptions {
   verbose?: boolean;
@@ -16,23 +21,35 @@ export function createShowCommand(): Command {
   const command = new Command('show');
 
   command
-    .description('Display information about templates, projects, or configuration')
+    .description(
+      'Display information about templates, projects, or configuration'
+    )
     .argument('[item]', 'Item to show (template|project|config|all)', 'project')
     .option('--verbose', 'Show detailed information')
-    .option('-f, --format <format>', 'Output format (table|json|summary)', 'table')
-    .addHelpText('after', `
+    .option(
+      '-f, --format <format>',
+      'Output format (table|json|summary)',
+      'table'
+    )
+    .addHelpText(
+      'after',
+      `
 Examples:
   scaffold show                    # Show current project info
   scaffold show project            # Show current project info
   scaffold show template           # Show available templates
   scaffold show config             # Show configuration cascade
   scaffold show all                # Show all information
-`)
+`
+    )
     .action(async (item: string, options: ShowCommandOptions) => {
       try {
         await handleShowCommand(item, options);
       } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+        console.error(
+          chalk.red('Error:'),
+          error instanceof Error ? error.message : String(error)
+        );
         process.exit(1);
       }
     });
@@ -40,7 +57,10 @@ Examples:
   return command;
 }
 
-async function handleShowCommand(item: string, options: ShowCommandOptions): Promise<void> {
+async function handleShowCommand(
+  item: string,
+  options: ShowCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
   const format = options.format || 'table';
 
@@ -67,12 +87,18 @@ async function handleShowCommand(item: string, options: ShowCommandOptions): Pro
         break;
       default:
         console.error(chalk.red('Error:'), `Unknown item: ${item}`);
-        console.log(chalk.gray('Available items: project, template, config, all'));
+        console.log(
+          chalk.gray('Available items: project, template, config, all')
+        );
         process.exit(1);
     }
   } catch (error) {
     if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(chalk.yellow('✓ Command structure created (service implementation pending)'));
+      console.log(
+        chalk.yellow(
+          '✓ Command structure created (service implementation pending)'
+        )
+      );
       console.log(chalk.blue('Would show:'), item);
       console.log(chalk.blue('Format:'), format);
       return;
@@ -91,13 +117,22 @@ async function showProjectInfo(options: ShowCommandOptions): Promise<void> {
   try {
     const fileSystemService = new FileSystemService();
     const templateService = new TemplateService();
-    const projectService = new ProjectService(templateService, fileSystemService);
+    const projectService = new ProjectService(
+      templateService,
+      fileSystemService
+    );
 
     const manifest = await projectService.loadProjectManifest(process.cwd());
 
     if (!manifest) {
-      console.log(chalk.yellow('This directory is not a scaffold-managed project.'));
-      console.log(chalk.gray('Use "scaffold new" to create a new project or "scaffold check" to validate.'));
+      console.log(
+        chalk.yellow('This directory is not a scaffold-managed project.')
+      );
+      console.log(
+        chalk.gray(
+          'Use "scaffold new" to create a new project or "scaffold check" to validate.'
+        )
+      );
       return;
     }
 
@@ -129,11 +164,16 @@ async function showProjectInfo(options: ShowCommandOptions): Promise<void> {
         console.log(chalk.gray('  -'), `${key}: ${value}`);
       }
     }
-
   } catch (error) {
     if (error instanceof Error && error.message.includes('No manifest found')) {
-      console.log(chalk.yellow('This directory is not a scaffold-managed project.'));
-      console.log(chalk.gray('Use "scaffold new" to create a new project or "scaffold check" to validate.'));
+      console.log(
+        chalk.yellow('This directory is not a scaffold-managed project.')
+      );
+      console.log(
+        chalk.gray(
+          'Use "scaffold new" to create a new project or "scaffold check" to validate.'
+        )
+      );
     } else {
       throw error;
     }
@@ -156,7 +196,11 @@ async function showTemplateInfo(options: ShowCommandOptions): Promise<void> {
 
   if (library.templates.length === 0) {
     console.log(chalk.yellow('No templates available.'));
-    console.log(chalk.gray('Use "scaffold template create" to create your first template.'));
+    console.log(
+      chalk.gray(
+        'Use "scaffold template create" to create your first template.'
+      )
+    );
     return;
   }
 
@@ -170,7 +214,9 @@ async function showTemplateInfo(options: ShowCommandOptions): Promise<void> {
   console.log(chalk.blue('Total:'), library.templates.length, 'templates');
 }
 
-async function showConfigurationInfo(options: ShowCommandOptions): Promise<void> {
+async function showConfigurationInfo(
+  options: ShowCommandOptions
+): Promise<void> {
   const format = options.format || 'table';
 
   console.log(chalk.green('Configuration Information:'));
@@ -186,18 +232,45 @@ async function showConfigurationInfo(options: ShowCommandOptions): Promise<void>
       return;
     }
 
-    console.log(chalk.blue('Templates Directory:'), config.paths?.templatesDir || 'Not configured');
-    console.log(chalk.blue('Cache Directory:'), config.paths?.cacheDir || 'Not configured');
-    console.log(chalk.blue('Backup Directory:'), config.paths?.backupDir || 'Not configured');
-    console.log(chalk.blue('Strict Mode Default:'), config.preferences?.strictModeDefault ? 'Enabled' : 'Disabled');
-    console.log(chalk.blue('Color Output:'), config.preferences?.colorOutput ? 'Yes' : 'No');
-    console.log(chalk.blue('Verbose Output:'), config.preferences?.verboseOutput ? 'Yes' : 'No');
-    console.log(chalk.blue('Confirm Destructive:'), config.preferences?.confirmDestructive ? 'Yes' : 'No');
-    console.log(chalk.blue('Backup Before Sync:'), config.preferences?.backupBeforeSync ? 'Yes' : 'No');
-
+    console.log(
+      chalk.blue('Templates Directory:'),
+      config.paths?.templatesDir || 'Not configured'
+    );
+    console.log(
+      chalk.blue('Cache Directory:'),
+      config.paths?.cacheDir || 'Not configured'
+    );
+    console.log(
+      chalk.blue('Backup Directory:'),
+      config.paths?.backupDir || 'Not configured'
+    );
+    console.log(
+      chalk.blue('Strict Mode Default:'),
+      config.preferences?.strictModeDefault ? 'Enabled' : 'Disabled'
+    );
+    console.log(
+      chalk.blue('Color Output:'),
+      config.preferences?.colorOutput ? 'Yes' : 'No'
+    );
+    console.log(
+      chalk.blue('Verbose Output:'),
+      config.preferences?.verboseOutput ? 'Yes' : 'No'
+    );
+    console.log(
+      chalk.blue('Confirm Destructive:'),
+      config.preferences?.confirmDestructive ? 'Yes' : 'No'
+    );
+    console.log(
+      chalk.blue('Backup Before Sync:'),
+      config.preferences?.backupBeforeSync ? 'Yes' : 'No'
+    );
   } catch (error) {
     if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(chalk.yellow('✓ Command structure created (service implementation pending)'));
+      console.log(
+        chalk.yellow(
+          '✓ Command structure created (service implementation pending)'
+        )
+      );
       return;
     }
     throw error;

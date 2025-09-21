@@ -8,7 +8,11 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { ProjectService, TemplateService, FileSystemService } from '../../services';
+import {
+  ProjectService,
+  TemplateService,
+  FileSystemService,
+} from '../../services';
 
 interface NewCommandOptions {
   template?: string;
@@ -25,23 +29,34 @@ export function createNewCommand(): Command {
     .description('Create new project from template')
     .argument('[project]', 'Project name')
     .option('-t, --template <template>', 'Template ID or name to use')
-    .option('-p, --path <path>', 'Target directory path (defaults to current directory)')
+    .option(
+      '-p, --path <path>',
+      'Target directory path (defaults to current directory)'
+    )
     .option('-v, --variables <variables>', 'JSON string of template variables')
     .option('--verbose', 'Show detailed output')
     .option('--dry-run', 'Show what would be created without creating anything')
-    .action(async (projectName: string | undefined, options: NewCommandOptions) => {
-      try {
-        await handleNewCommand(projectName, options);
-      } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
-        process.exit(1);
+    .action(
+      async (projectName: string | undefined, options: NewCommandOptions) => {
+        try {
+          await handleNewCommand(projectName, options);
+        } catch (error) {
+          console.error(
+            chalk.red('Error:'),
+            error instanceof Error ? error.message : String(error)
+          );
+          process.exit(1);
+        }
       }
-    });
+    );
 
   return command;
 }
 
-async function handleNewCommand(projectName: string | undefined, options: NewCommandOptions): Promise<void> {
+async function handleNewCommand(
+  projectName: string | undefined,
+  options: NewCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 
@@ -153,13 +168,25 @@ async function handleNewCommand(projectName: string | undefined, options: NewCom
 
       if (library.templates.length === 0) {
         console.log(chalk.yellow('No templates found.'));
-        console.log(chalk.gray('Use "scaffold template create" to create your first template.'));
-        console.log(chalk.gray('Or specify a template with: scaffold new my-project --template <template-name>'));
+        console.log(
+          chalk.gray(
+            'Use "scaffold template create" to create your first template.'
+          )
+        );
+        console.log(
+          chalk.gray(
+            'Or specify a template with: scaffold new my-project --template <template-name>'
+          )
+        );
         return;
       }
 
       if (verbose) {
-        console.log(chalk.blue('Found'), library.templates.length, 'available templates');
+        console.log(
+          chalk.blue('Found'),
+          library.templates.length,
+          'available templates'
+        );
       }
 
       // Create choices for inquirer
@@ -173,7 +200,8 @@ async function handleNewCommand(projectName: string | undefined, options: NewCom
         {
           type: 'checkbox',
           name: 'selectedTemplates',
-          message: 'Select templates to apply (use spacebar to select, enter to confirm):',
+          message:
+            'Select templates to apply (use spacebar to select, enter to confirm):',
           choices: templateChoices,
           validate: (input: string[]): string | boolean => {
             if (input.length === 0) {
@@ -190,10 +218,21 @@ async function handleNewCommand(projectName: string | undefined, options: NewCom
         console.log(chalk.blue('Selected templates:'), templateIds);
       }
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Failed to load templates')) {
+      if (
+        error instanceof Error &&
+        error.message.includes('Failed to load templates')
+      ) {
         console.log(chalk.yellow('No templates found.'));
-        console.log(chalk.gray('Use "scaffold template create" to create your first template.'));
-        console.log(chalk.gray('Or specify a template with: scaffold new my-project --template <template-name>'));
+        console.log(
+          chalk.gray(
+            'Use "scaffold template create" to create your first template.'
+          )
+        );
+        console.log(
+          chalk.gray(
+            'Or specify a template with: scaffold new my-project --template <template-name>'
+          )
+        );
         return;
       }
       throw error;
@@ -209,7 +248,9 @@ async function handleNewCommand(projectName: string | undefined, options: NewCom
         console.log(chalk.blue('Variables:'), variables);
       }
     } catch (error) {
-      throw new Error(`Invalid variables JSON: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Invalid variables JSON: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -224,12 +265,20 @@ async function handleNewCommand(projectName: string | undefined, options: NewCom
 
   try {
     // Create the project
-    const manifest = await projectService.createProject(finalProjectName, templateIds, targetPath, variables);
+    const manifest = await projectService.createProject(
+      finalProjectName,
+      templateIds,
+      targetPath,
+      variables
+    );
 
     console.log(chalk.green('✓ Project created successfully!'));
     console.log(chalk.blue('Project name:'), manifest.projectName);
     console.log(chalk.blue('Location:'), targetPath);
-    console.log(chalk.blue('Templates applied:'), manifest.templates.map(t => `${t.name}@${t.version}`).join(', '));
+    console.log(
+      chalk.blue('Templates applied:'),
+      manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+    );
 
     if (verbose) {
       console.log(chalk.blue('Manifest ID:'), manifest.id);
@@ -237,7 +286,11 @@ async function handleNewCommand(projectName: string | undefined, options: NewCom
     }
   } catch (error) {
     if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(chalk.yellow('✓ Command structure created (service implementation pending)'));
+      console.log(
+        chalk.yellow(
+          '✓ Command structure created (service implementation pending)'
+        )
+      );
       console.log(chalk.blue('Would create project:'), finalProjectName);
       console.log(chalk.blue('Target path:'), targetPath);
       console.log(chalk.blue('Templates:'), templateIds);

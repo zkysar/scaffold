@@ -28,19 +28,34 @@ export function createConfigCommand(): Command {
     .option('--global', 'Use global configuration')
     .option('--workspace', 'Use workspace configuration')
     .option('--project', 'Use project configuration')
-    .action(async (action: string, key: string, value: string, options: ConfigCommandOptions) => {
-      try {
-        await handleConfigCommand(action, key, value, options);
-      } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
-        process.exit(1);
+    .action(
+      async (
+        action: string,
+        key: string,
+        value: string,
+        options: ConfigCommandOptions
+      ) => {
+        try {
+          await handleConfigCommand(action, key, value, options);
+        } catch (error) {
+          console.error(
+            chalk.red('Error:'),
+            error instanceof Error ? error.message : String(error)
+          );
+          process.exit(1);
+        }
       }
-    });
+    );
 
   return command;
 }
 
-async function handleConfigCommand(action: string, key: string, value: string, options: ConfigCommandOptions): Promise<void> {
+async function handleConfigCommand(
+  action: string,
+  key: string,
+  value: string,
+  options: ConfigCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
 
   if (verbose) {
@@ -73,7 +88,11 @@ async function handleConfigCommand(action: string, key: string, value: string, o
     }
   } catch (error) {
     if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(chalk.yellow('✓ Command structure created (service implementation pending)'));
+      console.log(
+        chalk.yellow(
+          '✓ Command structure created (service implementation pending)'
+        )
+      );
       console.log(chalk.blue('Would perform config action:'), action);
       if (key) console.log(chalk.blue('Key:'), key);
       if (value) console.log(chalk.blue('Value:'), value);
@@ -85,23 +104,40 @@ async function handleConfigCommand(action: string, key: string, value: string, o
 
 async function handleListConfig(): Promise<void> {
   console.log(chalk.green('Configuration Settings:'));
-  console.log(chalk.gray('(Implementation pending - would list all configuration settings)'));
+  console.log(
+    chalk.gray(
+      '(Implementation pending - would list all configuration settings)'
+    )
+  );
 }
 
 async function handleGetConfig(key: string): Promise<void> {
   if (!key) {
-    console.error(chalk.red('Error:'), 'Configuration key is required for get action');
+    console.error(
+      chalk.red('Error:'),
+      'Configuration key is required for get action'
+    );
     console.log(chalk.gray('Usage: scaffold config get <key>'));
     process.exit(1);
   }
 
   console.log(chalk.blue('Key:'), key);
-  console.log(chalk.gray('(Implementation pending - would get configuration value)'));
+  console.log(
+    chalk.gray('(Implementation pending - would get configuration value)')
+  );
 }
 
-async function handleSetConfig(configService: ConfigurationService, key: string, value: string, options: ConfigCommandOptions): Promise<void> {
+async function handleSetConfig(
+  configService: ConfigurationService,
+  key: string,
+  value: string,
+  options: ConfigCommandOptions
+): Promise<void> {
   if (!key || !value) {
-    console.error(chalk.red('Error:'), 'Both key and value are required for set action');
+    console.error(
+      chalk.red('Error:'),
+      'Both key and value are required for set action'
+    );
     console.log(chalk.gray('Usage: scaffold config set <key> <value>'));
     process.exit(1);
   }
@@ -118,7 +154,11 @@ async function handleSetConfig(configService: ConfigurationService, key: string,
   console.log(chalk.blue('Value:'), value);
 }
 
-async function handleResetConfig(configService: ConfigurationService, key: string, options: ConfigCommandOptions): Promise<void> {
+async function handleResetConfig(
+  configService: ConfigurationService,
+  key: string,
+  options: ConfigCommandOptions
+): Promise<void> {
   if (options.dryRun) {
     console.log(chalk.yellow('DRY RUN - Would reset configuration'));
     if (key) console.log(chalk.blue('Key:'), key);

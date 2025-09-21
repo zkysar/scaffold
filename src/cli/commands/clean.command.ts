@@ -28,7 +28,10 @@ export function createCleanCommand(): Command {
       try {
         await handleCleanCommand(options);
       } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+        console.error(
+          chalk.red('Error:'),
+          error instanceof Error ? error.message : String(error)
+        );
         process.exit(1);
       }
     });
@@ -43,7 +46,6 @@ async function handleCleanCommand(options: CleanCommandOptions): Promise<void> {
   if (verbose) {
     console.log(chalk.blue('Clean options:'), JSON.stringify(options, null, 2));
   }
-
 
   // Determine what to clean
   const cleanAll = options.all || false;
@@ -96,10 +98,13 @@ async function handleCleanCommand(options: CleanCommandOptions): Promise<void> {
     } else {
       console.log(chalk.yellow('No files found to clean.'));
     }
-
   } catch (error) {
     if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(chalk.yellow('✓ Command structure created (service implementation pending)'));
+      console.log(
+        chalk.yellow(
+          '✓ Command structure created (service implementation pending)'
+        )
+      );
       console.log(chalk.blue('Would clean:'));
       cleanTargets.forEach(target => {
         console.log(chalk.gray('  •'), target);
@@ -110,14 +115,20 @@ async function handleCleanCommand(options: CleanCommandOptions): Promise<void> {
   }
 }
 
-async function mockCleanup(type: 'temp' | 'cache', verbose: boolean): Promise<number> {
+async function mockCleanup(
+  type: 'temp' | 'cache',
+  verbose: boolean
+): Promise<number> {
   // Mock cleanup for demonstration
-  const mockFiles = type === 'temp'
-    ? ['.scaffold-temp/project-1', '.scaffold-temp/backup-2']
-    : ['~/.scaffold/cache/templates', '~/.scaffold/cache/manifests'];
+  const mockFiles =
+    type === 'temp'
+      ? ['.scaffold-temp/project-1', '.scaffold-temp/backup-2']
+      : ['~/.scaffold/cache/templates', '~/.scaffold/cache/manifests'];
 
   if (verbose) {
-    console.log(chalk.gray(`  Found ${mockFiles.length} ${type} items to clean`));
+    console.log(
+      chalk.gray(`  Found ${mockFiles.length} ${type} items to clean`)
+    );
     mockFiles.forEach(file => {
       console.log(chalk.gray('    -'), file);
     });
