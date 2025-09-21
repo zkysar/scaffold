@@ -4,13 +4,20 @@
  */
 
 import { createExtendCommand } from '../../../src/cli/commands/extend.command';
-import { createMockFileSystem, createMockConsole, CommandResult } from '../../helpers/cli-helpers';
+import {
+  createMockFileSystem,
+  createMockConsole,
+  CommandResult,
+} from '../../helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
 
 // Helper function to execute command and capture result
-async function executeCommand(command: Command, args: string[]): Promise<CommandResult> {
-  return new Promise((resolve) => {
+async function executeCommand(
+  command: Command,
+  args: string[]
+): Promise<CommandResult> {
+  return new Promise(resolve => {
     const originalExit = process.exit;
     let exitCode = 0;
 
@@ -27,7 +34,11 @@ async function executeCommand(command: Command, args: string[]): Promise<Command
       // If we get here, command succeeded
       resolve({ code: 0, message: '', data: null });
     } catch (error) {
-      resolve({ code: 1, message: error instanceof Error ? error.message : String(error), data: null });
+      resolve({
+        code: 1,
+        message: error instanceof Error ? error.message : String(error),
+        data: null,
+      });
     } finally {
       process.exit = originalExit;
     }
@@ -58,15 +69,19 @@ describe('scaffold extend command contract', () => {
               version: '1.0.0',
               projectName: 'test-project',
               templates: [
-                { name: 'base', version: '1.0.0', appliedAt: '2023-01-01T00:00:00.000Z' }
+                {
+                  name: 'base',
+                  version: '1.0.0',
+                  appliedAt: '2023-01-01T00:00:00.000Z',
+                },
               ],
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
+              history: [],
+            }),
           },
-          'src': {}
+          src: {},
         },
         '/home/.scaffold/templates': {
           'react.json': JSON.stringify({
@@ -74,12 +89,15 @@ describe('scaffold extend command contract', () => {
             version: '1.0.0',
             folders: ['src/components'],
             files: [
-              { path: 'src/App.tsx', template: 'export default function App() {}' }
+              {
+                path: 'src/App.tsx',
+                template: 'export default function App() {}',
+              },
             ],
             variables: [],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
@@ -104,14 +122,18 @@ describe('scaffold extend command contract', () => {
               version: '1.0.0',
               projectName: 'test-project',
               templates: [
-                { name: 'base', version: '1.0.0', appliedAt: '2023-01-01T00:00:00.000Z' }
+                {
+                  name: 'base',
+                  version: '1.0.0',
+                  appliedAt: '2023-01-01T00:00:00.000Z',
+                },
               ],
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
+              history: [],
+            }),
+          },
         },
         '/home/.scaffold/templates': {
           'typescript.json': JSON.stringify({
@@ -119,18 +141,22 @@ describe('scaffold extend command contract', () => {
             version: '1.0.0',
             folders: [],
             files: [
-              { path: 'tsconfig.json', template: '{"compilerOptions": {}}' }
+              { path: 'tsconfig.json', template: '{"compilerOptions": {}}' },
             ],
             variables: [],
-            rules: { strict: true }
-          })
-        }
+            rules: { strict: true },
+          }),
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/test-project', '--template', 'typescript']);
+      const result = await executeCommand(command, [
+        '/test-project',
+        '--template',
+        'typescript',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -147,21 +173,30 @@ describe('scaffold extend command contract', () => {
               version: '1.0.0',
               projectName: 'test-project',
               templates: [
-                { name: 'base', version: '1.0.0', appliedAt: '2023-01-01T00:00:00.000Z' }
+                {
+                  name: 'base',
+                  version: '1.0.0',
+                  appliedAt: '2023-01-01T00:00:00.000Z',
+                },
               ],
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/test-project', '--template', 'react', '--verbose']);
+      const result = await executeCommand(command, [
+        '/test-project',
+        '--template',
+        'react',
+        '--verbose',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -178,21 +213,30 @@ describe('scaffold extend command contract', () => {
               version: '1.0.0',
               projectName: 'test-project',
               templates: [
-                { name: 'base', version: '1.0.0', appliedAt: '2023-01-01T00:00:00.000Z' }
+                {
+                  name: 'base',
+                  version: '1.0.0',
+                  appliedAt: '2023-01-01T00:00:00.000Z',
+                },
               ],
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/test-project', '--template', 'react', '--dry-run']);
+      const result = await executeCommand(command, [
+        '/test-project',
+        '--template',
+        'react',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -211,21 +255,30 @@ describe('scaffold extend command contract', () => {
               version: '1.0.0',
               projectName: 'test-project',
               templates: [
-                { name: 'base', version: '1.0.0', appliedAt: '2023-01-01T00:00:00.000Z' }
+                {
+                  name: 'base',
+                  version: '1.0.0',
+                  appliedAt: '2023-01-01T00:00:00.000Z',
+                },
               ],
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/test-project', '--template', 'react', '--force']);
+      const result = await executeCommand(command, [
+        '/test-project',
+        '--template',
+        'react',
+        '--force',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -241,23 +294,37 @@ describe('scaffold extend command contract', () => {
               version: '1.0.0',
               projectName: 'test-project',
               templates: [
-                { name: 'base', version: '1.0.0', appliedAt: '2023-01-01T00:00:00.000Z' }
+                {
+                  name: 'base',
+                  version: '1.0.0',
+                  appliedAt: '2023-01-01T00:00:00.000Z',
+                },
               ],
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
-      const variables = JSON.stringify({ author: 'John Doe', version: '2.0.0' });
+      const variables = JSON.stringify({
+        author: 'John Doe',
+        version: '2.0.0',
+      });
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/test-project', '--template', 'custom', '--variables', variables, '--dry-run']);
+      const result = await executeCommand(command, [
+        '/test-project',
+        '--template',
+        'custom',
+        '--variables',
+        variables,
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -274,7 +341,11 @@ describe('scaffold extend command contract', () => {
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/nonexistent-project', '--template', 'react']);
+      const result = await executeCommand(command, [
+        '/nonexistent-project',
+        '--template',
+        'react',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
@@ -287,21 +358,27 @@ describe('scaffold extend command contract', () => {
       const mockFileSystem = createMockFileSystem({
         '/regular-project': {
           'package.json': '{"name": "regular-project"}',
-          'src': {
-            'index.js': 'console.log("hello");'
-          }
-        }
+          src: {
+            'index.js': 'console.log("hello");',
+          },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/regular-project', '--template', 'react']);
+      const result = await executeCommand(command, [
+        '/regular-project',
+        '--template',
+        'react',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
       expect(mockConsole.errors.join(' ')).toContain('Error');
-      expect(mockConsole.errors.join(' ')).toContain('Not a scaffold-managed project');
+      expect(mockConsole.errors.join(' ')).toContain(
+        'Not a scaffold-managed project'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Use "scaffold new"');
     });
 
@@ -317,10 +394,10 @@ describe('scaffold extend command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -347,16 +424,22 @@ describe('scaffold extend command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/test-project', '--template', 'react', '--variables', 'invalid json {']);
+      const result = await executeCommand(command, [
+        '/test-project',
+        '--template',
+        'react',
+        '--variables',
+        'invalid json {',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
@@ -369,15 +452,19 @@ describe('scaffold extend command contract', () => {
       const mockFileSystem = createMockFileSystem({
         '/broken-project': {
           '.scaffold': {
-            'manifest.json': 'invalid json {'
-          }
-        }
+            'manifest.json': 'invalid json {',
+          },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/broken-project', '--template', 'react']);
+      const result = await executeCommand(command, [
+        '/broken-project',
+        '--template',
+        'react',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
@@ -398,17 +485,21 @@ describe('scaffold extend command contract', () => {
                 variables: {},
                 created: '2023-01-01T00:00:00.000Z',
                 updated: '2023-01-01T00:00:00.000Z',
-                history: []
-              })
-            }
-          }
-        })
+                history: [],
+              }),
+            },
+          },
+        }),
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/readonly-project', '--template', 'react']);
+      const result = await executeCommand(command, [
+        '/readonly-project',
+        '--template',
+        'react',
+      ]);
 
       // Assert - Should fail due to write permissions
       expect([0, 1]).toContain(result.code); // Could be 0 or 1 depending on implementation
@@ -429,10 +520,10 @@ describe('scaffold extend command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -441,7 +532,11 @@ describe('scaffold extend command contract', () => {
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['./project', '--template', 'react']);
+      const result = await executeCommand(command, [
+        './project',
+        '--template',
+        'react',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -460,16 +555,20 @@ describe('scaffold extend command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/empty-project', '--template', 'react']);
+      const result = await executeCommand(command, [
+        '/empty-project',
+        '--template',
+        'react',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -485,15 +584,19 @@ describe('scaffold extend command contract', () => {
               version: '1.0.0',
               projectName: 'test-project',
               templates: [
-                { name: 'base', version: '1.0.0', appliedAt: '2023-01-01T00:00:00.000Z' }
+                {
+                  name: 'base',
+                  version: '1.0.0',
+                  appliedAt: '2023-01-01T00:00:00.000Z',
+                },
               ],
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
@@ -503,11 +606,13 @@ describe('scaffold extend command contract', () => {
       const command = createExtendCommand();
       const result = await executeCommand(command, [
         '/test-project',
-        '--template', 'react',
-        '--variables', variables,
+        '--template',
+        'react',
+        '--variables',
+        variables,
         '--verbose',
         '--dry-run',
-        '--force'
+        '--force',
       ]);
 
       // Assert
@@ -529,16 +634,20 @@ describe('scaffold extend command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/test-project', '--template', 'react-typescript-v2']);
+      const result = await executeCommand(command, [
+        '/test-project',
+        '--template',
+        'react-typescript-v2',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -557,16 +666,23 @@ describe('scaffold extend command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/test-project', '--template', 'react', '--variables', '{}', '--dry-run']);
+      const result = await executeCommand(command, [
+        '/test-project',
+        '--template',
+        'react',
+        '--variables',
+        '{}',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -586,22 +702,29 @@ describe('scaffold extend command contract', () => {
               variables: {},
               created: '2023-01-01T00:00:00.000Z',
               updated: '2023-01-01T00:00:00.000Z',
-              history: []
-            })
-          }
-        }
+              history: [],
+            }),
+          },
+        },
       });
       mockFs(mockFileSystem);
 
       const complexVariables = JSON.stringify({
         author: { name: 'John Doe', email: 'john@example.com' },
         config: { strict: true, version: '2.0.0' },
-        features: ['typescript', 'eslint', 'prettier']
+        features: ['typescript', 'eslint', 'prettier'],
       });
 
       // Act
       const command = createExtendCommand();
-      const result = await executeCommand(command, ['/test-project', '--template', 'advanced', '--variables', complexVariables, '--dry-run']);
+      const result = await executeCommand(command, [
+        '/test-project',
+        '--template',
+        'advanced',
+        '--variables',
+        complexVariables,
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);

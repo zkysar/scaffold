@@ -7,7 +7,11 @@ import { Command } from 'commander';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
-import { ProjectService, TemplateService, FileSystemService } from '../../services';
+import {
+  ProjectService,
+  TemplateService,
+  FileSystemService,
+} from '../../services';
 
 interface FixCommandOptions {
   verbose?: boolean;
@@ -21,7 +25,10 @@ export function createFixCommand(): Command {
 
   command
     .description('Fix project structure issues automatically')
-    .argument('[project]', 'Project directory path (defaults to current directory)')
+    .argument(
+      '[project]',
+      'Project directory path (defaults to current directory)'
+    )
     .option('--verbose', 'Show detailed fix output')
     .option('--dry-run', 'Show what would be fixed without making changes')
     .option('--force', 'Fix issues without confirmation prompts')
@@ -30,7 +37,10 @@ export function createFixCommand(): Command {
       try {
         await handleFixCommand(projectPath, options);
       } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+        console.error(
+          chalk.red('Error:'),
+          error instanceof Error ? error.message : String(error)
+        );
         process.exit(1);
       }
     });
@@ -38,12 +48,17 @@ export function createFixCommand(): Command {
   return command;
 }
 
-async function handleFixCommand(projectPath: string, options: FixCommandOptions): Promise<void> {
+async function handleFixCommand(
+  projectPath: string,
+  options: FixCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 
   // Determine target path
-  const targetPath = projectPath ? resolve(projectPath) : resolve(process.cwd());
+  const targetPath = projectPath
+    ? resolve(projectPath)
+    : resolve(process.cwd());
 
   if (verbose) {
     console.log(chalk.blue('Fixing project:'), targetPath);
@@ -52,7 +67,10 @@ async function handleFixCommand(projectPath: string, options: FixCommandOptions)
 
   // Check if target directory exists
   if (!existsSync(targetPath)) {
-    console.error(chalk.red('Error:'), `Directory "${targetPath}" does not exist`);
+    console.error(
+      chalk.red('Error:'),
+      `Directory "${targetPath}" does not exist`
+    );
     process.exit(1);
   }
 
@@ -67,13 +85,20 @@ async function handleFixCommand(projectPath: string, options: FixCommandOptions)
   if (!manifest) {
     console.log(chalk.yellow('Not a scaffold-managed project.'));
     console.log(chalk.gray('No .scaffold/manifest.json file found.'));
-    console.log(chalk.gray('Use "scaffold new" to create a new project or "scaffold extend" to add templates.'));
+    console.log(
+      chalk.gray(
+        'Use "scaffold new" to create a new project or "scaffold extend" to add templates.'
+      )
+    );
     return;
   }
 
   if (verbose) {
     console.log(chalk.blue('Project name:'), manifest.projectName);
-    console.log(chalk.blue('Applied templates:'), manifest.templates.map(t => `${t.name}@${t.version}`).join(', '));
+    console.log(
+      chalk.blue('Applied templates:'),
+      manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+    );
   }
 
   // Fix the project

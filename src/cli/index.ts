@@ -28,7 +28,9 @@ const program = new Command();
 // Configure main program
 program
   .name('scaffold')
-  .description('A generic project structure management CLI tool with template-based scaffolding')
+  .description(
+    'A generic project structure management CLI tool with template-based scaffolding'
+  )
   .version(packageJson.version)
   .option('--verbose', 'Show detailed output')
   .option('--dry-run', 'Show what would be done without making changes')
@@ -38,7 +40,7 @@ program
     showGlobalOptions: true,
   })
   .configureOutput({
-    writeErr: (str) => process.stderr.write(chalk.red(str)),
+    writeErr: str => process.stderr.write(chalk.red(str)),
   });
 
 // Register commands
@@ -53,11 +55,14 @@ program.addCommand(createCleanCommand());
 
 // Add command aliases
 program.command('n').alias('new').description('Alias for "new" command');
-program.command('t').alias('template').description('Alias for "template" command');
+program
+  .command('t')
+  .alias('template')
+  .description('Alias for "template" command');
 program.command('c').alias('check').description('Alias for "check" command');
 
 // Global error handling
-program.exitOverride((err) => {
+program.exitOverride(err => {
   if (err.code === 'commander.help' || err.code === 'commander.version') {
     process.exit(0);
   }

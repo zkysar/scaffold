@@ -4,13 +4,20 @@
  */
 
 import { createConfigCommand } from '../../../src/cli/commands/config.command';
-import { createMockFileSystem, createMockConsole, CommandResult } from '../../helpers/cli-helpers';
+import {
+  createMockFileSystem,
+  createMockConsole,
+  CommandResult,
+} from '../../helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
 
 // Helper function to execute command and capture result
-async function executeCommand(command: Command, args: string[]): Promise<CommandResult> {
-  return new Promise((resolve) => {
+async function executeCommand(
+  command: Command,
+  args: string[]
+): Promise<CommandResult> {
+  return new Promise(resolve => {
     const originalExit = process.exit;
     let exitCode = 0;
 
@@ -27,7 +34,11 @@ async function executeCommand(command: Command, args: string[]): Promise<Command
       // If we get here, command succeeded
       resolve({ code: 0, message: '', data: null });
     } catch (error) {
-      resolve({ code: 1, message: error instanceof Error ? error.message : String(error), data: null });
+      resolve({
+        code: 1,
+        message: error instanceof Error ? error.message : String(error),
+        data: null,
+      });
     } finally {
       process.exit = originalExit;
     }
@@ -55,13 +66,13 @@ describe('scaffold config command contract', () => {
         '/home/.scaffold/config.json': JSON.stringify({
           paths: {
             templatesDir: '/home/.scaffold/templates',
-            cacheDir: '/home/.scaffold/cache'
+            cacheDir: '/home/.scaffold/cache',
           },
           preferences: {
             strictModeDefault: true,
-            colorOutput: true
-          }
-        })
+            colorOutput: true,
+          },
+        }),
       });
       mockFs(mockFileSystem);
 
@@ -96,14 +107,17 @@ describe('scaffold config command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '/home/.scaffold/config.json': JSON.stringify({
-          paths: { templatesDir: '/home/.scaffold/templates' }
-        })
+          paths: { templatesDir: '/home/.scaffold/templates' },
+        }),
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['get', 'paths.templatesDir']);
+      const result = await executeCommand(command, [
+        'get',
+        'paths.templatesDir',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -123,8 +137,12 @@ describe('scaffold config command contract', () => {
       // Assert
       expect(result.code).toBe(1);
       expect(mockConsole.errors.join(' ')).toContain('Error');
-      expect(mockConsole.errors.join(' ')).toContain('Configuration key is required');
-      expect(mockConsole.logs.join(' ')).toContain('Usage: scaffold config get <key>');
+      expect(mockConsole.errors.join(' ')).toContain(
+        'Configuration key is required'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Usage: scaffold config get <key>'
+      );
     });
 
     it('should get configuration with verbose output', async () => {
@@ -134,12 +152,18 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['get', 'preferences.strictMode', '--verbose']);
+      const result = await executeCommand(command, [
+        'get',
+        'preferences.strictMode',
+        '--verbose',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('Config action: get');
-      expect(mockConsole.logs.join(' ')).toContain('Key: preferences.strictMode');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Key: preferences.strictMode'
+      );
     });
 
     it('should handle nested configuration keys', async () => {
@@ -149,11 +173,16 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['get', 'paths.templates.directory']);
+      const result = await executeCommand(command, [
+        'get',
+        'paths.templates.directory',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Key: paths.templates.directory');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Key: paths.templates.directory'
+      );
     });
   });
 
@@ -161,18 +190,24 @@ describe('scaffold config command contract', () => {
     it('should set configuration value', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
-        '/home/.scaffold/config.json': JSON.stringify({})
+        '/home/.scaffold/config.json': JSON.stringify({}),
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'preferences.strictMode', 'true']);
+      const result = await executeCommand(command, [
+        'set',
+        'preferences.strictMode',
+        'true',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('Configuration updated');
-      expect(mockConsole.logs.join(' ')).toContain('Key: preferences.strictMode');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Key: preferences.strictMode'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Value: true');
     });
 
@@ -188,8 +223,12 @@ describe('scaffold config command contract', () => {
       // Assert
       expect(result.code).toBe(1);
       expect(mockConsole.errors.join(' ')).toContain('Error');
-      expect(mockConsole.errors.join(' ')).toContain('Both key and value are required');
-      expect(mockConsole.logs.join(' ')).toContain('Usage: scaffold config set <key> <value>');
+      expect(mockConsole.errors.join(' ')).toContain(
+        'Both key and value are required'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Usage: scaffold config set <key> <value>'
+      );
     });
 
     it('should fail when value is not provided for set action', async () => {
@@ -199,12 +238,17 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'preferences.strictMode']);
+      const result = await executeCommand(command, [
+        'set',
+        'preferences.strictMode',
+      ]);
 
       // Assert
       expect(result.code).toBe(1);
       expect(mockConsole.errors.join(' ')).toContain('Error');
-      expect(mockConsole.errors.join(' ')).toContain('Both key and value are required');
+      expect(mockConsole.errors.join(' ')).toContain(
+        'Both key and value are required'
+      );
     });
 
     it('should show what would be set in dry-run mode', async () => {
@@ -214,7 +258,12 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'paths.templatesDir', '/custom/templates', '--dry-run']);
+      const result = await executeCommand(command, [
+        'set',
+        'paths.templatesDir',
+        '/custom/templates',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -231,12 +280,19 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'preferences.colorOutput', 'false', '--verbose']);
+      const result = await executeCommand(command, [
+        'set',
+        'preferences.colorOutput',
+        'false',
+        '--verbose',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('Config action: set');
-      expect(mockConsole.logs.join(' ')).toContain('Key: preferences.colorOutput');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Key: preferences.colorOutput'
+      );
       expect(mockConsole.logs.join(' ')).toContain('Value: false');
       expect(mockConsole.logs.join(' ')).toContain('Configuration updated');
     });
@@ -248,7 +304,11 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'preferences.strictMode', 'true']);
+      const result = await executeCommand(command, [
+        'set',
+        'preferences.strictMode',
+        'true',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -262,7 +322,11 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'performance.maxConcurrency', '10']);
+      const result = await executeCommand(command, [
+        'set',
+        'performance.maxConcurrency',
+        '10',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -276,11 +340,17 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'meta.description', 'This is a description with spaces']);
+      const result = await executeCommand(command, [
+        'set',
+        'meta.description',
+        'This is a description with spaces',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Value: This is a description with spaces');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Value: This is a description with spaces'
+      );
     });
   });
 
@@ -289,27 +359,32 @@ describe('scaffold config command contract', () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '/home/.scaffold/config.json': JSON.stringify({
-          preferences: { strictMode: true }
-        })
+          preferences: { strictMode: true },
+        }),
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['reset', 'preferences.strictMode']);
+      const result = await executeCommand(command, [
+        'reset',
+        'preferences.strictMode',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('Configuration reset');
-      expect(mockConsole.logs.join(' ')).toContain('Reset key: preferences.strictMode');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Reset key: preferences.strictMode'
+      );
     });
 
     it('should reset all configuration when no key provided', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
         '/home/.scaffold/config.json': JSON.stringify({
-          preferences: { strictMode: true }
-        })
+          preferences: { strictMode: true },
+        }),
       });
       mockFs(mockFileSystem);
 
@@ -330,13 +405,19 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['reset', 'preferences.strictMode', '--dry-run']);
+      const result = await executeCommand(command, [
+        'reset',
+        'preferences.strictMode',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('DRY RUN');
       expect(mockConsole.logs.join(' ')).toContain('Would reset configuration');
-      expect(mockConsole.logs.join(' ')).toContain('Key: preferences.strictMode');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Key: preferences.strictMode'
+      );
     });
 
     it('should show what would be reset for all configuration in dry-run mode', async () => {
@@ -363,7 +444,12 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'preferences.strictMode', 'true', '--global']);
+      const result = await executeCommand(command, [
+        'set',
+        'preferences.strictMode',
+        'true',
+        '--global',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -377,7 +463,12 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'preferences.strictMode', 'false', '--workspace']);
+      const result = await executeCommand(command, [
+        'set',
+        'preferences.strictMode',
+        'false',
+        '--workspace',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -391,11 +482,17 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['get', 'preferences.strictMode', '--project']);
+      const result = await executeCommand(command, [
+        'get',
+        'preferences.strictMode',
+        '--project',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Key: preferences.strictMode');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Key: preferences.strictMode'
+      );
     });
 
     it('should handle multiple scope flags', async () => {
@@ -405,7 +502,12 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['list', '--global', '--workspace', '--project']);
+      const result = await executeCommand(command, [
+        'list',
+        '--global',
+        '--workspace',
+        '--project',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -426,8 +528,12 @@ describe('scaffold config command contract', () => {
       // Assert
       expect(result.code).toBe(1);
       expect(mockConsole.errors.join(' ')).toContain('Error');
-      expect(mockConsole.errors.join(' ')).toContain('Unknown action: unknown-action');
-      expect(mockConsole.logs.join(' ')).toContain('Available actions: list, get, set, reset');
+      expect(mockConsole.errors.join(' ')).toContain(
+        'Unknown action: unknown-action'
+      );
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Available actions: list, get, set, reset'
+      );
     });
 
     it('should handle service implementation errors gracefully', async () => {
@@ -447,7 +553,7 @@ describe('scaffold config command contract', () => {
     it('should handle malformed configuration files', async () => {
       // Arrange
       const mockFileSystem = createMockFileSystem({
-        '/home/.scaffold/config.json': 'invalid json {'
+        '/home/.scaffold/config.json': 'invalid json {',
       });
       mockFs(mockFileSystem);
 
@@ -466,15 +572,21 @@ describe('scaffold config command contract', () => {
         '/readonly-config': mockFs.directory({
           mode: 0o444, // read-only
           items: {
-            'config.json': JSON.stringify({ preferences: { strictMode: true } })
-          }
-        })
+            'config.json': JSON.stringify({
+              preferences: { strictMode: true },
+            }),
+          },
+        }),
       });
       mockFs(mockFileSystem);
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'preferences.strictMode', 'false']);
+      const result = await executeCommand(command, [
+        'set',
+        'preferences.strictMode',
+        'false',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -518,7 +630,13 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'test.key', 'test.value', '--dry-run', '--verbose']);
+      const result = await executeCommand(command, [
+        'set',
+        'test.key',
+        'test.value',
+        '--dry-run',
+        '--verbose',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
@@ -535,11 +653,16 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['get', 'paths.templates.react.components.directory']);
+      const result = await executeCommand(command, [
+        'get',
+        'paths.templates.react.components.directory',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Key: paths.templates.react.components.directory');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Key: paths.templates.react.components.directory'
+      );
     });
 
     it('should handle special characters in configuration values', async () => {
@@ -549,11 +672,18 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'paths.templatesDir', '/path/with spaces & special-chars@', '--dry-run']);
+      const result = await executeCommand(command, [
+        'set',
+        'paths.templatesDir',
+        '/path/with spaces & special-chars@',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Value: /path/with spaces & special-chars@');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Value: /path/with spaces & special-chars@'
+      );
     });
 
     it('should handle JSON-like values in configuration', async () => {
@@ -563,11 +693,18 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'meta.settings', '{"key":"value","nested":{"prop":true}}', '--dry-run']);
+      const result = await executeCommand(command, [
+        'set',
+        'meta.settings',
+        '{"key":"value","nested":{"prop":true}}',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);
-      expect(mockConsole.logs.join(' ')).toContain('Value: {"key":"value","nested":{"prop":true}}');
+      expect(mockConsole.logs.join(' ')).toContain(
+        'Value: {"key":"value","nested":{"prop":true}}'
+      );
     });
 
     it('should handle all scope combinations', async () => {
@@ -583,7 +720,7 @@ describe('scaffold config command contract', () => {
         ['--global', '--workspace'],
         ['--workspace', '--project'],
         ['--global', '--project'],
-        ['--global', '--workspace', '--project']
+        ['--global', '--workspace', '--project'],
       ];
 
       for (const scopeFlags of scopes) {
@@ -608,7 +745,9 @@ describe('scaffold config command contract', () => {
 
       // Assert
       expect(result.code).toBe(1);
-      expect(mockConsole.errors.join(' ')).toContain('Configuration key is required');
+      expect(mockConsole.errors.join(' ')).toContain(
+        'Configuration key is required'
+      );
     });
 
     it('should handle empty configuration values gracefully', async () => {
@@ -618,7 +757,12 @@ describe('scaffold config command contract', () => {
 
       // Act
       const command = createConfigCommand();
-      const result = await executeCommand(command, ['set', 'test.key', '', '--dry-run']);
+      const result = await executeCommand(command, [
+        'set',
+        'test.key',
+        '',
+        '--dry-run',
+      ]);
 
       // Assert
       expect(result.code).toBe(0);

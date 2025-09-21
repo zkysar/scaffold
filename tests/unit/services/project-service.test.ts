@@ -16,14 +16,17 @@ import type {
   AppliedTemplate,
   HistoryEntry,
   ValidationError,
-  ValidationWarning
+  ValidationWarning,
 } from '../../../src/models';
-import { createMockImplementation, assertDefined } from '../../helpers/test-utils';
+import {
+  createMockImplementation,
+  assertDefined,
+} from '../../helpers/test-utils';
 
 // Mock os module
 jest.mock('os', () => ({
   ...jest.requireActual('os'),
-  homedir: jest.fn(() => '/home/user')
+  homedir: jest.fn(() => '/home/user'),
 }));
 
 describe('ProjectService', () => {
@@ -35,7 +38,6 @@ describe('ProjectService', () => {
   const mockHomeDir = '/home/user';
   const testProjectPath = '/test/project';
   const manifestPath = path.join(testProjectPath, '.scaffold', 'manifest.json');
-
 
   // Mock template data
   const mockTemplate: Template = {
@@ -52,42 +54,42 @@ describe('ProjectService', () => {
         path: 'my-app/src',
         description: 'Source directory',
         permissions: '755',
-        gitkeep: false
+        gitkeep: false,
       },
       {
         path: 'my-app/tests',
         description: 'Test directory',
         permissions: '755',
-        gitkeep: true
-      }
+        gitkeep: true,
+      },
     ],
     files: [
       {
         path: 'my-app/package.json',
         content: '{\n  "name": "{{PROJECT_NAME}}",\n  "version": "1.0.0"\n}',
         permissions: '644',
-        variables: true
+        variables: true,
       },
       {
         path: 'my-app/README.md',
         content: '# {{PROJECT_NAME}}\n\nBy {{AUTHOR}}',
         permissions: '644',
-        variables: true
-      }
+        variables: true,
+      },
     ],
     variables: [
       {
         name: 'PROJECT_NAME',
         description: 'The project name',
         required: true,
-        pattern: '^[a-zA-Z0-9_-]+$'
+        pattern: '^[a-zA-Z0-9_-]+$',
       },
       {
         name: 'AUTHOR',
         description: 'Project author',
         required: false,
-        default: 'Anonymous'
-      }
+        default: 'Anonymous',
+      },
     ],
     rules: {
       strictMode: false,
@@ -105,12 +107,12 @@ describe('ProjectService', () => {
           fix: {
             action: 'create',
             content: '{"name": "default", "version": "1.0.0"}',
-            autoFix: true
+            autoFix: true,
           },
-          severity: 'error'
-        }
-      ]
-    }
+          severity: 'error',
+        },
+      ],
+    },
   };
 
   const mockManifest: ProjectManifest = {
@@ -128,12 +130,12 @@ describe('ProjectService', () => {
         appliedBy: 'testuser',
         appliedAt: '2023-01-01T00:00:00.000Z',
         status: 'active',
-        conflicts: []
-      }
+        conflicts: [],
+      },
     ],
     variables: {
       PROJECT_NAME: 'test-project',
-      AUTHOR: 'Test User'
+      AUTHOR: 'Test User',
     },
     history: [
       {
@@ -142,9 +144,9 @@ describe('ProjectService', () => {
         action: 'create',
         templates: ['test-template-123'],
         user: 'testuser',
-        changes: []
-      }
-    ]
+        changes: [],
+      },
+    ],
   };
 
   beforeEach(() => {
@@ -152,27 +154,27 @@ describe('ProjectService', () => {
     const mockFileSystem = {
       [testProjectPath]: {
         '.scaffold': {
-          'manifest.json': JSON.stringify(mockManifest)
+          'manifest.json': JSON.stringify(mockManifest),
         },
         'my-app': {
-          'src': {},
-          'tests': {
-            '.gitkeep': ''
+          src: {},
+          tests: {
+            '.gitkeep': '',
           },
           'package.json': '{"name": "test-project", "version": "1.0.0"}',
-          'README.md': '# test-project\n\nBy Test User'
-        }
+          'README.md': '# test-project\n\nBy Test User',
+        },
       },
       [mockHomeDir]: {
         '.scaffold': {
-          'templates': {
+          templates: {
             'test-template-123': {
               'template.json': JSON.stringify(mockTemplate),
-              'files': {}
-            }
-          }
-        }
-      }
+              files: {},
+            },
+          },
+        },
+      },
     };
 
     mockFs(mockFileSystem);
@@ -197,11 +199,11 @@ describe('ProjectService', () => {
       deletePath: jest.fn().mockResolvedValue(undefined),
       readDirectory: jest.fn().mockResolvedValue([]),
       isDryRun: false,
-      setDryRun: jest.fn()
+      setDryRun: jest.fn(),
     });
 
     mockConfigService = createMockImplementation<ConfigurationService>({
-      get: jest.fn().mockReturnValue(false)
+      get: jest.fn().mockReturnValue(false),
     });
 
     projectService = new ProjectService(
@@ -252,7 +254,9 @@ describe('ProjectService', () => {
       expect(manifest.history[0].action).toBe('create');
 
       // Verify service calls
-      expect(mockTemplateService.getTemplate).toHaveBeenCalledWith('test-template-123');
+      expect(mockTemplateService.getTemplate).toHaveBeenCalledWith(
+        'test-template-123'
+      );
       expect(mockFileService.createDirectory).toHaveBeenCalled();
       expect(mockFileService.createFile).toHaveBeenCalled();
     });
@@ -262,7 +266,7 @@ describe('ProjectService', () => {
         ...mockTemplate,
         id: 'test-template-456',
         name: 'Second Template',
-        rootFolder: 'backend'
+        rootFolder: 'backend',
       };
 
       mockTemplateService.getTemplate
@@ -285,47 +289,49 @@ describe('ProjectService', () => {
     });
 
     it('should throw error for invalid project name', async () => {
-      await expect(projectService.createProject('', ['template'], '/path')).rejects.toThrow(
-        'Project name must be a non-empty string'
-      );
+      await expect(
+        projectService.createProject('', ['template'], '/path')
+      ).rejects.toThrow('Project name must be a non-empty string');
 
-      await expect(projectService.createProject(null as any, ['template'], '/path')).rejects.toThrow(
-        'Project name must be a non-empty string'
-      );
+      await expect(
+        projectService.createProject(null as any, ['template'], '/path')
+      ).rejects.toThrow('Project name must be a non-empty string');
     });
 
     it('should throw error for empty template IDs', async () => {
-      await expect(projectService.createProject('project', [], '/path')).rejects.toThrow(
-        'At least one template ID must be provided'
-      );
+      await expect(
+        projectService.createProject('project', [], '/path')
+      ).rejects.toThrow('At least one template ID must be provided');
 
-      await expect(projectService.createProject('project', null as any, '/path')).rejects.toThrow(
-        'At least one template ID must be provided'
-      );
+      await expect(
+        projectService.createProject('project', null as any, '/path')
+      ).rejects.toThrow('At least one template ID must be provided');
     });
 
     it('should throw error for invalid target path', async () => {
-      await expect(projectService.createProject('project', ['template'], '')).rejects.toThrow(
-        'Target path must be a non-empty string'
-      );
+      await expect(
+        projectService.createProject('project', ['template'], '')
+      ).rejects.toThrow('Target path must be a non-empty string');
     });
 
     it('should throw error for rootFolder conflicts', async () => {
       const mockTemplate2 = {
         ...mockTemplate,
         id: 'conflicting-template',
-        rootFolder: 'my-app' // Same as first template
+        rootFolder: 'my-app', // Same as first template
       };
 
       mockTemplateService.getTemplate
         .mockResolvedValueOnce(mockTemplate)
         .mockResolvedValueOnce(mockTemplate2);
 
-      await expect(projectService.createProject(
-        'conflict-project',
-        ['test-template-123', 'conflicting-template'],
-        '/test/conflict'
-      )).rejects.toThrow('Template conflict');
+      await expect(
+        projectService.createProject(
+          'conflict-project',
+          ['test-template-123', 'conflicting-template'],
+          '/test/conflict'
+        )
+      ).rejects.toThrow('Template conflict');
     });
 
     it('should throw error for missing required variables', async () => {
@@ -335,28 +341,36 @@ describe('ProjectService', () => {
           {
             name: 'REQUIRED_VAR',
             description: 'Required variable',
-            required: true
-          }
-        ]
+            required: true,
+          },
+        ],
       };
 
-      mockTemplateService.getTemplate.mockResolvedValue(templateWithRequiredVar);
+      mockTemplateService.getTemplate.mockResolvedValue(
+        templateWithRequiredVar
+      );
 
-      await expect(projectService.createProject(
-        'project',
-        ['test-template-123'],
-        '/test/missing-vars'
-      )).rejects.toThrow('Template validation failed');
+      await expect(
+        projectService.createProject(
+          'project',
+          ['test-template-123'],
+          '/test/missing-vars'
+        )
+      ).rejects.toThrow('Template validation failed');
     });
 
     it('should throw error for non-existent template', async () => {
-      mockTemplateService.getTemplate.mockRejectedValue(new Error('Template not found'));
+      mockTemplateService.getTemplate.mockRejectedValue(
+        new Error('Template not found')
+      );
 
-      await expect(projectService.createProject(
-        'project',
-        ['non-existent'],
-        '/test/missing'
-      )).rejects.toThrow('Failed to create project');
+      await expect(
+        projectService.createProject(
+          'project',
+          ['non-existent'],
+          '/test/missing'
+        )
+      ).rejects.toThrow('Failed to create project');
     });
   });
 
@@ -365,8 +379,12 @@ describe('ProjectService', () => {
       // Mock file service for validation tests
       mockFileService.exists.mockImplementation(async (path: string) => {
         // Mock existing files
-        return path.includes('package.json') || path.includes('README.md') ||
-               path.includes('src') || path.includes('tests');
+        return (
+          path.includes('package.json') ||
+          path.includes('README.md') ||
+          path.includes('src') ||
+          path.includes('tests')
+        );
       });
 
       mockFileService.isDirectory.mockImplementation(async (path: string) => {
@@ -447,12 +465,12 @@ describe('ProjectService', () => {
               fix: {
                 action: 'create' as const,
                 content: 'custom content',
-                autoFix: true
+                autoFix: true,
               },
-              severity: 'error' as const
-            }
-          ]
-        }
+              severity: 'error' as const,
+            },
+          ],
+        },
       };
 
       mockTemplateService.getTemplate.mockResolvedValue(templateWithRules);
@@ -475,13 +493,15 @@ describe('ProjectService', () => {
     it('should throw error for project without manifest', async () => {
       mockFileService.readJson.mockRejectedValue(new Error('File not found'));
 
-      await expect(projectService.validateProject('/nonexistent')).rejects.toThrow(
-        'No project manifest found'
-      );
+      await expect(
+        projectService.validateProject('/nonexistent')
+      ).rejects.toThrow('No project manifest found');
     });
 
     it('should handle template loading errors gracefully', async () => {
-      mockTemplateService.getTemplate.mockRejectedValue(new Error('Template not found'));
+      mockTemplateService.getTemplate.mockRejectedValue(
+        new Error('Template not found')
+      );
 
       const report = await projectService.validateProject(testProjectPath);
 
@@ -529,27 +549,33 @@ describe('ProjectService', () => {
               fix: {
                 action: 'create' as const,
                 autoFix: false,
-                message: 'Manual fix required'
+                message: 'Manual fix required',
               },
-              severity: 'error' as const
-            }
-          ]
-        }
+              severity: 'error' as const,
+            },
+          ],
+        },
       };
 
       mockTemplateService.getTemplate.mockResolvedValue(templateWithManualFix);
 
       const report = await projectService.fixProject(testProjectPath, false);
 
-      expect(report.warnings.some(w => w.message.includes('Manual fix required'))).toBe(true);
+      expect(
+        report.warnings.some(w => w.message.includes('Manual fix required'))
+      ).toBe(true);
     });
 
     it('should handle fix failures gracefully', async () => {
-      mockFileService.createDirectory.mockRejectedValue(new Error('Permission denied'));
+      mockFileService.createDirectory.mockRejectedValue(
+        new Error('Permission denied')
+      );
 
       const report = await projectService.fixProject(testProjectPath, false);
 
-      expect(report.warnings.some(w => w.message.includes('Failed to fix'))).toBe(true);
+      expect(
+        report.warnings.some(w => w.message.includes('Failed to fix'))
+      ).toBe(true);
     });
 
     it('should return existing report if project is already valid', async () => {
@@ -569,7 +595,7 @@ describe('ProjectService', () => {
         ...mockTemplate,
         id: 'extension-template',
         name: 'Extension Template',
-        rootFolder: 'extensions'
+        rootFolder: 'extensions',
       };
 
       mockTemplateService.getTemplate.mockResolvedValue(newTemplate);
@@ -584,37 +610,38 @@ describe('ProjectService', () => {
       expect(manifest.templates[1].templateId).toBe('extension-template');
       expect(manifest.variables.NEW_VAR).toBe('value');
       expect(manifest.history.length).toBeGreaterThan(1);
-      expect(manifest.history[manifest.history.length - 1].action).toBe('extend');
+      expect(manifest.history[manifest.history.length - 1].action).toBe(
+        'extend'
+      );
     });
 
     it('should throw error for rootFolder conflicts with existing templates', async () => {
       const conflictingTemplate = {
         ...mockTemplate,
         id: 'conflicting-extension',
-        rootFolder: 'my-app' // Conflicts with existing template
+        rootFolder: 'my-app', // Conflicts with existing template
       };
 
       mockTemplateService.getTemplate.mockResolvedValue(conflictingTemplate);
 
-      await expect(projectService.extendProject(
-        testProjectPath,
-        ['conflicting-extension']
-      )).rejects.toThrow('Template conflict');
+      await expect(
+        projectService.extendProject(testProjectPath, ['conflicting-extension'])
+      ).rejects.toThrow('Template conflict');
     });
 
     it('should throw error for non-existent project', async () => {
       mockFileService.readJson.mockRejectedValue(new Error('Not found'));
 
-      await expect(projectService.extendProject(
-        '/nonexistent',
-        ['template']
-      )).rejects.toThrow('No project manifest found');
+      await expect(
+        projectService.extendProject('/nonexistent', ['template'])
+      ).rejects.toThrow('No project manifest found');
     });
   });
 
   describe('loadProjectManifest', () => {
     it('should load manifest from project path', async () => {
-      const manifest = await projectService.loadProjectManifest(testProjectPath);
+      const manifest =
+        await projectService.loadProjectManifest(testProjectPath);
 
       expect(manifest).toBeDefined();
       expect(manifest?.projectName).toBe('test-project');
@@ -645,13 +672,15 @@ describe('ProjectService', () => {
   describe('cleanProject', () => {
     beforeEach(() => {
       mockFileService.exists.mockImplementation(async (path: string) => {
-        return path.includes('.scaffold-temp') || path.includes('.scaffold-backup');
+        return (
+          path.includes('.scaffold-temp') || path.includes('.scaffold-backup')
+        );
       });
 
       mockFileService.readDirectory.mockResolvedValue([
         'file1.txt',
         'file2.scaffold-backup',
-        'file3.js'
+        'file3.js',
       ]);
     });
 
@@ -682,10 +711,14 @@ describe('ProjectService', () => {
     });
 
     it('should handle cleanup failures gracefully', async () => {
-      mockFileService.deletePath.mockRejectedValue(new Error('Permission denied'));
+      mockFileService.deletePath.mockRejectedValue(
+        new Error('Permission denied')
+      );
 
       // Should not throw error
-      await expect(projectService.cleanProject(testProjectPath)).resolves.not.toThrow();
+      await expect(
+        projectService.cleanProject(testProjectPath)
+      ).resolves.not.toThrow();
     });
 
     it('should skip cleanup if no items found', async () => {
@@ -706,13 +739,20 @@ describe('ProjectService', () => {
     });
 
     it('should search upward for nearest manifest', async () => {
-      const deepPath = path.join(testProjectPath, 'my-app', 'src', 'components');
+      const deepPath = path.join(
+        testProjectPath,
+        'my-app',
+        'src',
+        'components'
+      );
 
       // Mock the file system to find manifest in parent directory
       mockFileService.exists.mockImplementation(async (filePath: string) => {
-        return filePath.includes('.scaffold/manifest.json') &&
-               !filePath.includes('components') &&
-               !filePath.includes('src');
+        return (
+          filePath.includes('.scaffold/manifest.json') &&
+          !filePath.includes('components') &&
+          !filePath.includes('src')
+        );
       });
 
       const manifest = await projectService.getProjectManifest(deepPath);
@@ -738,7 +778,10 @@ describe('ProjectService', () => {
 
   describe('initializeProjectManifest', () => {
     it('should create manifest with required fields', () => {
-      const manifest = projectService.initializeProjectManifest('new-project', 'template-123');
+      const manifest = projectService.initializeProjectManifest(
+        'new-project',
+        'template-123'
+      );
 
       expect(manifest.projectName).toBe('new-project');
       expect(manifest.id).toBeDefined();
@@ -751,13 +794,13 @@ describe('ProjectService', () => {
     });
 
     it('should throw error for invalid inputs', () => {
-      expect(() => projectService.initializeProjectManifest('', 'template')).toThrow(
-        'Project name must be a non-empty string'
-      );
+      expect(() =>
+        projectService.initializeProjectManifest('', 'template')
+      ).toThrow('Project name must be a non-empty string');
 
-      expect(() => projectService.initializeProjectManifest('project', '')).toThrow(
-        'Template ID must be a non-empty string'
-      );
+      expect(() =>
+        projectService.initializeProjectManifest('project', '')
+      ).toThrow('Template ID must be a non-empty string');
     });
   });
 
@@ -765,19 +808,19 @@ describe('ProjectService', () => {
     it('should handle file system errors gracefully', async () => {
       mockFileService.readJson.mockRejectedValue(new Error('Disk error'));
 
-      await expect(projectService.validateProject(testProjectPath)).rejects.toThrow(
-        'Failed to validate project'
-      );
+      await expect(
+        projectService.validateProject(testProjectPath)
+      ).rejects.toThrow('Failed to validate project');
     });
 
     it('should provide detailed error messages', async () => {
-      mockTemplateService.getTemplate.mockRejectedValue(new Error('Template corrupted'));
+      mockTemplateService.getTemplate.mockRejectedValue(
+        new Error('Template corrupted')
+      );
 
-      await expect(projectService.createProject(
-        'project',
-        ['bad-template'],
-        '/test/path'
-      )).rejects.toThrow('Failed to create project');
+      await expect(
+        projectService.createProject('project', ['bad-template'], '/test/path')
+      ).rejects.toThrow('Failed to create project');
     });
 
     it('should handle variable substitution service errors', async () => {
@@ -798,7 +841,7 @@ describe('ProjectService', () => {
     it('should handle manifest with no templates', async () => {
       const emptyManifest = {
         ...mockManifest,
-        templates: []
+        templates: [],
       };
 
       mockFileService.readJson.mockResolvedValue(emptyManifest);
@@ -813,7 +856,7 @@ describe('ProjectService', () => {
       const minimalTemplate = {
         ...mockTemplate,
         files: [],
-        folders: []
+        folders: [],
       };
 
       mockTemplateService.getTemplate.mockResolvedValue(minimalTemplate);
@@ -832,7 +875,7 @@ describe('ProjectService', () => {
       const manyTemplates = Array.from({ length: 100 }, (_, i) => ({
         ...mockTemplate,
         id: `template-${i}`,
-        rootFolder: `app-${i}`
+        rootFolder: `app-${i}`,
       }));
 
       let callCount = 0;
