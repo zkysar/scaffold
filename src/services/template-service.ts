@@ -348,24 +348,13 @@ export class TemplateService implements ITemplateService {
       template.folders.forEach((folder, index) => {
         if (!folder.path || typeof folder.path !== 'string') {
           errors.push(`Folder ${index}: path is required and must be a string`);
-        } else if (template.rootFolder) {
-          // Validate that folder path starts with rootFolder
-          if (template.rootFolder === '.') {
-            // For current directory, paths should start with "./"
-            if (!folder.path.startsWith('./') && folder.path !== '.') {
-              errors.push(
-                `Folder ${index}: path '${folder.path}' must start with './' when rootFolder is '.'`
-              );
-            }
-          } else {
-            if (
-              !folder.path.startsWith(template.rootFolder + '/') &&
-              folder.path !== template.rootFolder
-            ) {
-              errors.push(
-                `Folder ${index}: path '${folder.path}' must start with rootFolder '${template.rootFolder}/'`
-              );
-            }
+        } else {
+          // Validate path is relative (doesn't start with / or contain ..)
+          if (folder.path.startsWith('/')) {
+            errors.push(`Folder ${index}: path '${folder.path}' must be relative (cannot start with '/')`);
+          }
+          if (folder.path.includes('../')) {
+            errors.push(`Folder ${index}: path '${folder.path}' cannot contain '../' (directory traversal)`);
           }
         }
       });
@@ -377,21 +366,13 @@ export class TemplateService implements ITemplateService {
       template.files.forEach((file, index) => {
         if (!file.path || typeof file.path !== 'string') {
           errors.push(`File ${index}: path is required and must be a string`);
-        } else if (template.rootFolder) {
-          // Validate that file path starts with rootFolder
-          if (template.rootFolder === '.') {
-            // For current directory, paths should start with "./"
-            if (!file.path.startsWith('./')) {
-              errors.push(
-                `File ${index}: path '${file.path}' must start with './' when rootFolder is '.'`
-              );
-            }
-          } else {
-            if (!file.path.startsWith(template.rootFolder + '/')) {
-              errors.push(
-                `File ${index}: path '${file.path}' must start with rootFolder '${template.rootFolder}/'`
-              );
-            }
+        } else {
+          // Validate path is relative (doesn't start with / or contain ..)
+          if (file.path.startsWith('/')) {
+            errors.push(`File ${index}: path '${file.path}' must be relative (cannot start with '/')`);
+          }
+          if (file.path.includes('../')) {
+            errors.push(`File ${index}: path '${file.path}' cannot contain '../' (directory traversal)`);
           }
         }
         if (!file.sourcePath && !file.content) {
@@ -482,27 +463,14 @@ export class TemplateService implements ITemplateService {
           }
 
           if (!rule.target || typeof rule.target !== 'string') {
-            errors.push(
-              `Rule ${index}: target is required and must be a string`
-            );
-          } else if (template.rootFolder) {
-            // Validate that rule target starts with rootFolder
-            if (template.rootFolder === '.') {
-              // For current directory, targets should start with "./"
-              if (!rule.target.startsWith('./') && rule.target !== '.') {
-                errors.push(
-                  `Rule ${index}: target '${rule.target}' must start with './' when rootFolder is '.'`
-                );
-              }
-            } else {
-              if (
-                !rule.target.startsWith(template.rootFolder + '/') &&
-                rule.target !== template.rootFolder
-              ) {
-                errors.push(
-                  `Rule ${index}: target '${rule.target}' must start with rootFolder '${template.rootFolder}/'`
-                );
-              }
+            errors.push(`Rule ${index}: target is required and must be a string`);
+          } else {
+            // Validate target is relative (doesn't start with / or contain ..)
+            if (rule.target.startsWith('/')) {
+              errors.push(`Rule ${index}: target '${rule.target}' must be relative (cannot start with '/')`);
+            }
+            if (rule.target.includes('../')) {
+              errors.push(`Rule ${index}: target '${rule.target}' cannot contain '../' (directory traversal)`);
             }
           }
 
