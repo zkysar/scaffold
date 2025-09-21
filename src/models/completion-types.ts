@@ -16,9 +16,9 @@ export enum ShellType {
  */
 export interface CompletionItem {
   value: string;                          // Text to complete
-  description: string | null;             // Optional help text
+  description: string | null;             // Optional help text - NOT IMPLEMENTED (always null)
   type: 'command' | 'option' | 'argument' | 'path'; // Completion type
-  deprecated: boolean;                    // Show but mark as deprecated
+  deprecated: boolean;                    // Show but mark as deprecated - NOT IMPLEMENTED (always false)
 }
 
 /**
@@ -26,8 +26,8 @@ export interface CompletionItem {
  */
 export interface CompletionResult {
   completions: CompletionItem[];          // List of completion suggestions
-  cacheKey: string | null;               // For caching dynamic results
-  cacheExpiry: Date | null;              // When cache entry expires
+  cacheKey: string | null;               // For caching dynamic results - NOT IMPLEMENTED (always null)
+  cacheExpiry: Date | null;              // When cache entry expires - NOT IMPLEMENTED (always null)
   errors: string[];                      // Non-fatal errors during generation
 }
 
@@ -35,12 +35,12 @@ export interface CompletionResult {
  * Options for completion generation
  */
 export interface CompletionOptions {
-  maxResults?: number;                    // Limit number of suggestions
-  includeHidden?: boolean;                // Include hidden/deprecated options
-  caseSensitive?: boolean;                // Case-sensitive matching
-  fuzzyMatch?: boolean;                   // Enable fuzzy matching
-  sortResults?: boolean;                  // Sort results alphabetically
-  includeDescriptions?: boolean;          // Include help text in results
+  maxResults?: number;                    // Limit number of suggestions - NOT IMPLEMENTED
+  includeHidden?: boolean;                // Include hidden/deprecated options - NOT IMPLEMENTED
+  caseSensitive?: boolean;                // Case-sensitive matching - NOT IMPLEMENTED (always case-sensitive)
+  fuzzyMatch?: boolean;                   // Enable fuzzy matching - NOT IMPLEMENTED (only prefix matching)
+  sortResults?: boolean;                  // Sort results alphabetically - PARTIALLY IMPLEMENTED (always sorts)
+  includeDescriptions?: boolean;          // Include help text in results - NOT IMPLEMENTED
 }
 
 /**
@@ -52,6 +52,7 @@ export interface CompletionCacheEntry {
   created: Date;                         // When entry was created
   expires: Date;                         // When entry expires
   provider: string;                      // Which provider generated this
+  // NOTE: This interface is defined but not used - caching is handled internally by providers
 }
 
 /**
@@ -60,11 +61,11 @@ export interface CompletionCacheEntry {
 export interface ShellCompletionConfig {
   shellType: ShellType;                  // Which shell this is for
   scriptPath: string;                    // Path to completion script
-  installCommand: string;                // Command to install completion
-  uninstallCommand: string;              // Command to remove completion
-  testCommand: string;                   // Command to test if installed
-  supportsDynamic: boolean;              // Supports dynamic completions
-  supportsDescriptions: boolean;         // Supports completion descriptions
+  installCommand: string;                // Command to install completion - NOT IMPLEMENTED
+  uninstallCommand: string;              // Command to remove completion - NOT IMPLEMENTED
+  testCommand: string;                   // Command to test if installed - NOT IMPLEMENTED
+  supportsDynamic: boolean;              // Supports dynamic completions - NOT IMPLEMENTED
+  supportsDescriptions: boolean;         // Supports completion descriptions - NOT IMPLEMENTED
 }
 
 /**
