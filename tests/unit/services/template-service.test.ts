@@ -40,13 +40,13 @@ describe('TemplateService', () => {
     updated: '2023-01-01T00:00:00.000Z',
     folders: [
       {
-        path: 'test-project/src',
+        path: 'src',
         description: 'Source code directory',
         permissions: '755',
         gitkeep: false,
       },
       {
-        path: 'test-project/tests',
+        path: 'tests',
         description: 'Test directory',
         permissions: '755',
         gitkeep: true,
@@ -54,13 +54,13 @@ describe('TemplateService', () => {
     ],
     files: [
       {
-        path: 'test-project/package.json',
+        path: 'package.json',
         content: '{\n  "name": "{{PROJECT_NAME}}",\n  "version": "1.0.0"\n}',
         permissions: '644',
         variables: true,
       },
       {
-        path: 'test-project/README.md',
+        path: 'README.md',
         sourcePath: 'README.template.md',
         permissions: '644',
         variables: true,
@@ -92,7 +92,7 @@ describe('TemplateService', () => {
           name: 'Package.json Required',
           description: 'Every project must have a package.json file',
           type: 'required_file',
-          target: 'test-project/package.json',
+          target: 'package.json',
           fix: {
             action: 'create',
             content: '{"name": "default-project", "version": "1.0.0"}',
@@ -458,51 +458,55 @@ describe('TemplateService', () => {
       );
     });
 
-    it('should validate folder paths start with rootFolder', async () => {
+    it('should validate folder paths are relative', async () => {
       const invalidTemplate = {
         ...mockTemplate,
-        folders: [
-          {
-            path: 'wrong-folder/src',
-            description: 'Invalid folder',
-          },
-        ],
+        folders: [{
+          path: '/absolute/path/src',
+          description: 'Invalid folder'
+        }]
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
 
-      expect(errors).toContain(
-        expect.stringMatching(/path .* must start with rootFolder/)
-      );
+      expect(errors.some(e => e.includes('must be relative'))).toBe(true);
     });
 
-    it('should validate file paths start with rootFolder', async () => {
+    it('should validate file paths are relative', async () => {
       const invalidTemplate = {
         ...mockTemplate,
-        files: [
-          {
-            path: 'wrong-folder/file.txt',
-            content: 'test',
-          },
-        ],
+        files: [{
+          path: '/absolute/file.txt',
+          content: 'test'
+        }]
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
 
-      expect(errors).toContain(
-        expect.stringMatching(/path .* must start with rootFolder/)
-      );
+      expect(errors.some(e => e.includes('must be relative'))).toBe(true);
+    });
+
+    it('should reject paths with directory traversal', async () => {
+      const invalidTemplate = {
+        ...mockTemplate,
+        files: [{
+          path: '../outside/file.txt',
+          content: 'test'
+        }]
+      };
+
+      const errors = await templateService.validateTemplate(invalidTemplate);
+
+      expect(errors.some(e => e.includes('cannot contain'))).toBe(true);
     });
 
     it('should validate file has content or sourcePath', async () => {
       const invalidTemplate = {
         ...mockTemplate,
-        files: [
-          {
-            path: 'test-project/empty.txt',
-            // Missing content and sourcePath
-          },
-        ],
+        files: [{
+          path: 'empty.txt'
+          // Missing content and sourcePath
+        }]
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
@@ -547,7 +551,7 @@ describe('TemplateService', () => {
               name: 'First Rule',
               description: 'First rule',
               type: 'required_file' as const,
-              target: 'test-project/file1.txt',
+              target: 'file1.txt',
               fix: { action: 'create' as const, autoFix: true },
               severity: 'error' as const,
             },
@@ -556,7 +560,7 @@ describe('TemplateService', () => {
               name: 'Second Rule',
               description: 'Second rule',
               type: 'required_file' as const,
-              target: 'test-project/file2.txt',
+              target: 'file2.txt',
               fix: { action: 'create' as const, autoFix: true },
               severity: 'error' as const,
             },

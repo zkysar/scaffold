@@ -51,13 +51,13 @@ describe('ProjectService', () => {
     updated: '2023-01-01T00:00:00.000Z',
     folders: [
       {
-        path: 'my-app/src',
+        path: 'src',
         description: 'Source directory',
         permissions: '755',
         gitkeep: false,
       },
       {
-        path: 'my-app/tests',
+        path: 'tests',
         description: 'Test directory',
         permissions: '755',
         gitkeep: true,
@@ -65,13 +65,13 @@ describe('ProjectService', () => {
     ],
     files: [
       {
-        path: 'my-app/package.json',
+        path: 'package.json',
         content: '{\n  "name": "{{PROJECT_NAME}}",\n  "version": "1.0.0"\n}',
         permissions: '644',
         variables: true,
       },
       {
-        path: 'my-app/README.md',
+        path: 'README.md',
         content: '# {{PROJECT_NAME}}\n\nBy {{AUTHOR}}',
         permissions: '644',
         variables: true,
@@ -103,7 +103,7 @@ describe('ProjectService', () => {
           name: 'Package.json Required',
           description: 'Package.json must exist',
           type: 'required_file',
-          target: 'my-app/package.json',
+          target: 'package.json',
           fix: {
             action: 'create',
             content: '{"name": "default", "version": "1.0.0"}',
@@ -461,7 +461,7 @@ describe('ProjectService', () => {
               name: 'Custom File Required',
               description: 'Custom file must exist',
               type: 'required_file' as const,
-              target: 'my-app/custom.txt',
+              target: 'custom.txt',
               fix: {
                 action: 'create' as const,
                 content: 'custom content',
@@ -545,7 +545,7 @@ describe('ProjectService', () => {
               name: 'Manual Fix Required',
               description: 'Requires manual intervention',
               type: 'required_file' as const,
-              target: 'my-app/manual.txt',
+              target: 'manual.txt',
               fix: {
                 action: 'create' as const,
                 autoFix: false,
