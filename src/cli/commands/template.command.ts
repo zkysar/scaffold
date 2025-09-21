@@ -7,7 +7,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { TemplateService } from '../../services';
-import type { Template, TemplateSummary } from '../../models';
+import type { Template } from '../../models';
 
 interface TemplateCommandOptions {
   verbose?: boolean;
@@ -41,8 +41,6 @@ export function createTemplateCommand(): Command {
 
 async function handleTemplateCommand(action: string, name: string, options: TemplateCommandOptions): Promise<void> {
   const verbose = options.verbose || false;
-  const dryRun = options.dryRun || false;
-  const force = options.force || false;
 
   if (verbose) {
     console.log(chalk.blue('Template action:'), action);
@@ -143,7 +141,7 @@ async function handleCreateTemplate(templateService: TemplateService, name: stri
       name: 'rootFolder',
       message: 'Root folder for template isolation:',
       default: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
-      validate: (input: string) => {
+      validate: (input: string): string | boolean => {
         if (!input.trim()) return 'Root folder is required';
         if (!/^[a-zA-Z0-9_-]+$/.test(input)) return 'Root folder must contain only alphanumeric characters, underscores, and hyphens';
         if (input.startsWith('.') || input.startsWith('-')) return 'Root folder cannot start with a dot or hyphen';
@@ -155,7 +153,7 @@ async function handleCreateTemplate(templateService: TemplateService, name: stri
       name: 'version',
       message: 'Initial version:',
       default: '1.0.0',
-      validate: (input: string) => {
+      validate: (input: string): string | boolean => {
         const semverRegex = /^\d+\.\d+\.\d+(-[\w.]+)?$/;
         return semverRegex.test(input) || 'Invalid semantic version (e.g., 1.0.0)';
       },
