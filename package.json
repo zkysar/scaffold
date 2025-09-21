@@ -61,7 +61,7 @@
     "*.ts": [
       "eslint --fix",
       "prettier --write",
-      "npm run test -- --findRelatedTests"
+      "npm run test -- --findRelatedTests --passWithNoTests"
     ]
   }
 }
