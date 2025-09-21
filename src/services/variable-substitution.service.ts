@@ -23,22 +23,37 @@ export interface IVariableSubstitutionService {
   /**
    * Substitute variables in content using {{variable}} syntax
    */
-  substituteVariables(content: string, variables: Record<string, any>, options?: VariableSubstitutionOptions): string;
+  substituteVariables(
+    content: string,
+    variables: Record<string, any>,
+    options?: VariableSubstitutionOptions
+  ): string;
 
   /**
    * Substitute variables in a file
    */
-  substituteInFile(filePath: string, variables: Record<string, any>, options?: VariableSubstitutionOptions): Promise<void>;
+  substituteInFile(
+    filePath: string,
+    variables: Record<string, any>,
+    options?: VariableSubstitutionOptions
+  ): Promise<void>;
 
   /**
    * Substitute variables in a path string
    */
-  substituteInPath(path: string, variables: Record<string, any>, options?: VariableSubstitutionOptions): string;
+  substituteInPath(
+    path: string,
+    variables: Record<string, any>,
+    options?: VariableSubstitutionOptions
+  ): string;
 
   /**
    * Validate that all required variables are provided for a template
    */
-  validateRequiredVariables(template: Template, provided: Record<string, any>): ValidationResult[];
+  validateRequiredVariables(
+    template: Template,
+    provided: Record<string, any>
+  ): ValidationResult[];
 
   /**
    * Extract variable names from content
@@ -56,19 +71,25 @@ export interface IVariableSubstitutionService {
   createContext(variables: Record<string, any>): SubstitutionContext;
 }
 
-export class VariableSubstitutionService implements IVariableSubstitutionService {
+export class VariableSubstitutionService
+  implements IVariableSubstitutionService
+{
   private readonly variablePattern = /\\?\{\{([^}]+)\}\}/g;
   private readonly escapePattern = /\\(\{\{[^}]+\}\})/g;
 
   constructor(private readonly fileService: IFileSystemService) {}
 
-  substituteVariables(content: string, variables: Record<string, any>, options: VariableSubstitutionOptions = {}): string {
+  substituteVariables(
+    content: string,
+    variables: Record<string, any>,
+    options: VariableSubstitutionOptions = {}
+  ): string {
     const opts = {
       preserveEscapes: false,
       throwOnMissing: true,
       allowCircular: false,
       maxDepth: 10,
-      ...options
+      ...options,
     };
 
     const context = this.createContext(variables);
@@ -93,7 +114,9 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
       if (opts.allowCircular) {
         // Allow circular references, just stop processing
       } else {
-        throw new Error(`Variable substitution exceeded maximum depth (${opts.maxDepth}). This may indicate circular references.`);
+        throw new Error(
+          `Variable substitution exceeded maximum depth (${opts.maxDepth}). This may indicate circular references.`
+        );
       }
     }
 
@@ -105,33 +128,53 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
     return result;
   }
 
-  async substituteInFile(filePath: string, variables: Record<string, any>, options: VariableSubstitutionOptions = {}): Promise<void> {
+  async substituteInFile(
+    filePath: string,
+    variables: Record<string, any>,
+    options: VariableSubstitutionOptions = {}
+  ): Promise<void> {
     try {
-      if (!await this.fileService.exists(filePath)) {
+      if (!(await this.fileService.exists(filePath))) {
         throw new Error(`File does not exist: ${filePath}`);
       }
 
       const content = await this.fileService.readFile(filePath);
-      const substitutedContent = this.substituteVariables(content, variables, options);
+      const substitutedContent = this.substituteVariables(
+        content,
+        variables,
+        options
+      );
 
       await this.fileService.writeFile(filePath, substitutedContent, {
         overwrite: true,
-        atomic: true
+        atomic: true,
       });
     } catch (error) {
-      throw this.enhanceError(error, `Failed to substitute variables in file: ${filePath}`, {
-        suggestion: 'Ensure the file exists and contains valid variable syntax.',
-        path: filePath,
-        operation: 'substituteInFile'
-      });
+      throw this.enhanceError(
+        error,
+        `Failed to substitute variables in file: ${filePath}`,
+        {
+          suggestion:
+            'Ensure the file exists and contains valid variable syntax.',
+          path: filePath,
+          operation: 'substituteInFile',
+        }
+      );
     }
   }
 
-  substituteInPath(path: string, variables: Record<string, any>, options: VariableSubstitutionOptions = {}): string {
+  substituteInPath(
+    path: string,
+    variables: Record<string, any>,
+    options: VariableSubstitutionOptions = {}
+  ): string {
     return this.substituteVariables(path, variables, options);
   }
 
-  validateRequiredVariables(template: Template, provided: Record<string, any>): ValidationResult[] {
+  validateRequiredVariables(
+    template: Template,
+    provided: Record<string, any>
+  ): ValidationResult[] {
     const errors: ValidationResult[] = [];
 
     // Check template-defined required variables
@@ -146,14 +189,15 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
             type: 'rule',
             severity: 'error',
             message: `Required variable '${templateVar.name}' is missing`,
-            expected: templateVar.description || `Value for ${templateVar.name}`,
+            expected:
+              templateVar.description || `Value for ${templateVar.name}`,
             actual: 'undefined',
             ruleId: `required-var-${templateVar.name}`,
             templateSha: template.id,
             suggestion: templateVar.default
               ? `Provide a value or use default: ${templateVar.default}`
               : `Provide a value for ${templateVar.name}`,
-            fixable: false
+            fixable: false,
           });
         } else if (templateVar.pattern) {
           const pattern = new RegExp(templateVar.pattern);
@@ -169,7 +213,7 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
               ruleId: `pattern-var-${templateVar.name}`,
               templateSha: template.id,
               suggestion: `Ensure ${templateVar.name} matches the pattern: ${templateVar.pattern}`,
-              fixable: false
+              fixable: false,
             });
           }
         }
@@ -218,7 +262,7 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
             ruleId: `missing-var-${varName}`,
             templateSha: template.id,
             suggestion: `Provide a value for variable '${varName}'`,
-            fixable: false
+            fixable: false,
           });
         }
       }
@@ -269,24 +313,25 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
     return {
       variables,
       specialVariables: {
-        'timestamp': () => Date.now().toString(),
-        'date': () => now.toISOString().split('T')[0],
-        'datetime': () => now.toISOString(),
-        'uuid': () => randomUUID(),
-        'year': () => now.getFullYear().toString(),
-        'month': () => (now.getMonth() + 1).toString().padStart(2, '0'),
-        'day': () => now.getDate().toString().padStart(2, '0'),
+        timestamp: () => Date.now().toString(),
+        date: () => now.toISOString().split('T')[0],
+        datetime: () => now.toISOString(),
+        uuid: () => randomUUID(),
+        year: () => now.getFullYear().toString(),
+        month: () => (now.getMonth() + 1).toString().padStart(2, '0'),
+        day: () => now.getDate().toString().padStart(2, '0'),
       },
       transforms: {
-        'upper': (value: string) => value.toUpperCase(),
-        'lower': (value: string) => value.toLowerCase(),
-        'camelCase': (value: string) => this.toCamelCase(value),
-        'kebabCase': (value: string) => this.toKebabCase(value),
-        'snakeCase': (value: string) => this.toSnakeCase(value),
-        'pascalCase': (value: string) => this.toPascalCase(value),
-        'capitalize': (value: string) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase(),
-        'trim': (value: string) => value.trim(),
-      }
+        upper: (value: string) => value.toUpperCase(),
+        lower: (value: string) => value.toLowerCase(),
+        camelCase: (value: string) => this.toCamelCase(value),
+        kebabCase: (value: string) => this.toKebabCase(value),
+        snakeCase: (value: string) => this.toSnakeCase(value),
+        pascalCase: (value: string) => this.toPascalCase(value),
+        capitalize: (value: string) =>
+          value.charAt(0).toUpperCase() + value.slice(1).toLowerCase(),
+        trim: (value: string) => value.trim(),
+      },
     };
   }
 
@@ -306,7 +351,9 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
         return this.processVariable(variable, context, processedVars, options);
       } catch (error) {
         if (options.throwOnMissing) {
-          throw new Error(`Variable substitution failed for '${variable}': ${error instanceof Error ? error.message : String(error)}`);
+          throw new Error(
+            `Variable substitution failed for '${variable}': ${error instanceof Error ? error.message : String(error)}`
+          );
         }
         return match; // Leave unresolved
       }
@@ -322,7 +369,11 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
     const parts = variable.split('|');
     const varName = parts[0].trim();
     const defaultValue = parts[1]?.trim();
-    const transform = parts[2]?.trim() || (parts.length === 2 && !defaultValue?.includes(' ') ? defaultValue : undefined);
+    const transform =
+      parts[2]?.trim() ||
+      (parts.length === 2 && !defaultValue?.includes(' ')
+        ? defaultValue
+        : undefined);
 
     // Check for circular references
     if (processedVars.has(varName) && !options.allowCircular) {
@@ -365,7 +416,10 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
     return result;
   }
 
-  private resolveVariableValue(varName: string, variables: Record<string, any>): any {
+  private resolveVariableValue(
+    varName: string,
+    variables: Record<string, any>
+  ): any {
     // Support nested variables like "project.name"
     const parts = varName.split('.');
     let value = variables;
@@ -389,7 +443,7 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
 
   private toCamelCase(value: string): string {
     return value
-      .replace(/[-_\s]+(.)?/g, (_, char) => char ? char.toUpperCase() : '')
+      .replace(/[-_\s]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ''))
       .replace(/^[A-Z]/, char => char.toLowerCase());
   }
 
@@ -409,22 +463,26 @@ export class VariableSubstitutionService implements IVariableSubstitutionService
 
   private toPascalCase(value: string): string {
     return value
-      .replace(/[-_\s]+(.)?/g, (_, char) => char ? char.toUpperCase() : '')
+      .replace(/[-_\s]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ''))
       .replace(/^[a-z]/, char => char.toUpperCase());
   }
 
-  private enhanceError(originalError: any, message: string, context: {
-    suggestion?: string;
-    path?: string;
-    operation?: string;
-  }): Error {
+  private enhanceError(
+    originalError: any,
+    message: string,
+    context: {
+      suggestion?: string;
+      path?: string;
+      operation?: string;
+    }
+  ): Error {
     const error = new Error(`${message}\n${context.suggestion || ''}`);
 
     // Add context as properties
     Object.assign(error, {
       operation: context.operation,
       path: context.path,
-      originalError
+      originalError,
     });
 
     // Preserve original error details in stack trace

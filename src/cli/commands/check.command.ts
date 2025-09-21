@@ -7,7 +7,11 @@ import { Command } from 'commander';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
-import { ProjectService, TemplateService, FileSystemService } from '../../services';
+import {
+  ProjectService,
+  TemplateService,
+  FileSystemService,
+} from '../../services';
 import type { ValidationReport } from '../../models';
 
 interface CheckCommandOptions {
@@ -22,16 +26,26 @@ export function createCheckCommand(): Command {
 
   command
     .description('Validate project structure against applied templates')
-    .argument('[project]', 'Project directory path (defaults to current directory)')
+    .argument(
+      '[project]',
+      'Project directory path (defaults to current directory)'
+    )
     .option('--verbose', 'Show detailed validation output')
     .option('--strict', 'Use strict mode validation')
     .option('-c, --config <path>', 'Path to configuration file')
-    .option('-f, --format <format>', 'Output format (table|json|summary)', 'table')
+    .option(
+      '-f, --format <format>',
+      'Output format (table|json|summary)',
+      'table'
+    )
     .action(async (projectPath: string, options: CheckCommandOptions) => {
       try {
         await handleCheckCommand(projectPath, options);
       } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+        console.error(
+          chalk.red('Error:'),
+          error instanceof Error ? error.message : String(error)
+        );
         process.exit(1);
       }
     });
@@ -39,12 +53,17 @@ export function createCheckCommand(): Command {
   return command;
 }
 
-async function handleCheckCommand(projectPath: string, options: CheckCommandOptions): Promise<void> {
+async function handleCheckCommand(
+  projectPath: string,
+  options: CheckCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
   const format = options.format || 'table';
 
   // Determine target path
-  const targetPath = projectPath ? resolve(projectPath) : resolve(process.cwd());
+  const targetPath = projectPath
+    ? resolve(projectPath)
+    : resolve(process.cwd());
 
   if (verbose) {
     console.log(chalk.blue('Checking project:'), targetPath);
@@ -53,7 +72,10 @@ async function handleCheckCommand(projectPath: string, options: CheckCommandOpti
 
   // Check if target directory exists
   if (!existsSync(targetPath)) {
-    console.error(chalk.red('Error:'), `Directory "${targetPath}" does not exist`);
+    console.error(
+      chalk.red('Error:'),
+      `Directory "${targetPath}" does not exist`
+    );
     process.exit(1);
   }
 
@@ -69,13 +91,20 @@ async function handleCheckCommand(projectPath: string, options: CheckCommandOpti
     if (!manifest) {
       console.log(chalk.yellow('Not a scaffold-managed project.'));
       console.log(chalk.gray('No .scaffold/manifest.json file found.'));
-      console.log(chalk.gray('Use "scaffold new" to create a new project or "scaffold extend" to add templates.'));
+      console.log(
+        chalk.gray(
+          'Use "scaffold new" to create a new project or "scaffold extend" to add templates.'
+        )
+      );
       return;
     }
 
     if (verbose) {
       console.log(chalk.blue('Project name:'), manifest.projectName);
-      console.log(chalk.blue('Applied templates:'), manifest.templates.map(t => `${t.name}@${t.version}`).join(', '));
+      console.log(
+        chalk.blue('Applied templates:'),
+        manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+      );
     }
 
     // Validate the project
@@ -101,10 +130,13 @@ async function handleCheckCommand(projectPath: string, options: CheckCommandOpti
     } else if (report.stats.warningCount > 0) {
       process.exit(2);
     }
-
   } catch (error) {
     if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(chalk.yellow('✓ Command structure created (service implementation pending)'));
+      console.log(
+        chalk.yellow(
+          '✓ Command structure created (service implementation pending)'
+        )
+      );
       console.log(chalk.blue('Would validate project:'), targetPath);
 
       // Mock validation report for demonstration
@@ -148,7 +180,9 @@ function displaySummary(report: ValidationReport): void {
       console.log(chalk.red(`✗ ${report.stats.errorCount} error(s) found`));
     }
     if (report.stats.warningCount > 0) {
-      console.log(chalk.yellow(`⚠ ${report.stats.warningCount} warning(s) found`));
+      console.log(
+        chalk.yellow(`⚠ ${report.stats.warningCount} warning(s) found`)
+      );
     }
   }
 
@@ -238,7 +272,9 @@ function displayTable(report: ValidationReport, verbose: boolean): void {
   // Display suggestions for next steps
   if (report.errors.length > 0) {
     console.log(chalk.yellow('Next steps:'));
-    console.log(chalk.gray('  • Run "scaffold fix" to automatically fix issues'));
+    console.log(
+      chalk.gray('  • Run "scaffold fix" to automatically fix issues')
+    );
     console.log(chalk.gray('  • Use --verbose for detailed error information'));
   }
 }

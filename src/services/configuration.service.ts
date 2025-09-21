@@ -69,13 +69,15 @@ export class ConfigurationService implements IConfigurationService {
 
   constructor(
     private readonly projectRoot?: string,
-    private readonly workspaceRoot?: string,
+    private readonly workspaceRoot?: string
   ) {}
 
   get<T = any>(key: string, scope?: ConfigScope): T | undefined {
     // Ensure configurations are loaded (sync operation)
     if (!this.loaded) {
-      throw new Error('Configuration not loaded. Call loadConfiguration() first.');
+      throw new Error(
+        'Configuration not loaded. Call loadConfiguration() first.'
+      );
     }
 
     if (scope) {
@@ -91,16 +93,25 @@ export class ConfigurationService implements IConfigurationService {
 
     // Check cascade: project → workspace → global
     if (this.projectRoot) {
-      const projectValue = this.getNestedValue(this.configCache.get(ConfigLevel.PROJECT), key);
+      const projectValue = this.getNestedValue(
+        this.configCache.get(ConfigLevel.PROJECT),
+        key
+      );
       if (projectValue !== undefined) return projectValue as T;
     }
 
     if (this.workspaceRoot) {
-      const workspaceValue = this.getNestedValue(this.configCache.get(ConfigLevel.WORKSPACE), key);
+      const workspaceValue = this.getNestedValue(
+        this.configCache.get(ConfigLevel.WORKSPACE),
+        key
+      );
       if (workspaceValue !== undefined) return workspaceValue as T;
     }
 
-    const globalValue = this.getNestedValue(this.configCache.get(ConfigLevel.GLOBAL), key);
+    const globalValue = this.getNestedValue(
+      this.configCache.get(ConfigLevel.GLOBAL),
+      key
+    );
     return globalValue as T;
   }
 
@@ -153,7 +164,11 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   async loadConfiguration(): Promise<void> {
-    const scopes = [ConfigLevel.GLOBAL, ConfigLevel.WORKSPACE, ConfigLevel.PROJECT];
+    const scopes = [
+      ConfigLevel.GLOBAL,
+      ConfigLevel.WORKSPACE,
+      ConfigLevel.PROJECT,
+    ];
 
     for (const scope of scopes) {
       try {
@@ -208,7 +223,9 @@ export class ConfigurationService implements IConfigurationService {
   }
 
   getEffectiveConfiguration(): ScaffoldConfig {
-    const global = this.configCache.get(ConfigLevel.GLOBAL) || this.createDefaultConfig(ConfigLevel.GLOBAL);
+    const global =
+      this.configCache.get(ConfigLevel.GLOBAL) ||
+      this.createDefaultConfig(ConfigLevel.GLOBAL);
     const workspace = this.configCache.get(ConfigLevel.WORKSPACE);
     const project = this.configCache.get(ConfigLevel.PROJECT);
 
@@ -230,7 +247,6 @@ export class ConfigurationService implements IConfigurationService {
 
     return effective;
   }
-
 
   private async performSave(scope: ConfigScope): Promise<void> {
     const config = this.configCache.get(scope);
@@ -259,15 +275,18 @@ export class ConfigurationService implements IConfigurationService {
     };
 
     const basePaths: PathConfiguration = {
-      templatesDir: scope === ConfigLevel.GLOBAL
-        ? path.join(os.homedir(), '.scaffold', 'templates')
-        : './templates',
-      cacheDir: scope === ConfigLevel.GLOBAL
-        ? path.join(os.homedir(), '.scaffold', 'cache')
-        : './.scaffold/cache',
-      backupDir: scope === ConfigLevel.GLOBAL
-        ? path.join(os.homedir(), '.scaffold', 'backups')
-        : './.scaffold/backups',
+      templatesDir:
+        scope === ConfigLevel.GLOBAL
+          ? path.join(os.homedir(), '.scaffold', 'templates')
+          : './templates',
+      cacheDir:
+        scope === ConfigLevel.GLOBAL
+          ? path.join(os.homedir(), '.scaffold', 'cache')
+          : './.scaffold/cache',
+      backupDir:
+        scope === ConfigLevel.GLOBAL
+          ? path.join(os.homedir(), '.scaffold', 'backups')
+          : './.scaffold/backups',
     };
 
     const baseDefaults: DefaultSettings = {
@@ -284,7 +303,10 @@ export class ConfigurationService implements IConfigurationService {
     };
   }
 
-  private validateAndMigrateConfig(data: any, scope: ConfigScope): ScaffoldConfig {
+  private validateAndMigrateConfig(
+    data: any,
+    scope: ConfigScope
+  ): ScaffoldConfig {
     // Basic validation and migration logic
     if (!data || typeof data !== 'object') {
       return this.createDefaultConfig(scope);
@@ -304,9 +326,9 @@ export class ConfigurationService implements IConfigurationService {
 
   private generateConfigId(): string {
     // Simple UUID v4 generation
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = (Math.random() * 16) | 0;
+      const v = c == 'x' ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
   }
@@ -385,7 +407,10 @@ export class ConfigurationService implements IConfigurationService {
     }
   }
 
-  private mergeConfigs(base: ScaffoldConfig, override: ScaffoldConfig): ScaffoldConfig {
+  private mergeConfigs(
+    base: ScaffoldConfig,
+    override: ScaffoldConfig
+  ): ScaffoldConfig {
     return {
       ...base,
       id: override.id || base.id,
@@ -400,7 +425,8 @@ export class ConfigurationService implements IConfigurationService {
   private deepClone<T>(obj: T): T {
     if (obj === null || typeof obj !== 'object') return obj;
     if (obj instanceof Date) return new Date(obj.getTime()) as unknown as T;
-    if (Array.isArray(obj)) return obj.map(item => this.deepClone(item)) as unknown as T;
+    if (Array.isArray(obj))
+      return obj.map(item => this.deepClone(item)) as unknown as T;
 
     const cloned = {} as T;
     for (const key in obj) {

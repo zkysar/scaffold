@@ -84,7 +84,10 @@ async function handleTemplateCommand(action: string, identifier: string, alias: 
   }
 }
 
-async function handleListTemplates(templateService: TemplateService, options: TemplateCommandOptions): Promise<void> {
+async function handleListTemplates(
+  templateService: TemplateService,
+  options: TemplateCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
 
   try {
@@ -92,7 +95,11 @@ async function handleListTemplates(templateService: TemplateService, options: Te
 
     if (library.templates.length === 0) {
       console.log(chalk.yellow('No templates found.'));
-      console.log(chalk.gray('Use "scaffold template create" to create your first template.'));
+      console.log(
+        chalk.gray(
+          'Use "scaffold template create" to create your first template.'
+        )
+      );
       return;
     }
 
@@ -107,11 +114,17 @@ async function handleListTemplates(templateService: TemplateService, options: Te
       console.log(chalk.bold(template.name), chalk.gray(`${shortId}${aliasStr}`));
       console.log(chalk.gray('  Version:'), template.version);
       console.log(chalk.gray('  Description:'), template.description);
-      console.log(chalk.gray('  Location:'), `~/.scaffold/templates/${template.id}/template.json`);
+      console.log(
+        chalk.gray('  Location:'),
+        `~/.scaffold/templates/${template.id}/template.json`
+      );
 
       if (verbose) {
         console.log(chalk.gray('  Source:'), template.source);
-        console.log(chalk.gray('  Installed:'), template.installed ? 'Yes' : 'No');
+        console.log(
+          chalk.gray('  Installed:'),
+          template.installed ? 'Yes' : 'No'
+        );
         console.log(chalk.gray('  Last Updated:'), template.lastUpdated);
       }
 
@@ -120,21 +133,35 @@ async function handleListTemplates(templateService: TemplateService, options: Te
 
     console.log(chalk.blue('Total:'), library.templates.length, 'templates');
   } catch (error) {
-    if (error instanceof Error && error.message.includes('No templates found')) {
+    if (
+      error instanceof Error &&
+      error.message.includes('No templates found')
+    ) {
       console.log(chalk.yellow('No templates found.'));
-      console.log(chalk.gray('Use "scaffold template create" to create your first template.'));
+      console.log(
+        chalk.gray(
+          'Use "scaffold template create" to create your first template.'
+        )
+      );
     } else {
       throw error;
     }
   }
 }
 
-async function handleCreateTemplate(templateService: TemplateService, name: string, options: TemplateCommandOptions): Promise<void> {
+async function handleCreateTemplate(
+  templateService: TemplateService,
+  name: string,
+  options: TemplateCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 
   if (!name) {
-    console.error(chalk.red('Error:'), 'Template name is required for create action');
+    console.error(
+      chalk.red('Error:'),
+      'Template name is required for create action'
+    );
     console.log(chalk.gray('Usage: scaffold template create <name>'));
     process.exit(1);
   }
@@ -149,17 +176,23 @@ async function handleCreateTemplate(templateService: TemplateService, name: stri
       type: 'input',
       name: 'description',
       message: 'Template description:',
-      validate: (input: string) => input.trim().length > 0 || 'Description is required',
+      validate: (input: string) =>
+        input.trim().length > 0 || 'Description is required',
     },
     {
       type: 'input',
       name: 'rootFolder',
       message: 'Root folder for template isolation:',
-      default: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+      default: name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, ''),
       validate: (input: string): string | boolean => {
         if (!input.trim()) return 'Root folder is required';
-        if (!/^[a-zA-Z0-9_-]+$/.test(input)) return 'Root folder must contain only alphanumeric characters, underscores, and hyphens';
-        if (input.startsWith('.') || input.startsWith('-')) return 'Root folder cannot start with a dot or hyphen';
+        if (!/^[a-zA-Z0-9_-]+$/.test(input))
+          return 'Root folder must contain only alphanumeric characters, underscores, and hyphens';
+        if (input.startsWith('.') || input.startsWith('-'))
+          return 'Root folder cannot start with a dot or hyphen';
         return true;
       },
     },
@@ -170,7 +203,9 @@ async function handleCreateTemplate(templateService: TemplateService, name: stri
       default: '1.0.0',
       validate: (input: string): string | boolean => {
         const semverRegex = /^\d+\.\d+\.\d+(-[\w.]+)?$/;
-        return semverRegex.test(input) || 'Invalid semantic version (e.g., 1.0.0)';
+        return (
+          semverRegex.test(input) || 'Invalid semantic version (e.g., 1.0.0)'
+        );
       },
     },
     {
@@ -230,20 +265,31 @@ async function handleCreateTemplate(templateService: TemplateService, name: stri
   } catch (error) {
     if (error instanceof Error && error.message.includes('already exists')) {
       console.error(chalk.red('Error:'), `Template '${name}' already exists`);
-      console.log(chalk.gray('Use a different name or delete the existing template first.'));
+      console.log(
+        chalk.gray(
+          'Use a different name or delete the existing template first.'
+        )
+      );
     } else {
       throw error;
     }
   }
 }
 
-async function handleDeleteTemplate(templateService: TemplateService, name: string, options: TemplateCommandOptions): Promise<void> {
+async function handleDeleteTemplate(
+  templateService: TemplateService,
+  name: string,
+  options: TemplateCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
   const force = options.force || false;
 
   if (!name) {
-    console.error(chalk.red('Error:'), 'Template name or ID is required for delete action');
+    console.error(
+      chalk.red('Error:'),
+      'Template name or ID is required for delete action'
+    );
     console.log(chalk.gray('Usage: scaffold template delete <name>'));
     process.exit(1);
   }
@@ -255,7 +301,9 @@ async function handleDeleteTemplate(templateService: TemplateService, name: stri
   try {
     // Find template by name or ID
     const library = await templateService.loadTemplates();
-    const template = library.templates.find(t => t.name === name || t.id === name);
+    const template = library.templates.find(
+      t => t.name === name || t.id === name
+    );
 
     if (!template) {
       console.error(chalk.red('Error:'), `Template '${name}' not found`);
@@ -298,13 +346,22 @@ async function handleDeleteTemplate(templateService: TemplateService, name: stri
   }
 }
 
-async function handleExportTemplate(templateService: TemplateService, name: string, options: TemplateCommandOptions): Promise<void> {
+async function handleExportTemplate(
+  templateService: TemplateService,
+  name: string,
+  options: TemplateCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 
   if (!name) {
-    console.error(chalk.red('Error:'), 'Template name or ID is required for export action');
-    console.log(chalk.gray('Usage: scaffold template export <name> [-o output.json]'));
+    console.error(
+      chalk.red('Error:'),
+      'Template name or ID is required for export action'
+    );
+    console.log(
+      chalk.gray('Usage: scaffold template export <name> [-o output.json]')
+    );
     process.exit(1);
   }
 
@@ -318,7 +375,9 @@ async function handleExportTemplate(templateService: TemplateService, name: stri
   try {
     // Find template by name or ID
     const library = await templateService.loadTemplates();
-    const template = library.templates.find(t => t.name === name || t.id === name);
+    const template = library.templates.find(
+      t => t.name === name || t.id === name
+    );
 
     if (!template) {
       console.error(chalk.red('Error:'), `Template '${name}' not found`);
@@ -326,8 +385,14 @@ async function handleExportTemplate(templateService: TemplateService, name: stri
     }
 
     if (dryRun) {
-      console.log(chalk.yellow('DRY RUN - Would export template to:'), outputPath);
-      console.log(chalk.blue('  Template:'), `${template.name} (${template.id})`);
+      console.log(
+        chalk.yellow('DRY RUN - Would export template to:'),
+        outputPath
+      );
+      console.log(
+        chalk.blue('  Template:'),
+        `${template.name} (${template.id})`
+      );
       return;
     }
 
@@ -344,12 +409,19 @@ async function handleExportTemplate(templateService: TemplateService, name: stri
   }
 }
 
-async function handleImportTemplate(templateService: TemplateService, archivePath: string, options: TemplateCommandOptions): Promise<void> {
+async function handleImportTemplate(
+  templateService: TemplateService,
+  archivePath: string,
+  options: TemplateCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 
   if (!archivePath) {
-    console.error(chalk.red('Error:'), 'Archive path is required for import action');
+    console.error(
+      chalk.red('Error:'),
+      'Archive path is required for import action'
+    );
     console.log(chalk.gray('Usage: scaffold template import <archive-path>'));
     process.exit(1);
   }
@@ -359,7 +431,10 @@ async function handleImportTemplate(templateService: TemplateService, archivePat
   }
 
   if (dryRun) {
-    console.log(chalk.yellow('DRY RUN - Would import template from:'), archivePath);
+    console.log(
+      chalk.yellow('DRY RUN - Would import template from:'),
+      archivePath
+    );
     return;
   }
 
@@ -377,10 +452,21 @@ async function handleImportTemplate(templateService: TemplateService, archivePat
     }
   } catch (error) {
     if (error instanceof Error && error.message.includes('already exists')) {
-      console.error(chalk.red('Error:'), 'Template with the same ID already exists');
-      console.log(chalk.gray('Delete the existing template first or modify the import.'));
-    } else if (error instanceof Error && error.message.includes('does not exist')) {
-      console.error(chalk.red('Error:'), `Archive file '${archivePath}' not found`);
+      console.error(
+        chalk.red('Error:'),
+        'Template with the same ID already exists'
+      );
+      console.log(
+        chalk.gray('Delete the existing template first or modify the import.')
+      );
+    } else if (
+      error instanceof Error &&
+      error.message.includes('does not exist')
+    ) {
+      console.error(
+        chalk.red('Error:'),
+        `Archive file '${archivePath}' not found`
+      );
     } else {
       throw error;
     }

@@ -3,29 +3,29 @@
  */
 
 export interface ChangeRecord {
-  id: string;                     // Unique identifier (UUID v4)
-  type: "added" | "modified" | "removed";
-  path: string;                   // File/folder path
-  reason?: string;                // Why this change
+  id: string; // Unique identifier (UUID v4)
+  type: 'added' | 'modified' | 'removed';
+  path: string; // File/folder path
+  reason?: string; // Why this change
 }
 
 export interface HistoryEntry {
-  id: string;                     // Unique identifier (UUID v4)
-  timestamp: string;              // ISO 8601 date
-  action: "create" | "extend" | "sync" | "check" | "clean";
-  templates?: string[];           // Templates involved
-  user?: string;                  // User who performed action
-  changes: ChangeRecord[];        // What changed
+  id: string; // Unique identifier (UUID v4)
+  timestamp: string; // ISO 8601 date
+  action: 'create' | 'extend' | 'sync' | 'check' | 'clean';
+  templates?: string[]; // Templates involved
+  user?: string; // User who performed action
+  changes: ChangeRecord[]; // What changed
 }
 
 export interface ConflictRecord {
-  id: string;                     // Unique identifier (UUID v4)
-  path: string;                   // Conflicting file/folder
-  templateVersion: string;        // What template wants
-  localVersion: string;           // What exists locally
-  resolution: "kept_local" | "used_template" | "merged" | "skipped";
-  resolvedAt: string;            // ISO 8601 date
-  resolvedBy?: string;           // User who resolved conflict
+  id: string; // Unique identifier (UUID v4)
+  path: string; // Conflicting file/folder
+  templateVersion: string; // What template wants
+  localVersion: string; // What exists locally
+  resolution: 'kept_local' | 'used_template' | 'merged' | 'skipped';
+  resolvedAt: string; // ISO 8601 date
+  resolvedBy?: string; // User who resolved conflict
 }
 
 export interface AppliedTemplate {
@@ -41,12 +41,12 @@ export interface AppliedTemplate {
 }
 
 export interface ProjectManifest {
-  id: string;                     // Unique project identifier (UUID v4)
-  version: string;                 // Manifest schema version
-  projectName: string;            // Project name (human-readable)
-  created: string;                // ISO 8601 date
-  updated: string;                // ISO 8601 date
-  templates: AppliedTemplate[];   // Templates used in this project
+  id: string; // Unique project identifier (UUID v4)
+  version: string; // Manifest schema version
+  projectName: string; // Project name (human-readable)
+  created: string; // ISO 8601 date
+  updated: string; // ISO 8601 date
+  templates: AppliedTemplate[]; // Templates used in this project
   variables: Record<string, string>; // Variable values used
-  history: HistoryEntry[];        // Change history
+  history: HistoryEntry[]; // Change history
 }

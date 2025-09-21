@@ -7,7 +7,11 @@ import { Command } from 'commander';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
-import { ProjectService, TemplateService, FileSystemService } from '../../services';
+import {
+  ProjectService,
+  TemplateService,
+  FileSystemService,
+} from '../../services';
 
 interface ExtendCommandOptions {
   template?: string;
@@ -22,7 +26,10 @@ export function createExtendCommand(): Command {
 
   command
     .description('Add templates to existing scaffold project')
-    .argument('[project]', 'Project directory path (defaults to current directory)')
+    .argument(
+      '[project]',
+      'Project directory path (defaults to current directory)'
+    )
     .option('-t, --template <template>', 'Template ID or name to add')
     .option('-v, --variables <variables>', 'JSON string of template variables')
     .option('--verbose', 'Show detailed output')
@@ -32,7 +39,10 @@ export function createExtendCommand(): Command {
       try {
         await handleExtendCommand(projectPath, options);
       } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+        console.error(
+          chalk.red('Error:'),
+          error instanceof Error ? error.message : String(error)
+        );
         process.exit(1);
       }
     });
@@ -40,12 +50,17 @@ export function createExtendCommand(): Command {
   return command;
 }
 
-async function handleExtendCommand(projectPath: string, options: ExtendCommandOptions): Promise<void> {
+async function handleExtendCommand(
+  projectPath: string,
+  options: ExtendCommandOptions
+): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 
   // Determine target path
-  const targetPath = projectPath ? resolve(projectPath) : resolve(process.cwd());
+  const targetPath = projectPath
+    ? resolve(projectPath)
+    : resolve(process.cwd());
 
   if (verbose) {
     console.log(chalk.blue('Extending project:'), targetPath);
@@ -54,7 +69,10 @@ async function handleExtendCommand(projectPath: string, options: ExtendCommandOp
 
   // Check if target directory exists
   if (!existsSync(targetPath)) {
-    console.error(chalk.red('Error:'), `Directory "${targetPath}" does not exist`);
+    console.error(
+      chalk.red('Error:'),
+      `Directory "${targetPath}" does not exist`
+    );
     process.exit(1);
   }
 
@@ -70,13 +88,19 @@ async function handleExtendCommand(projectPath: string, options: ExtendCommandOp
     if (!manifest) {
       console.error(chalk.red('Error:'), 'Not a scaffold-managed project');
       console.log(chalk.gray('No .scaffold/manifest.json file found.'));
-      console.log(chalk.gray('Use "scaffold new" to create a new project first.'));
+      console.log(
+        chalk.gray('Use "scaffold new" to create a new project first.')
+      );
       process.exit(1);
     }
 
     if (!options.template) {
       console.error(chalk.red('Error:'), 'Template is required');
-      console.log(chalk.gray('Usage: scaffold extend <project> --template <template-name>'));
+      console.log(
+        chalk.gray(
+          'Usage: scaffold extend <project> --template <template-name>'
+        )
+      );
       process.exit(1);
     }
 
@@ -86,7 +110,9 @@ async function handleExtendCommand(projectPath: string, options: ExtendCommandOp
       try {
         variables = JSON.parse(options.variables);
       } catch (error) {
-        throw new Error(`Invalid variables JSON: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(
+          `Invalid variables JSON: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
@@ -98,13 +124,20 @@ async function handleExtendCommand(projectPath: string, options: ExtendCommandOp
       return;
     }
 
-    console.log(chalk.yellow('✓ Command structure created (service implementation pending)'));
+    console.log(
+      chalk.yellow(
+        '✓ Command structure created (service implementation pending)'
+      )
+    );
     console.log(chalk.blue('Would extend project:'), targetPath);
     console.log(chalk.blue('With template:'), options.template);
-
   } catch (error) {
     if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(chalk.yellow('✓ Command structure created (service implementation pending)'));
+      console.log(
+        chalk.yellow(
+          '✓ Command structure created (service implementation pending)'
+        )
+      );
       console.log(chalk.blue('Would extend project:'), targetPath);
       console.log(chalk.blue('With template:'), options.template);
       return;

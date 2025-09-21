@@ -21,13 +21,13 @@ export interface ValidationError {
 }
 
 export interface ValidationWarning {
-  id: string;                    // Unique warning identifier (UUID v4)
+  id: string; // Unique warning identifier (UUID v4)
   template: string;
   path: string;
   message: string;
   suggestion?: string;
-  file?: string;                 // File path for display
-  rule?: string;                 // Rule name for display
+  file?: string; // File path for display
+  rule?: string; // Rule name for display
 }
 
 export interface ValidationStats {
@@ -36,25 +36,25 @@ export interface ValidationStats {
   templatesChecked: number;
   errorsFound: number;
   warningsFound: number;
-  executionTime: number;         // Milliseconds
+  executionTime: number; // Milliseconds
   rulesEvaluated: number;
   errorCount: number;
   warningCount: number;
-  duration: number;              // Milliseconds (alias for executionTime)
+  duration: number; // Milliseconds (alias for executionTime)
 }
 
 export interface ValidationReport {
-  id: string;                     // Unique report identifier (UUID v4)
-  timestamp: string;              // ISO 8601 date
-  projectId?: string;             // Reference to ProjectManifest.id
-  projectName?: string;           // Project name for display
-  projectPath?: string;           // Project path
-  templates?: string[];           // Templates being checked
-  valid?: boolean;                // Overall validation result
-  errors: ValidationError[];     // Problems found
+  id: string; // Unique report identifier (UUID v4)
+  timestamp: string; // ISO 8601 date
+  projectId?: string; // Reference to ProjectManifest.id
+  projectName?: string; // Project name for display
+  projectPath?: string; // Project path
+  templates?: string[]; // Templates being checked
+  valid?: boolean; // Overall validation result
+  errors: ValidationError[]; // Problems found
   warnings: ValidationWarning[]; // Non-critical issues
-  suggestions?: string[];         // Improvement suggestions
-  stats: ValidationStats;        // Summary numbers
-  passedRules?: string[];        // Rules that passed
-  skippedRules?: string[];       // Rules that were skipped
+  suggestions?: string[]; // Improvement suggestions
+  stats: ValidationStats; // Summary numbers
+  passedRules?: string[]; // Rules that passed
+  skippedRules?: string[]; // Rules that were skipped
 }
