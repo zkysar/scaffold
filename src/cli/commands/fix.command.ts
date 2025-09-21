@@ -61,82 +61,77 @@ async function handleFixCommand(projectPath: string, options: FixCommandOptions)
   const templateService = new TemplateService();
   const projectService = new ProjectService(templateService, fileSystemService);
 
-  try {
-    // Check if this is a scaffold-managed project
-    const manifest = await projectService.loadProjectManifest(targetPath);
+  // Check if this is a scaffold-managed project
+  const manifest = await projectService.loadProjectManifest(targetPath);
 
-    if (!manifest) {
-      console.log(chalk.yellow('Not a scaffold-managed project.'));
-      console.log(chalk.gray('No .scaffold/manifest.json file found.'));
-      console.log(chalk.gray('Use "scaffold new" to create a new project or "scaffold extend" to add templates.'));
-      return;
-    }
+  if (!manifest) {
+    console.log(chalk.yellow('Not a scaffold-managed project.'));
+    console.log(chalk.gray('No .scaffold/manifest.json file found.'));
+    console.log(chalk.gray('Use "scaffold new" to create a new project or "scaffold extend" to add templates.'));
+    return;
+  }
 
-    if (verbose) {
-      console.log(chalk.blue('Project name:'), manifest.projectName);
-      console.log(chalk.blue('Applied templates:'), manifest.templates.map(t => `${t.name}@${t.version}`).join(', '));
-    }
+  if (verbose) {
+    console.log(chalk.blue('Project name:'), manifest.projectName);
+    console.log(chalk.blue('Applied templates:'), manifest.templates.map(t => `${t.name}@${t.version}`).join(', '));
+  }
 
-    // Fix the project
-    const report = await projectService.fixProject(targetPath, dryRun);
+  // Fix the project
+  const report = await projectService.fixProject(targetPath, dryRun);
 
-    // Display results
-    console.log(chalk.bold('Project Fix Report'));
-    console.log('─'.repeat(50));
+  // Display results
+  console.log(chalk.bold('Project Fix Report'));
+  console.log('─'.repeat(50));
 
-    if (report.valid) {
-      console.log(chalk.green('✓ Project structure is valid - no fixes needed'));
-    } else {
-      // Display errors that couldn't be fixed
-      if (report.errors.length > 0) {
-        console.log(chalk.red('Remaining Errors:'));
-        for (const error of report.errors) {
-          console.log(chalk.red('  ✗'), error.message);
-          if (error.suggestion) {
-            console.log(chalk.gray(`    Suggestion: ${error.suggestion}`));
-          }
+  if (report.valid) {
+    console.log(chalk.green('✓ Project structure is valid - no fixes needed'));
+  } else {
+    // Display errors that couldn't be fixed
+    if (report.errors.length > 0) {
+      console.log(chalk.red('Remaining Errors:'));
+      for (const error of report.errors) {
+        console.log(chalk.red('  ✗'), error.message);
+        if (error.suggestion) {
+          console.log(chalk.gray(`    Suggestion: ${error.suggestion}`));
         }
-        console.log('');
-      }
-
-      // Display warnings
-      if (report.warnings.length > 0) {
-        console.log(chalk.yellow('Warnings:'));
-        for (const warning of report.warnings) {
-          console.log(chalk.yellow('  ⚠'), warning.message);
-          if (warning.suggestion) {
-            console.log(chalk.gray(`    Suggestion: ${warning.suggestion}`));
-          }
-        }
-        console.log('');
-      }
-    }
-
-    // Display suggestions
-    if (report.suggestions && report.suggestions.length > 0) {
-      console.log(chalk.blue('Summary:'));
-      for (const suggestion of report.suggestions) {
-        console.log(chalk.gray(`  • ${suggestion}`));
       }
       console.log('');
     }
 
-    // Display stats
-    console.log(chalk.blue('Statistics:'));
-    console.log(chalk.gray(`  Files checked: ${report.stats.filesChecked}`));
-    console.log(chalk.gray(`  Folders checked: ${report.stats.foldersChecked}`));
-    console.log(chalk.gray(`  Errors: ${report.stats.errorCount}`));
-    console.log(chalk.gray(`  Warnings: ${report.stats.warningCount}`));
-    console.log(chalk.gray(`  Duration: ${report.stats.duration}ms`));
-
-    // Set exit code based on results
-    if (report.stats.errorCount > 0) {
-      process.exit(1);
-    } else if (report.stats.warningCount > 0) {
-      process.exit(2);
+    // Display warnings
+    if (report.warnings.length > 0) {
+      console.log(chalk.yellow('Warnings:'));
+      for (const warning of report.warnings) {
+        console.log(chalk.yellow('  ⚠'), warning.message);
+        if (warning.suggestion) {
+          console.log(chalk.gray(`    Suggestion: ${warning.suggestion}`));
+        }
+      }
+      console.log('');
     }
+  }
 
-  } catch (error) {
-    throw error;
+  // Display suggestions
+  if (report.suggestions && report.suggestions.length > 0) {
+    console.log(chalk.blue('Summary:'));
+    for (const suggestion of report.suggestions) {
+      console.log(chalk.gray(`  • ${suggestion}`));
+    }
+    console.log('');
+  }
+
+  // Display stats
+  console.log(chalk.blue('Statistics:'));
+  console.log(chalk.gray(`  Files checked: ${report.stats.filesChecked}`));
+  console.log(chalk.gray(`  Folders checked: ${report.stats.foldersChecked}`));
+  console.log(chalk.gray(`  Errors: ${report.stats.errorCount}`));
+  console.log(chalk.gray(`  Warnings: ${report.stats.warningCount}`));
+  console.log(chalk.gray(`  Duration: ${report.stats.duration}ms`));
+
+  // Set exit code based on results
+  if (report.stats.errorCount > 0) {
+    process.exit(1);
+  } else if (report.stats.warningCount > 0) {
+    process.exit(2);
   }
 }

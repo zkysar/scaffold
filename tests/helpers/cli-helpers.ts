@@ -9,7 +9,7 @@ import mockFs from 'mock-fs';
  * Mock file system interface for testing
  */
 export interface MockFileSystem {
-  [path: string]: string | MockFileSystem | mockFs.Directory;
+  [path: string]: string | MockFileSystem | ReturnType<typeof mockFs.directory>;
 }
 
 /**
@@ -24,10 +24,10 @@ export function createMockFileSystem(structure: MockFileSystem): MockFileSystem 
  */
 export interface MockConsole {
   mockConsole: {
-    log: jest.MockedFunction<typeof console.log>;
-    warn: jest.MockedFunction<typeof console.warn>;
-    error: jest.MockedFunction<typeof console.error>;
-    info: jest.MockedFunction<typeof console.info>;
+    log: jest.MockInstance<void, any[]>;
+    warn: jest.MockInstance<void, any[]>;
+    error: jest.MockInstance<void, any[]>;
+    info: jest.MockInstance<void, any[]>;
   };
   logs: string[];
   warnings: string[];
@@ -46,10 +46,18 @@ export function createMockConsole(): MockConsole {
   const infos: string[] = [];
 
   const mockConsole = {
-    log: jest.fn((...args: any[]) => logs.push(args.join(' '))),
-    warn: jest.fn((...args: any[]) => warnings.push(args.join(' '))),
-    error: jest.fn((...args: any[]) => errors.push(args.join(' '))),
-    info: jest.fn((...args: any[]) => infos.push(args.join(' '))),
+    log: jest.fn((...args: any[]) => {
+      logs.push(args.join(' '));
+    }) as jest.MockInstance<void, any[]>,
+    warn: jest.fn((...args: any[]) => {
+      warnings.push(args.join(' '));
+    }) as jest.MockInstance<void, any[]>,
+    error: jest.fn((...args: any[]) => {
+      errors.push(args.join(' '));
+    }) as jest.MockInstance<void, any[]>,
+    info: jest.fn((...args: any[]) => {
+      infos.push(args.join(' '));
+    }) as jest.MockInstance<void, any[]>,
   };
 
   return {

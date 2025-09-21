@@ -1,454 +1,570 @@
 # Scaffold CLI
 
-A powerful, template-based project scaffolding tool that helps you create, manage, and maintain consistent project structures across your development workflow.
+A powerful, template-based project structure management CLI tool that helps developers create, validate, and maintain consistent project structures across teams and organizations.
 
-## Features
+## Overview
 
-- 🎯 **Template-Based Scaffolding** - Create reusable project templates with files, folders, and variables
-- 🔒 **Template Isolation** - Each template lives in its own root folder, preventing conflicts
-- 🔄 **Variable Substitution** - Dynamic content generation with `{{variable}}` syntax and transformations
-- ✅ **Project Validation** - Ensure projects match their template structure
-- 🔧 **Auto-Fix** - Automatically repair project structure issues
-- 🎨 **Multiple Templates** - Apply multiple templates to a single project without conflicts
-- ⚙️ **Configuration Cascade** - Global → Workspace → Project level settings
-- 🐳 **Docker Support** - Full containerized development environment
+Scaffold CLI provides a comprehensive solution for managing project templates and enforcing structural consistency. Whether you're creating new projects, validating existing ones, or maintaining organizational standards, Scaffold CLI streamlines the process with intelligent templates, flexible configuration, and robust validation.
+
+### Key Features
+
+- **Template-based project creation** - Generate new projects from reusable templates
+- **Structure validation** - Verify projects conform to expected patterns
+- **Automatic fixing** - Repair structural issues with intelligent suggestions
+- **Configuration cascade** - Global, workspace, and project-level settings
+- **Shell completion** - Built-in completion support for bash, zsh, and fish
+- **Docker support** - Containerized development and testing environment
+- **Extensible architecture** - Plugin-friendly design for custom functionality
 
 ## Installation
 
 ### Prerequisites
 
-- Node.js 20+ and npm
-- TypeScript 5.3+
+- Node.js 20.0.0 or higher
+- npm or yarn package manager
 
-### Build from Source
+### Install from npm
+
+```bash
+# Install globally
+npm install -g @scaffold/cli
+
+# Or use with npx (no installation required)
+npx @scaffold/cli --help
+```
+
+### Local Development Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/scaffold.git
-cd scaffold
+git clone <repository-url>
+cd scaffold-cli
 
 # Install dependencies
 npm install
 
-# Build the CLI
+# Build the project
 npm run build
 
-# Optional: Link globally
+# Link for local development
 npm link
-# Now you can use 'scaffold' instead of './dist/cli/index.js'
 ```
 
-### Docker Development
+### Docker Installation
 
 ```bash
-# Start development container with hot-reload
+# Development environment
 docker-compose up dev
 
-# Run tests in container
-docker-compose run test
-
-# Build in container
-docker-compose run build
+# Run specific commands
+docker-compose run --rm dev scaffold --help
 ```
 
 ## Quick Start
 
-### 1. Create Your First Template
-
 ```bash
-scaffold template create my-template
-```
+# Create a new project from a template
+scaffold new my-project --template react-app
 
-You'll be prompted for:
-- Template description
-- Version (default: 1.0.0)
-- Root folder name (for isolation)
-- Folders to create
-- Files with content
-- Variables for dynamic content
-
-### 2. Create a Project from Template
-
-```bash
-scaffold new my-project --template my-template
-```
-
-Or with variables:
-
-```bash
-scaffold new my-project \
-  --template my-template \
-  --variables '{"projectName":"my-project","description":"My awesome project"}'
-```
-
-### 3. Validate Project Structure
-
-```bash
+# Validate an existing project structure
 scaffold check my-project
-```
 
-### 4. Auto-Fix Structure Issues
-
-```bash
+# Fix structural issues
 scaffold fix my-project
-```
 
-## Commands
-
-### `scaffold new <project>`
-Create a new project from a template.
-
-**Options:**
-- `-t, --template <id>` - Template to use (required)
-- `-p, --path <path>` - Target directory (default: current)
-- `-v, --variables <json>` - Template variables as JSON
-- `--dry-run` - Preview without creating files
-
-**Example:**
-```bash
-scaffold new my-app --template node-express --variables '{"port":3000}'
-```
-
-### `scaffold template <action>`
-Manage templates.
-
-**Actions:**
-- `create <name>` - Create a new template interactively
-- `list` - List available templates
-- `delete <name>` - Delete a template
-- `export <name>` - Export template to JSON
-- `import <file>` - Import template from JSON
-
-**Examples:**
-```bash
+# List available templates
 scaffold template list
-scaffold template create react-component
-scaffold template export my-template > template.json
-scaffold template import shared-template.json
+
+# Show project information
+scaffold show my-project
 ```
 
-### `scaffold check [project]`
-Validate project structure against applied templates.
+## Usage
 
-**Options:**
-- `-f, --format <format>` - Output format: table, json, summary (default: table)
-- `--verbose` - Show detailed validation information
+### Core Commands
 
-**Example:**
+#### Create New Projects
+
 ```bash
-scaffold check ./my-project --format json
+# Create project with default template
+scaffold new my-project
+
+# Create with specific template
+scaffold new my-project --template react-typescript
+
+# Create in specific directory
+scaffold new my-project --path ./projects
+
+# Pass template variables
+scaffold new my-project --variables '{"author":"John Doe","license":"MIT"}'
+
+# Preview without creating
+scaffold new my-project --dry-run
 ```
 
-### `scaffold fix [project]`
-Automatically fix project structure issues.
+#### Template Management
 
-**Options:**
-- `--dry-run` - Show what would be fixed without making changes
-- `--verbose` - Show detailed fix information
-
-**Example:**
 ```bash
+# List available templates
+scaffold template list
+
+# Create new template from existing project
+scaffold template create my-template
+
+# Export template to file
+scaffold template export my-template --output ./my-template.json
+
+# Import template from file
+scaffold template import ./downloaded-template.json
+
+# Delete template
+scaffold template delete old-template
+```
+
+#### Project Validation
+
+```bash
+# Check current directory
+scaffold check
+
+# Check specific project
+scaffold check ./my-project
+
+# Detailed validation report
+scaffold check ./my-project --verbose
+
+# Check without colors (CI-friendly)
+scaffold check ./my-project --no-color
+```
+
+#### Project Repair
+
+```bash
+# Fix issues in current directory
+scaffold fix
+
+# Fix specific project
+scaffold fix ./my-project
+
+# Preview fixes without applying
 scaffold fix ./my-project --dry-run
+
+# Force fixes without confirmation
+scaffold fix ./my-project --force
 ```
 
-### `scaffold extend <project>`
-Add additional templates to an existing project.
+#### Project Extension
 
-**Options:**
-- `-t, --template <id>` - Template to add (required)
-- `-v, --variables <json>` - Template variables
-
-**Example:**
 ```bash
-scaffold extend my-project --template authentication
+# Add template to existing project
+scaffold extend my-project --template api-endpoints
+
+# List available extensions
+scaffold extend my-project --list
+
+# Preview extension without applying
+scaffold extend my-project --template logging --dry-run
 ```
 
-### `scaffold show [item]`
-Display information about templates, projects, or configuration.
+#### Project Information
 
-**Examples:**
 ```bash
-scaffold show                    # Show current project info
-scaffold show templates           # List all templates
-scaffold show template my-template # Show template details
-scaffold show config              # Show configuration
+# Show project details
+scaffold show my-project
+
+# Show template information
+scaffold show --template react-app
+
+# Show configuration
+scaffold show --config
 ```
 
-### `scaffold config <action>`
-Manage configuration settings.
+#### Configuration Management
 
-**Actions:**
-- `get <key>` - Get configuration value
-- `set <key> <value>` - Set configuration value
-- `list` - List all configuration
-- `reset [--global|--workspace|--project]` - Reset to defaults
-
-**Examples:**
 ```bash
-scaffold config set preferences.colorOutput true
-scaffold config get templateDirectory
-scaffold config list --global
+# Show current configuration
+scaffold config show
+
+# Set global configuration
+scaffold config set templates.directory ~/.scaffold/templates
+
+# Set workspace configuration
+scaffold config set --workspace eslint.enabled true
+
+# Set project configuration
+scaffold config set --project variables.author "Team Lead"
+
+# Reset configuration
+scaffold config reset
 ```
 
-### `scaffold clean`
-Clean up temporary files and cache.
+#### Cleanup
 
-**Options:**
-- `--cache` - Clean cache only
-- `--temp` - Clean temp files only
-- `--all` - Clean everything (default)
+```bash
+# Clean temporary files
+scaffold clean
 
-## Template Structure
-
-### Template Definition
-
-Templates are stored in `~/.scaffold/templates/` with this structure:
-
-```
-my-template/
-├── template.json    # Template definition
-└── files/          # Optional static files
+# Clean with verbose output
+scaffold clean --verbose
 ```
 
-### template.json Example
+### Global Options
+
+All commands support these global options:
+
+- `--verbose` - Show detailed output and debug information
+- `--dry-run` - Preview operations without making changes
+- `--no-color` - Disable colored output (useful for CI/CD)
+- `--help` - Show help for any command
+
+### Command Aliases
+
+For faster usage, several commands have short aliases:
+
+```bash
+scaffold n my-project    # alias for 'new'
+scaffold t list          # alias for 'template'
+scaffold c my-project    # alias for 'check'
+```
+
+## Templates
+
+### What are Templates?
+
+Templates are reusable project structure definitions that include:
+
+- **Folder structure** - Directory hierarchies and naming conventions
+- **File templates** - Boilerplate files with variable substitution
+- **Variables** - Customizable parameters for template generation
+- **Rules** - Validation rules and structural requirements
+
+### Template Structure
+
+Templates are defined in JSON format:
 
 ```json
 {
-  "id": "my-template",
-  "name": "My Template",
-  "description": "A template for Node.js projects",
+  "name": "react-typescript",
   "version": "1.0.0",
-  "rootFolder": "app",
+  "description": "React application with TypeScript",
   "folders": [
     {
-      "path": "app/src",
-      "description": "Source code"
+      "path": "src",
+      "required": true
     },
     {
-      "path": "app/tests",
-      "description": "Test files"
+      "path": "src/components",
+      "required": true
+    },
+    {
+      "path": "public",
+      "required": true
     }
   ],
   "files": [
     {
-      "path": "app/package.json",
-      "content": "{\n  \"name\": \"{{projectName|kebabCase}}\",\n  \"version\": \"1.0.0\"\n}",
-      "description": "Package configuration"
+      "path": "package.json",
+      "template": "package.json.hbs",
+      "required": true
     },
     {
-      "path": "app/src/index.js",
-      "content": "console.log('Hello from {{projectName}}');",
-      "description": "Entry point"
+      "path": "src/index.tsx",
+      "template": "index.tsx.hbs",
+      "required": true
     }
   ],
   "variables": [
     {
       "name": "projectName",
-      "description": "Project name",
-      "required": true
+      "type": "string",
+      "required": true,
+      "description": "Name of the project"
     },
     {
       "name": "author",
-      "description": "Author name",
-      "default": "Anonymous"
+      "type": "string",
+      "default": "Anonymous",
+      "description": "Project author"
     }
   ],
   "rules": {
-    "strictMode": false,
-    "allowExtraFiles": true,
-    "allowExtraFolders": true,
-    "conflictResolution": "prompt"
+    "enforceFileNaming": "kebab-case",
+    "requireReadme": true,
+    "maxDepth": 5
   }
 }
 ```
 
-## Variable Substitution
+### Creating Custom Templates
 
-### Basic Syntax
-- `{{variableName}}` - Simple substitution
-- `{{nested.variable}}` - Nested object access
-- `{{variable|defaultValue}}` - Default values
+1. **Start with an existing project**:
+   ```bash
+   scaffold template create my-template
+   ```
 
-### Transformations
-- `{{name|upper}}` - UPPERCASE
-- `{{name|lower}}` - lowercase
-- `{{name|camelCase}}` - camelCase
-- `{{name|kebabCase}}` - kebab-case
-- `{{name|snakeCase}}` - snake_case
-- `{{name|pascalCase}}` - PascalCase
-- `{{name|capitalize}}` - Capitalize first letter
+2. **Define the template structure** by editing the generated JSON file
 
-### Special Variables
-- `{{timestamp}}` - Current Unix timestamp
-- `{{date}}` - Current date (YYYY-MM-DD)
-- `{{datetime}}` - Current datetime (ISO format)
-- `{{uuid}}` - Random UUID
-- `{{year}}` - Current year
-- `{{month}}` - Current month
-- `{{day}}` - Current day
+3. **Add template files** with variable placeholders using Handlebars syntax:
+   ```handlebars
+   {
+     "name": "{{projectName}}",
+     "author": "{{author}}",
+     "version": "1.0.0"
+   }
+   ```
 
-## Template Isolation
+4. **Test your template**:
+   ```bash
+   scaffold new test-project --template my-template
+   ```
 
-Each template defines a `rootFolder` that contains all its files and folders. This prevents conflicts when applying multiple templates to the same project:
+### Sharing Templates
 
-```
-my-project/
-├── .scaffold/          # Scaffold metadata
-│   └── manifest.json
-├── backend/           # From 'backend-api' template
-│   ├── src/
-│   └── package.json
-├── frontend/          # From 'react-app' template
-│   ├── src/
-│   └── package.json
-└── shared/            # From 'shared-types' template
-    └── types.ts
-```
+Templates can be shared through:
+
+- **Export/Import**: Use `scaffold template export` and `scaffold template import`
+- **Git repositories**: Store templates in version control
+- **NPM packages**: Publish templates as npm packages
+- **Template registries**: Use organizational template repositories
 
 ## Configuration
 
-Scaffold uses a three-level configuration cascade:
+Scaffold CLI uses a cascading configuration system with three levels:
 
-1. **Global** (`~/.scaffold/config.json`) - User-wide settings
-2. **Workspace** (`./.scaffold/config.json`) - Project workspace settings
-3. **Project** (`project/.scaffold/config.json`) - Project-specific settings
+### Configuration Hierarchy
+
+1. **Global** (`~/.scaffold/config.json`) - System-wide defaults
+2. **Workspace** (`./scaffold.config.json`) - Project workspace settings
+3. **Project** (`./scaffold-project.json`) - Individual project overrides
+
+Higher-level configurations override lower-level ones.
 
 ### Configuration Options
 
 ```json
 {
-  "preferences": {
-    "colorOutput": true,
-    "verboseByDefault": false,
-    "editor": "code"
-  },
   "templates": {
-    "searchPaths": ["~/.scaffold/templates"],
-    "defaultTemplate": "base",
-    "autoUpdate": false
+    "directory": "~/.scaffold/templates",
+    "registry": "https://templates.scaffold.dev",
+    "autoUpdate": true
   },
   "validation": {
-    "strictMode": false,
-    "ignorePatterns": ["node_modules", ".git", "dist"]
+    "enforceRules": true,
+    "exitOnError": true,
+    "ignorePatterns": ["node_modules", ".git"]
+  },
+  "output": {
+    "colorEnabled": true,
+    "verboseDefault": false,
+    "progressBars": true
+  },
+  "completion": {
+    "shellType": "auto",
+    "enabled": true
   }
 }
 ```
 
-### Environment Variables
-
-Override configuration with environment variables:
+### Configuration Examples
 
 ```bash
-export SCAFFOLD_PREFERENCES_COLOR_OUTPUT=false
-export SCAFFOLD_TEMPLATES_DEFAULT_TEMPLATE=my-template
+# Set global template directory
+scaffold config set templates.directory ~/my-templates
+
+# Enable workspace-level validation
+scaffold config set --workspace validation.enforceRules true
+
+# Set project-specific variables
+scaffold config set --project variables.license MIT
+
+# View effective configuration
+scaffold config show --merged
 ```
 
 ## Development
 
-### Project Structure
+### Setting Up Development Environment
 
+```bash
+# Clone repository
+git clone <repository-url>
+cd scaffold-cli
+
+# Install dependencies
+npm install
+
+# Start development mode
+npm run dev
+
+# Run tests
+npm test
 ```
-scaffold/
-├── src/
-│   ├── cli/           # CLI commands
-│   ├── services/      # Business logic
-│   ├── models/        # Data models
-│   └── lib/           # Utilities
-├── tests/
-│   ├── unit/          # Unit tests
-│   ├── integration/   # Integration tests
-│   └── contract/      # Contract tests
-├── docker/            # Docker configurations
-└── specs/             # Feature specifications
+
+### Docker Development
+
+```bash
+# Start development container
+docker-compose up dev
+
+# Run tests in container
+docker-compose run test
+
+# Run linting
+docker-compose run lint
+
+# Run type checking
+docker-compose run typecheck
+
+# Build project
+docker-compose run build
 ```
 
 ### Available Scripts
 
 ```bash
-npm run build         # Compile TypeScript
-npm run dev          # Watch mode development
-npm test             # Run test suite
-npm run test:watch   # Run tests in watch mode
-npm run test:coverage # Generate coverage report
-npm run lint         # Run ESLint
-npm run typecheck    # Check TypeScript types
+npm run build          # Compile TypeScript
+npm run dev            # Development mode with watch
+npm test               # Run test suite
+npm run test:watch     # Run tests in watch mode
+npm run test:coverage  # Run tests with coverage
+npm run lint           # Run ESLint
+npm run typecheck      # Run TypeScript compiler checks
+npm run clean          # Clean build artifacts
+```
+
+### Project Structure
+
+```
+src/
+├── models/           # Data models and interfaces
+├── services/         # Business logic services
+├── cli/             # CLI command handlers
+│   ├── commands/    # Individual command implementations
+│   └── completion/  # Shell completion handlers
+└── lib/             # Utility functions
+
+tests/
+├── unit/            # Unit tests
+├── integration/     # Integration tests
+└── contract/        # Contract validation tests
+
+docker/
+├── development/     # Development container config
+├── testing/         # Test container config
+└── production/      # Production container config
 ```
 
 ### Testing
+
+The project uses Jest for testing with comprehensive coverage requirements:
 
 ```bash
 # Run all tests
 npm test
 
-# Run specific test suite
-npm test -- tests/unit
-npm test -- tests/integration
+# Run tests in watch mode
+npm run test:watch
 
-# Run with coverage
+# Generate coverage report
 npm run test:coverage
+
+# Run specific test file
+npm test -- src/services/template.service.test.ts
+
+# Run tests matching pattern
+npm test -- --testNamePattern="validation"
 ```
 
-### Docker Commands
+#### Testing in Docker
 
 ```bash
-# Development with hot-reload
-docker-compose up dev
-
-# Run tests
+# Run full test suite in container
 docker-compose run test
 
-# Run specific npm command
-docker-compose run dev npm run lint
+# Run tests with coverage
+docker-compose run test npm run test:coverage
 
-# Build production image
-docker-compose build prod
+# Run tests in watch mode
+docker-compose run test npm run test:watch
 ```
 
-## Troubleshooting
+### Code Style
 
-### Common Issues
+The project follows strict TypeScript and ESLint rules:
 
-**Template not found:**
-```bash
-scaffold template list  # Check available templates
-```
-
-**Variable substitution not working:**
-- Ensure variables are passed as valid JSON
-- Check template.json for required variables
-
-**Permission errors:**
-```bash
-# Check scaffold directory permissions
-ls -la ~/.scaffold
-
-# Reset permissions if needed
-chmod -R 755 ~/.scaffold
-```
-
-**Validation failures:**
-```bash
-# Run check with verbose output
-scaffold check --verbose
-
-# Auto-fix issues
-scaffold fix
-```
+- **TypeScript**: Strict mode enabled, explicit types for public APIs
+- **File naming**: kebab-case for files, PascalCase for classes
+- **Code style**: Prettier formatting, ESLint rules enforced
+- **Architecture**: Service layer pattern, dependency injection
+- **Error handling**: Comprehensive error messages with recovery suggestions
 
 ## Contributing
 
+We welcome contributions! Please follow these guidelines:
+
+### Getting Started
+
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Make your changes following the code style guidelines
+4. Add tests for new functionality
+5. Ensure all tests pass: `npm test`
+6. Submit a pull request
+
+### Code Quality Requirements
+
+- **Test coverage**: Minimum 80% code coverage required
+- **Type safety**: All code must be properly typed (no `any` types)
+- **Documentation**: Public APIs must be documented
+- **Error handling**: All error conditions must be tested
+- **Performance**: Sub-second response times for all operations
+
+### Development Workflow
+
+```bash
+# Create feature branch
+git checkout -b feature/my-feature
+
+# Make changes and test
+npm run dev
+npm test
+
+# Lint and type check
+npm run lint
+npm run typecheck
+
+# Build to verify
+npm run build
+
+# Commit changes
+git commit -m "feat: add new template validation rule"
+
+# Push and create PR
+git push origin feature/my-feature
+```
+
+### Reporting Issues
+
+When reporting issues, please include:
+
+- Scaffold CLI version (`scaffold --version`)
+- Node.js version (`node --version`)
+- Operating system and version
+- Complete error messages
+- Steps to reproduce the issue
+- Expected vs actual behavior
 
 ## License
 
-MIT License - see LICENSE file for details
+This project is licensed under the ISC License. See the LICENSE file for details.
 
 ## Support
 
-- GitHub Issues: [github.com/your-org/scaffold/issues](https://github.com/your-org/scaffold/issues)
-- Documentation: [scaffold-cli.dev/docs](https://scaffold-cli.dev/docs)
-- Discord: [discord.gg/scaffold](https://discord.gg/scaffold)
+- **Documentation**: [Project Wiki](link-to-wiki)
+- **Issues**: [GitHub Issues](link-to-issues)
+- **Discussions**: [GitHub Discussions](link-to-discussions)
+- **Discord**: [Community Discord](link-to-discord)
+
+---
+
+**Scaffold CLI** - Streamlining project structure management for development teams worldwide.
