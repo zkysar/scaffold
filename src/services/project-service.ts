@@ -256,14 +256,11 @@ export class ProjectService implements IProjectService {
           // Check required folders exist
           for (const folder of template.folders) {
             foldersChecked++;
-            const folderPath = this.variableService.substituteInPath(
-              folder.path,
-              manifest.variables
-            );
-            const fullFolderPath = this.fileService.resolvePath(
-              actualProjectPath,
-              folderPath
-            );
+            // Paths are now relative to rootFolder, so prepend it
+            const rootFolderPath = this.variableService.substituteInPath(template.rootFolder, manifest.variables);
+            const relativePath = this.variableService.substituteInPath(folder.path, manifest.variables);
+            const folderPath = rootFolderPath === '.' ? relativePath : `${rootFolderPath}/${relativePath}`;
+            const fullFolderPath = this.fileService.resolvePath(actualProjectPath, folderPath);
 
             if (!(await this.fileService.exists(fullFolderPath))) {
               errors.push({
@@ -302,14 +299,11 @@ export class ProjectService implements IProjectService {
           // Check required files exist
           for (const file of template.files) {
             filesChecked++;
-            const filePath = this.variableService.substituteInPath(
-              file.path,
-              manifest.variables
-            );
-            const fullFilePath = this.fileService.resolvePath(
-              actualProjectPath,
-              filePath
-            );
+            // Paths are now relative to rootFolder, so prepend it
+            const rootFolderPath = this.variableService.substituteInPath(template.rootFolder, manifest.variables);
+            const relativePath = this.variableService.substituteInPath(file.path, manifest.variables);
+            const filePath = rootFolderPath === '.' ? relativePath : `${rootFolderPath}/${relativePath}`;
+            const fullFilePath = this.fileService.resolvePath(actualProjectPath, filePath);
 
             if (!(await this.fileService.exists(fullFilePath))) {
               errors.push({
@@ -348,14 +342,11 @@ export class ProjectService implements IProjectService {
 
           // Check template rules
           for (const rule of template.rules.rules) {
-            const rulePath = this.variableService.substituteInPath(
-              rule.target,
-              manifest.variables
-            );
-            const fullRulePath = this.fileService.resolvePath(
-              actualProjectPath,
-              rulePath
-            );
+            // Rules targets are also relative to rootFolder now
+            const rootFolderPath = this.variableService.substituteInPath(template.rootFolder, manifest.variables);
+            const relativeTarget = this.variableService.substituteInPath(rule.target, manifest.variables);
+            const rulePath = rootFolderPath === '.' ? relativeTarget : `${rootFolderPath}/${relativeTarget}`;
+            const fullRulePath = this.fileService.resolvePath(actualProjectPath, rulePath);
 
             if (
               rule.type === 'required_file' &&
@@ -555,16 +546,13 @@ export class ProjectService implements IProjectService {
                   foldersFixed++;
                 } else if (error.ruleId === 'required_file') {
                   // Get the template to recreate the file properly
-                  const template = await this.templateService.getTemplate(
-                    error.templateId
-                  );
-                  const file = template.files.find(
-                    f =>
-                      this.variableService.substituteInPath(
-                        f.path,
-                        manifest.variables
-                      ) === error.path
-                  );
+                  const template = await this.templateService.getTemplate(error.templateId);
+                  const file = template.files.find(f => {
+                    const rootFolderPath = this.variableService.substituteInPath(template.rootFolder, manifest.variables);
+                    const relativePath = this.variableService.substituteInPath(f.path, manifest.variables);
+                    const fullPath = rootFolderPath === '.' ? relativePath : `${rootFolderPath}/${relativePath}`;
+                    return fullPath === error.path;
+                  });
 
                   let content = error.fix.content || '';
 
@@ -1174,14 +1162,10 @@ export class ProjectService implements IProjectService {
 
       // Create folders first
       for (const folder of template.folders) {
-        const folderPath = this.variableService.substituteInPath(
-          folder.path,
-          variables
-        );
-        const fullFolderPath = this.fileService.resolvePath(
-          projectPath,
-          folderPath
-        );
+        // Paths are now relative to rootFolder, so prepend it
+        const relativePath = this.variableService.substituteInPath(folder.path, variables);
+        const folderPath = rootFolderPath === '.' ? relativePath : `${rootFolderPath}/${relativePath}`;
+        const fullFolderPath = this.fileService.resolvePath(projectPath, folderPath);
 
         await this.fileService.createDirectory(fullFolderPath, {
           mode: folder.permissions
@@ -1203,14 +1187,10 @@ export class ProjectService implements IProjectService {
 
       // Create files
       for (const file of template.files) {
-        const filePath = this.variableService.substituteInPath(
-          file.path,
-          variables
-        );
-        const fullFilePath = this.fileService.resolvePath(
-          projectPath,
-          filePath
-        );
+        // Paths are now relative to rootFolder, so prepend it
+        const relativePath = this.variableService.substituteInPath(file.path, variables);
+        const filePath = rootFolderPath === '.' ? relativePath : `${rootFolderPath}/${relativePath}`;
+        const fullFilePath = this.fileService.resolvePath(projectPath, filePath);
 
         let content = '';
 
