@@ -23,13 +23,13 @@ export function createNewCommand(): Command {
 
   command
     .description('Create new project from template')
-    .argument('<project>', 'Project name')
+    .argument('[project]', 'Project name')
     .option('-t, --template <template>', 'Template ID or name to use')
     .option('-p, --path <path>', 'Target directory path (defaults to current directory)')
     .option('-v, --variables <variables>', 'JSON string of template variables')
     .option('--verbose', 'Show detailed output')
     .option('--dry-run', 'Show what would be created without creating anything')
-    .action(async (projectName: string, options: NewCommandOptions) => {
+    .action(async (projectName: string | undefined, options: NewCommandOptions) => {
       try {
         await handleNewCommand(projectName, options);
       } catch (error) {
@@ -41,19 +41,77 @@ export function createNewCommand(): Command {
   return command;
 }
 
-async function handleNewCommand(projectName: string, options: NewCommandOptions): Promise<void> {
+async function handleNewCommand(projectName: string | undefined, options: NewCommandOptions): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 
+  // Prompt for project name if not provided
+  let finalProjectName: string;
+  if (!projectName) {
+    const { name } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'name',
+        message: 'Enter project name:',
+        validate: (input: string): string | boolean => {
+          if (!input || input.trim().length === 0) {
+            return 'Project name is required';
+          }
+          // Validate project name (no special characters except dash and underscore)
+          if (!/^[a-zA-Z0-9_-]+$/.test(input.trim())) {
+            return 'Project name can only contain letters, numbers, dashes, and underscores';
+          }
+          return true;
+        },
+      },
+    ]);
+    finalProjectName = name.trim();
+  } else {
+    finalProjectName = projectName;
+  }
+
   if (verbose) {
-    console.log(chalk.blue('Creating new project:'), projectName);
+    console.log(chalk.blue('Creating new project:'), finalProjectName);
     console.log(chalk.blue('Options:'), JSON.stringify(options, null, 2));
   }
 
+  // Prompt for path if not provided
+  let basePath: string;
+  if (!options.path) {
+    const { useCurrentDir } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'useCurrentDir',
+        message: 'Create project in current directory?',
+        default: true,
+      },
+    ]);
+
+    if (!useCurrentDir) {
+      const { customPath } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'customPath',
+          message: 'Enter target directory path:',
+          default: process.cwd(),
+          validate: (input: string): string | boolean => {
+            if (!input || input.trim().length === 0) {
+              return 'Path is required';
+            }
+            return true;
+          },
+        },
+      ]);
+      basePath = customPath.trim();
+    } else {
+      basePath = process.cwd();
+    }
+  } else {
+    basePath = options.path;
+  }
+
   // Determine target path
-  const targetPath = options.path
-    ? resolve(options.path, projectName)
-    : resolve(process.cwd(), projectName);
+  const targetPath = resolve(basePath, finalProjectName);
 
   if (verbose) {
     console.log(chalk.blue('Target path:'), targetPath);
@@ -157,7 +215,7 @@ async function handleNewCommand(projectName: string, options: NewCommandOptions)
 
   if (dryRun) {
     console.log(chalk.yellow('DRY RUN - No files will be created'));
-    console.log(chalk.blue('Would create project:'), projectName);
+    console.log(chalk.blue('Would create project:'), finalProjectName);
     console.log(chalk.blue('Target path:'), targetPath);
     console.log(chalk.blue('Templates:'), templateIds);
     console.log(chalk.blue('Variables:'), variables);
@@ -166,7 +224,7 @@ async function handleNewCommand(projectName: string, options: NewCommandOptions)
 
   try {
     // Create the project
-    const manifest = await projectService.createProject(projectName, templateIds, targetPath, variables);
+    const manifest = await projectService.createProject(finalProjectName, templateIds, targetPath, variables);
 
     console.log(chalk.green('✓ Project created successfully!'));
     console.log(chalk.blue('Project name:'), manifest.projectName);
@@ -180,7 +238,7 @@ async function handleNewCommand(projectName: string, options: NewCommandOptions)
   } catch (error) {
     if (error instanceof Error && error.message === 'Not implemented') {
       console.log(chalk.yellow('✓ Command structure created (service implementation pending)'));
-      console.log(chalk.blue('Would create project:'), projectName);
+      console.log(chalk.blue('Would create project:'), finalProjectName);
       console.log(chalk.blue('Target path:'), targetPath);
       console.log(chalk.blue('Templates:'), templateIds);
       return;
