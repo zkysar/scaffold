@@ -380,6 +380,9 @@ export class VariableSubstitutionService
       throw new Error(`Circular reference detected for variable: ${varName}`);
     }
 
+    // Track this variable as being processed to detect circular references
+    processedVars.add(varName);
+
     let value = this.resolveVariableValue(varName, context.variables);
 
     // Try special variables
