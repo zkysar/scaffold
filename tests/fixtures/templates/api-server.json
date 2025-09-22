@@ -1,0 +1,92 @@
+{
+  "name": "api-server",
+  "version": "1.0.0",
+  "description": "REST API server template for testing",
+  "folders": [
+    "src/routes",
+    "src/controllers",
+    "src/models",
+    "src/middleware",
+    "tests/unit",
+    "tests/integration",
+    "config"
+  ],
+  "files": [
+    {
+      "path": "src/server.js",
+      "template": "const express = require('express');\nconst cors = require('cors');\nconst helmet = require('helmet');\nconst config = require('../config/config.json');\n\nconst app = express();\nconst PORT = process.env.PORT || {{port}};\n\n// Middleware\napp.use(helmet());\napp.use(cors());\napp.use(express.json());\napp.use(express.urlencoded({ extended: true }));\n\n// Routes\napp.get('/health', (req, res) => {\n  res.json({ status: 'ok', service: '{{projectName}}' });\n});\n\n// Error handling\napp.use((err, req, res, next) => {\n  console.error(err.stack);\n  res.status(500).send('Something broke!');\n});\n\napp.listen(PORT, () => {\n  console.log(`{{projectName}} server running on port ${PORT}`);\n});\n\nmodule.exports = app;"
+    },
+    {
+      "path": "config/config.json",
+      "template": "{\n  \"service\": \"{{projectName}}\",\n  \"port\": {{port}},\n  \"database\": {\n    \"type\": \"{{databaseType}}\",\n    \"host\": \"localhost\",\n    \"port\": {{databasePort}},\n    \"name\": \"{{projectName}}_db\"\n  },\n  \"cors\": {\n    \"origin\": \"*\",\n    \"credentials\": true\n  },\n  \"rateLimit\": {\n    \"windowMs\": 900000,\n    \"max\": 100\n  }\n}"
+    },
+    {
+      "path": "src/routes/index.js",
+      "template": "const express = require('express');\nconst router = express.Router();\n\nrouter.get('/', (req, res) => {\n  res.json({\n    message: 'Welcome to {{projectName}} API',\n    version: '1.0.0',\n    endpoints: [\n      'GET /health',\n      'GET /api/v1/items',\n      'POST /api/v1/items',\n      'GET /api/v1/items/:id',\n      'PUT /api/v1/items/:id',\n      'DELETE /api/v1/items/:id'\n    ]\n  });\n});\n\nmodule.exports = router;"
+    },
+    {
+      "path": "src/controllers/itemController.js",
+      "template": "class ItemController {\n  constructor() {\n    this.items = [];\n  }\n\n  getAllItems(req, res) {\n    res.json(this.items);\n  }\n\n  getItemById(req, res) {\n    const item = this.items.find(i => i.id === req.params.id);\n    if (!item) {\n      return res.status(404).json({ error: 'Item not found' });\n    }\n    res.json(item);\n  }\n\n  createItem(req, res) {\n    const newItem = {\n      id: Date.now().toString(),\n      ...req.body,\n      createdAt: new Date()\n    };\n    this.items.push(newItem);\n    res.status(201).json(newItem);\n  }\n\n  updateItem(req, res) {\n    const index = this.items.findIndex(i => i.id === req.params.id);\n    if (index === -1) {\n      return res.status(404).json({ error: 'Item not found' });\n    }\n    this.items[index] = { ...this.items[index], ...req.body };\n    res.json(this.items[index]);\n  }\n\n  deleteItem(req, res) {\n    const index = this.items.findIndex(i => i.id === req.params.id);\n    if (index === -1) {\n      return res.status(404).json({ error: 'Item not found' });\n    }\n    this.items.splice(index, 1);\n    res.status(204).send();\n  }\n}\n\nmodule.exports = new ItemController();"
+    },
+    {
+      "path": "package.json",
+      "template": "{\n  \"name\": \"{{projectName}}\",\n  \"version\": \"1.0.0\",\n  \"description\": \"{{description}}\",\n  \"main\": \"src/server.js\",\n  \"scripts\": {\n    \"start\": \"node src/server.js\",\n    \"dev\": \"nodemon src/server.js\",\n    \"test\": \"jest\",\n    \"test:watch\": \"jest --watch\",\n    \"test:coverage\": \"jest --coverage\"\n  },\n  \"dependencies\": {\n    \"express\": \"^4.18.0\",\n    \"cors\": \"^2.8.5\",\n    \"helmet\": \"^7.0.0\"\n  },\n  \"devDependencies\": {\n    \"nodemon\": \"^3.0.0\",\n    \"jest\": \"^29.0.0\",\n    \"supertest\": \"^6.3.0\"\n  }\n}"
+    },
+    {
+      "path": "Dockerfile",
+      "template": "FROM node:{{nodeVersion}}-alpine\n\nWORKDIR /app\n\nCOPY package*.json ./\nRUN npm ci --only=production\n\nCOPY . .\n\nEXPOSE {{port}}\n\nUSER node\n\nCMD [\"node\", \"src/server.js\"]"
+    },
+    {
+      "path": "docker-compose.yml",
+      "template": "version: '3.8'\n\nservices:\n  api:\n    build: .\n    ports:\n      - \"{{port}}:{{port}}\"\n    environment:\n      - NODE_ENV=production\n      - PORT={{port}}\n    depends_on:\n      - {{databaseType}}\n    networks:\n      - app-network\n\n  {{databaseType}}:\n    image: {{databaseType}}:latest\n    ports:\n      - \"{{databasePort}}:{{databasePort}}\"\n    environment:\n      - POSTGRES_DB={{projectName}}_db\n      - POSTGRES_USER=admin\n      - POSTGRES_PASSWORD=password\n    volumes:\n      - db-data:/var/lib/postgresql/data\n    networks:\n      - app-network\n\nvolumes:\n  db-data:\n\nnetworks:\n  app-network:\n    driver: bridge"
+    }
+  ],
+  "variables": [
+    {
+      "name": "projectName",
+      "type": "string",
+      "required": true,
+      "prompt": "Project name"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "required": false,
+      "default": "REST API server",
+      "prompt": "Project description"
+    },
+    {
+      "name": "port",
+      "type": "number",
+      "required": false,
+      "default": 3000,
+      "prompt": "Server port"
+    },
+    {
+      "name": "databaseType",
+      "type": "string",
+      "required": false,
+      "default": "postgres",
+      "prompt": "Database type (postgres, mysql, mongodb)"
+    },
+    {
+      "name": "databasePort",
+      "type": "number",
+      "required": false,
+      "default": 5432,
+      "prompt": "Database port"
+    },
+    {
+      "name": "nodeVersion",
+      "type": "string",
+      "required": false,
+      "default": "20",
+      "prompt": "Node.js version"
+    }
+  ],
+  "rules": {
+    "strict": false,
+    "allowExtraFiles": true,
+    "allowExtraFolders": true
+  }
+}
