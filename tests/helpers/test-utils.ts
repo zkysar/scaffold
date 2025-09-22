@@ -44,9 +44,12 @@ export function delay(ms: number): Promise<void> {
  */
 export function createCallTracker<T extends (...args: any[]) => any>() {
   const calls: Parameters<T>[] = [];
-  const mockFn = jest.fn((...args: Parameters<T>) => {
-    calls.push(args);
-  }) as jest.MockedFunction<T>;
+  const mockFn = jest.fn<ReturnType<T>, Parameters<T>>(
+    (...args: Parameters<T>): ReturnType<T> => {
+      calls.push(args);
+      return undefined as ReturnType<T>;
+    }
+  );
 
   return {
     mockFn,
@@ -78,8 +81,8 @@ export function assertDefined<T>(
  */
 export function createMockImplementation<T extends Record<string, any>>(
   partial: Partial<T>
-): T {
-  return partial as T;
+): jest.Mocked<T> {
+  return partial as jest.Mocked<T>;
 }
 
 /**

@@ -459,12 +459,16 @@ describe('ConfigurationService', () => {
     });
 
     it('should save configuration to correct file', async () => {
-      await configService.set('preferences.test', true, ConfigLevel.GLOBAL);
+      await configService.set(
+        'preferences.confirmDestructive',
+        true,
+        ConfigLevel.GLOBAL
+      );
       await configService.saveConfiguration(ConfigLevel.GLOBAL);
 
       // Configuration should be persisted (we can't easily test file write with mockFs)
       const config = configService.getAll(ConfigLevel.GLOBAL);
-      expect(config.preferences.test).toBe(true);
+      expect(config.preferences.confirmDestructive).toBe(true);
     });
 
     it('should handle concurrent saves to same scope', async () => {

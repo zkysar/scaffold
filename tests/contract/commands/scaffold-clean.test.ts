@@ -284,12 +284,8 @@ describe('scaffold clean command contract', () => {
       });
       mockFs(mockFileSystem);
 
-      // Mock the cleanup function to return 0 items
-      const originalSetTimeout = global.setTimeout;
-      global.setTimeout = jest.fn((callback: Function) => {
-        callback();
-        return 123 as any;
-      });
+      // Use Jest fake timers for async operations
+      jest.useFakeTimers();
 
       // Act
       const command = createCleanCommand();
@@ -299,8 +295,8 @@ describe('scaffold clean command contract', () => {
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('No files found to clean');
 
-      // Restore
-      global.setTimeout = originalSetTimeout;
+      // Restore real timers
+      jest.useRealTimers();
     });
 
     it('should handle cleanup when directories do not exist', async () => {
@@ -310,12 +306,8 @@ describe('scaffold clean command contract', () => {
       });
       mockFs(mockFileSystem);
 
-      // Mock the cleanup function to return 0 items
-      const originalSetTimeout = global.setTimeout;
-      global.setTimeout = jest.fn((callback: Function) => {
-        callback();
-        return 123 as any;
-      });
+      // Use Jest fake timers for async operations
+      jest.useFakeTimers();
 
       // Act
       const command = createCleanCommand();
@@ -325,8 +317,8 @@ describe('scaffold clean command contract', () => {
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('No files found to clean');
 
-      // Restore
-      global.setTimeout = originalSetTimeout;
+      // Restore real timers
+      jest.useRealTimers();
     });
   });
 
@@ -416,12 +408,8 @@ describe('scaffold clean command contract', () => {
       });
       mockFs(mockFileSystem);
 
-      // Mock the cleanup function to return 0 items for empty directories
-      const originalSetTimeout = global.setTimeout;
-      global.setTimeout = jest.fn((callback: Function) => {
-        callback();
-        return 123 as any;
-      });
+      // Use Jest fake timers for async operations
+      jest.useFakeTimers();
 
       // Act
       const command = createCleanCommand();
@@ -431,8 +419,8 @@ describe('scaffold clean command contract', () => {
       expect(result.code).toBe(0);
       expect(mockConsole.logs.join(' ')).toContain('No files found to clean');
 
-      // Restore
-      global.setTimeout = originalSetTimeout;
+      // Restore real timers
+      jest.useRealTimers();
     });
 
     it('should handle permission issues gracefully', async () => {
