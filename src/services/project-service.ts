@@ -19,6 +19,8 @@ import type { ITemplateService } from './template-service';
 import type { IFileSystemService } from './file-system.service';
 import type { IConfigurationService } from './configuration.service';
 import { VariableSubstitutionService } from './variable-substitution.service';
+import { TemplateIdentifierService } from './template-identifier-service';
+import { shortSHA } from '../lib/sha';
 
 export interface IProjectService {
   /**
@@ -76,6 +78,7 @@ export interface IProjectService {
 
 export class ProjectService implements IProjectService {
   private readonly variableService: VariableSubstitutionService;
+  private readonly identifierService: TemplateIdentifierService;
 
   constructor(
     private readonly templateService: ITemplateService,
@@ -83,6 +86,7 @@ export class ProjectService implements IProjectService {
     private readonly configService?: IConfigurationService
   ) {
     this.variableService = new VariableSubstitutionService(this.fileService);
+    this.identifierService = TemplateIdentifierService.getInstance();
   }
 
   async createProject(
@@ -109,9 +113,12 @@ export class ProjectService implements IProjectService {
     try {
       // Validate all templates exist and collect them
       const templates: Template[] = [];
+      const resolvedIdentifiers: string[] = [];
       for (const templateId of templateIds) {
         const template = await this.templateService.getTemplate(templateId);
         templates.push(template);
+        // Track which identifier was used (could be alias or SHA)
+        resolvedIdentifiers.push(templateId);
       }
 
       // Check for rootFolder conflicts between templates
@@ -151,18 +158,18 @@ export class ProjectService implements IProjectService {
       await this.ensureProjectDirectory(projectPath);
 
       // Initialize project manifest
-      const manifest = this.initializeProjectManifest(
-        projectName,
-        templateIds[0]
-      );
+      const manifest = this.initializeProjectManifest(projectName, templates[0].id);
 
       // Apply each template
-      for (const template of templates) {
+      for (let i = 0; i < templates.length; i++) {
+        const template = templates[i];
+        const originalIdentifier = resolvedIdentifiers[i];
         await this.applyTemplate(template, projectPath, allVariables);
 
         // Track applied template in manifest
         const appliedTemplate: AppliedTemplate = {
-          templateId: template.id,
+          templateSha: template.id,
+          templateAlias: template.aliases?.includes(originalIdentifier) ? originalIdentifier : undefined,
           name: template.name,
           version: template.version,
           rootFolder: this.variableService.substituteInPath(
@@ -185,7 +192,7 @@ export class ProjectService implements IProjectService {
         id: randomUUID(),
         timestamp: new Date().toISOString(),
         action: 'create',
-        templates: templateIds,
+        templates: templates.map(t => t.id),
         user: process.env.USER || 'unknown',
         changes: [
           {
@@ -249,9 +256,7 @@ export class ProjectService implements IProjectService {
         templatesChecked++;
 
         try {
-          const template = await this.templateService.getTemplate(
-            appliedTemplate.templateId
-          );
+          const template = await this.templateService.getTemplate(appliedTemplate.templateSha);
 
           // Check required folders exist
           for (const folder of template.folders) {
@@ -266,7 +271,7 @@ export class ProjectService implements IProjectService {
               errors.push({
                 id: randomUUID(),
                 severity: 'error',
-                templateId: template.id,
+                templateSha: template.id,
                 ruleId: 'required_folder',
                 path: folderPath,
                 expected: 'Directory to exist',
@@ -281,7 +286,7 @@ export class ProjectService implements IProjectService {
               errors.push({
                 id: randomUUID(),
                 severity: 'error',
-                templateId: template.id,
+                templateSha: template.id,
                 ruleId: 'required_folder',
                 path: folderPath,
                 expected: 'Path to be a directory',
@@ -309,7 +314,7 @@ export class ProjectService implements IProjectService {
               errors.push({
                 id: randomUUID(),
                 severity: 'error',
-                templateId: template.id,
+                templateSha: template.id,
                 ruleId: 'required_file',
                 path: filePath,
                 expected: 'File to exist',
@@ -325,7 +330,7 @@ export class ProjectService implements IProjectService {
               errors.push({
                 id: randomUUID(),
                 severity: 'error',
-                templateId: template.id,
+                templateSha: template.id,
                 ruleId: 'required_file',
                 path: filePath,
                 expected: 'Path to be a file',
@@ -355,7 +360,7 @@ export class ProjectService implements IProjectService {
               const validationError: ValidationError = {
                 id: randomUUID(),
                 severity: rule.severity === 'error' ? 'error' : 'critical',
-                templateId: template.id,
+                templateSha: template.id,
                 ruleId: rule.id,
                 path: rulePath,
                 expected: rule.description,
@@ -374,7 +379,7 @@ export class ProjectService implements IProjectService {
               const validationError: ValidationError = {
                 id: randomUUID(),
                 severity: rule.severity === 'error' ? 'error' : 'critical',
-                templateId: template.id,
+                templateSha: template.id,
                 ruleId: rule.id,
                 path: rulePath,
                 expected: rule.description,
@@ -393,7 +398,7 @@ export class ProjectService implements IProjectService {
               const validationError: ValidationError = {
                 id: randomUUID(),
                 severity: rule.severity === 'error' ? 'error' : 'critical',
-                templateId: template.id,
+                templateSha: template.id,
                 ruleId: rule.id,
                 path: rulePath,
                 expected: 'File should not exist',
@@ -420,27 +425,22 @@ export class ProjectService implements IProjectService {
           warnings.push({
             id: randomUUID(),
             template: appliedTemplate.name,
-            path: appliedTemplate.templateId,
-            message: `Template '${appliedTemplate.templateId}' could not be loaded`,
-            suggestion:
-              error instanceof Error ? error.message : 'Unknown error',
+            path: shortSHA(appliedTemplate.templateSha),
+            message: `Template '${shortSHA(appliedTemplate.templateSha)}' could not be loaded`,
+            suggestion: error instanceof Error ? error.message : 'Unknown error'
           });
         }
       }
 
       // Check for extra files if strictMode is enabled in any template
-      const hasStrictTemplate = manifest.templates.some(
-        async appliedTemplate => {
-          try {
-            const template = await this.templateService.getTemplate(
-              appliedTemplate.templateId
-            );
-            return template.rules.strictMode;
-          } catch {
-            return false;
-          }
+      const hasStrictTemplate = manifest.templates.some(async (appliedTemplate) => {
+        try {
+          const template = await this.templateService.getTemplate(appliedTemplate.templateSha);
+          return template.rules.strictMode;
+        } catch {
+          return false;
         }
-      );
+      });
 
       if (hasStrictTemplate) {
         warnings.push({
@@ -472,9 +472,7 @@ export class ProjectService implements IProjectService {
         projectId: manifest.id,
         projectName: manifest.projectName,
         projectPath: actualProjectPath,
-        templates: manifest.templates
-          .filter(t => t.status === 'active')
-          .map(t => t.templateId),
+        templates: manifest.templates.filter(t => t.status === 'active').map(t => t.templateSha),
         valid: errors.length === 0,
         errors,
         warnings,
@@ -546,7 +544,7 @@ export class ProjectService implements IProjectService {
                   foldersFixed++;
                 } else if (error.ruleId === 'required_file') {
                   // Get the template to recreate the file properly
-                  const template = await this.templateService.getTemplate(error.templateId);
+                  const template = await this.templateService.getTemplate(error.templateSha);
                   const file = template.files.find(f => {
                     const rootFolderPath = this.variableService.substituteInPath(template.rootFolder, manifest.variables);
                     const relativePath = this.variableService.substituteInPath(f.path, manifest.variables);
@@ -561,9 +559,7 @@ export class ProjectService implements IProjectService {
                       content = file.content;
                     } else if (file.sourcePath) {
                       // Read from template source file
-                      const templatePath = await this.findTemplateById(
-                        template.id
-                      );
+                      const templatePath = await this.findTemplateBySHA(template.id);
                       if (templatePath) {
                         const sourceFilePath = this.fileService.resolvePath(
                           templatePath,
@@ -668,9 +664,7 @@ export class ProjectService implements IProjectService {
           projectId: manifest.id,
           projectName: manifest.projectName,
           projectPath: actualProjectPath,
-          templates: manifest.templates
-            .filter(t => t.status === 'active')
-            .map(t => t.templateId),
+          templates: manifest.templates.filter(t => t.status === 'active').map(t => t.templateSha),
           valid: remainingErrors.length === 0,
           errors: remainingErrors,
           warnings,
@@ -730,9 +724,12 @@ export class ProjectService implements IProjectService {
 
       // Validate all templates exist and collect them
       const templates: Template[] = [];
+      const resolvedIdentifiers: string[] = [];
       for (const templateId of templateIds) {
         const template = await this.templateService.getTemplate(templateId);
         templates.push(template);
+        // Track which identifier was used (could be alias or SHA)
+        resolvedIdentifiers.push(templateId);
       }
 
       // Check for rootFolder conflicts with existing templates
@@ -782,12 +779,15 @@ export class ProjectService implements IProjectService {
       }
 
       // Apply each new template
-      for (const template of templates) {
+      for (let i = 0; i < templates.length; i++) {
+        const template = templates[i];
+        const originalIdentifier = resolvedIdentifiers[i];
         await this.applyTemplate(template, actualProjectPath, allVariables);
 
         // Track applied template in manifest
         const appliedTemplate: AppliedTemplate = {
-          templateId: template.id,
+          templateSha: template.id,
+          templateAlias: template.aliases?.includes(originalIdentifier) ? originalIdentifier : undefined,
           name: template.name,
           version: template.version,
           rootFolder: this.variableService.substituteInPath(
@@ -810,14 +810,14 @@ export class ProjectService implements IProjectService {
         id: randomUUID(),
         timestamp: new Date().toISOString(),
         action: 'extend',
-        templates: templateIds,
+        templates: templates.map(t => t.id),
         user: process.env.USER || 'unknown',
-        changes: templateIds.map(templateId => ({
+        changes: templates.map(template => ({
           id: randomUUID(),
           type: 'added',
-          path: templateId,
-          reason: 'Template extended to project',
-        })),
+          path: template.id,
+          reason: 'Template extended to project'
+        }))
       };
       manifest.history.push(historyEntry);
 
@@ -1094,16 +1094,13 @@ export class ProjectService implements IProjectService {
   /**
    * Initialize a new project manifest
    */
-  initializeProjectManifest(
-    projectName: string,
-    templateId: string
-  ): ProjectManifest {
+  initializeProjectManifest(projectName: string, templateSha: string): ProjectManifest {
     if (!projectName || typeof projectName !== 'string') {
       throw new Error('Project name must be a non-empty string');
     }
 
-    if (!templateId || typeof templateId !== 'string') {
-      throw new Error('Template ID must be a non-empty string');
+    if (!templateSha || typeof templateSha !== 'string') {
+      throw new Error('Template SHA must be a non-empty string');
     }
 
     const now = new Date().toISOString();
@@ -1199,7 +1196,7 @@ export class ProjectService implements IProjectService {
           content = file.content;
         } else if (file.sourcePath) {
           // Read from template source file
-          const templatePath = await this.findTemplateById(template.id);
+          const templatePath = await this.findTemplateBySHA(template.id);
           if (!templatePath) {
             throw new Error(
               `Template path not found for template '${template.id}'`
@@ -1239,17 +1236,13 @@ export class ProjectService implements IProjectService {
   /**
    * Find template directory by ID
    */
-  private async findTemplateById(templateId: string): Promise<string | null> {
+  private async findTemplateBySHA(templateSha: string): Promise<string | null> {
     try {
-      await this.templateService.getTemplate(templateId);
+      await this.templateService.getTemplate(templateSha);
       // The TemplateService should provide the path, but for now we'll reconstruct it
       // This is based on the pattern seen in TemplateService
-      const templatesDir = this.fileService.resolvePath(
-        os.homedir(),
-        '.scaffold',
-        'templates'
-      );
-      return this.fileService.resolvePath(templatesDir, templateId);
+      const templatesDir = this.fileService.resolvePath(os.homedir(), '.scaffold', 'templates');
+      return this.fileService.resolvePath(templatesDir, templateSha);
     } catch (error) {
       return null;
     }

@@ -29,14 +29,15 @@ export interface ConflictRecord {
 }
 
 export interface AppliedTemplate {
-  templateId: string; // Reference to Template.id
-  name: string; // Template name (for display)
-  version: string; // Version applied
-  rootFolder: string; // Root folder where template was applied
-  appliedBy?: string; // User who applied the template
-  appliedAt: string; // ISO 8601 date
-  status: 'active' | 'removed'; // Current status
-  conflicts: ConflictRecord[]; // Recorded conflicts
+  templateSha: string;            // SHA-256 hash of the template
+  templateAlias?: string;         // Optional: alias used when applied
+  name: string;                   // Template name (for display)
+  version: string;                // Version applied
+  rootFolder: string;             // Root folder where template was applied
+  appliedBy?: string;             // User who applied the template
+  appliedAt: string;              // ISO 8601 date
+  status: "active" | "removed";   // Current status
+  conflicts: ConflictRecord[];    // Recorded conflicts
 }
 
 export interface ProjectManifest {
