@@ -1,0 +1,110 @@
+{
+  "name": "nodejs-api",
+  "version": "1.0.0",
+  "description": "Express.js REST API with TypeScript",
+  "author": "Scaffold CLI",
+  "folders": [
+    {
+      "path": "src",
+      "description": "Source code"
+    },
+    {
+      "path": "src/routes",
+      "description": "API routes"
+    },
+    {
+      "path": "src/middleware",
+      "description": "Express middleware"
+    },
+    {
+      "path": "src/models",
+      "description": "Data models"
+    },
+    {
+      "path": "tests",
+      "description": "Test files"
+    }
+  ],
+  "files": [
+    {
+      "path": "package.json",
+      "template": "files/package.json",
+      "description": "NPM configuration"
+    },
+    {
+      "path": "tsconfig.json",
+      "template": "files/tsconfig.json",
+      "description": "TypeScript configuration"
+    },
+    {
+      "path": "README.md",
+      "template": "files/README.md",
+      "description": "Documentation"
+    },
+    {
+      "path": ".gitignore",
+      "template": "files/.gitignore",
+      "description": "Git ignore"
+    },
+    {
+      "path": ".env.example",
+      "template": "files/.env.example",
+      "description": "Environment variables example"
+    },
+    {
+      "path": "src/server.ts",
+      "template": "files/server.ts",
+      "description": "Server entry point"
+    },
+    {
+      "path": "src/app.ts",
+      "template": "files/app.ts",
+      "description": "Express app configuration"
+    },
+    {
+      "path": "src/routes/health.ts",
+      "template": "files/health.ts",
+      "description": "Health check route"
+    },
+    {
+      "path": "src/middleware/error.ts",
+      "template": "files/error.ts",
+      "description": "Error handling middleware"
+    },
+    {
+      "path": "Dockerfile",
+      "template": "files/Dockerfile",
+      "description": "Docker configuration"
+    }
+  ],
+  "variables": [
+    {
+      "name": "PROJECT_NAME",
+      "description": "API project name",
+      "default": "my-api",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    {
+      "name": "API_PREFIX",
+      "description": "API route prefix",
+      "default": "/api/v1"
+    },
+    {
+      "name": "DATABASE_TYPE",
+      "description": "Database type (postgres, mysql, mongodb)",
+      "default": "postgres"
+    },
+    {
+      "name": "PORT",
+      "description": "Server port",
+      "default": "3000",
+      "pattern": "^[0-9]{4,5}$"
+    }
+  ],
+  "rules": {
+    "fileNaming": "kebab-case",
+    "maxFileSize": 100000,
+    "allowedExtensions": [".ts", ".js", ".json", ".md", ".env"],
+    "requiredFiles": ["package.json", "tsconfig.json", "README.md"]
+  }
+}

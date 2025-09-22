@@ -1,0 +1,143 @@
+{
+  "name": "react-typescript",
+  "version": "1.0.0",
+  "description": "Modern React application with TypeScript, testing, and best practices",
+  "author": "Scaffold CLI",
+  "folders": [
+    {
+      "path": "src",
+      "description": "Source code directory"
+    },
+    {
+      "path": "src/components",
+      "description": "React components"
+    },
+    {
+      "path": "src/hooks",
+      "description": "Custom React hooks"
+    },
+    {
+      "path": "src/services",
+      "description": "API and service layer"
+    },
+    {
+      "path": "src/utils",
+      "description": "Utility functions"
+    },
+    {
+      "path": "src/types",
+      "description": "TypeScript type definitions"
+    },
+    {
+      "path": "src/__tests__",
+      "description": "Test files"
+    },
+    {
+      "path": "public",
+      "description": "Public assets"
+    }
+  ],
+  "files": [
+    {
+      "path": "package.json",
+      "template": "files/package.json",
+      "description": "NPM package configuration"
+    },
+    {
+      "path": "tsconfig.json",
+      "template": "files/tsconfig.json",
+      "description": "TypeScript configuration"
+    },
+    {
+      "path": "README.md",
+      "template": "files/README.md",
+      "description": "Project documentation"
+    },
+    {
+      "path": ".gitignore",
+      "template": "files/.gitignore",
+      "description": "Git ignore patterns"
+    },
+    {
+      "path": ".prettierrc",
+      "template": "files/.prettierrc",
+      "description": "Prettier configuration"
+    },
+    {
+      "path": "src/App.tsx",
+      "template": "files/App.tsx",
+      "description": "Main App component"
+    },
+    {
+      "path": "src/index.tsx",
+      "template": "files/index.tsx",
+      "description": "Application entry point"
+    },
+    {
+      "path": "src/index.css",
+      "template": "files/index.css",
+      "description": "Global styles"
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "template": "files/Header.tsx",
+      "description": "Header component"
+    },
+    {
+      "path": "src/hooks/useCounter.ts",
+      "template": "files/useCounter.ts",
+      "description": "Example custom hook"
+    },
+    {
+      "path": "src/types/index.ts",
+      "template": "files/types.ts",
+      "description": "Type definitions"
+    },
+    {
+      "path": "public/index.html",
+      "template": "files/index.html",
+      "description": "HTML template"
+    },
+    {
+      "path": "jest.config.js",
+      "template": "files/jest.config.js",
+      "description": "Jest configuration"
+    },
+    {
+      "path": "src/__tests__/App.test.tsx",
+      "template": "files/App.test.tsx",
+      "description": "App component tests"
+    }
+  ],
+  "variables": [
+    {
+      "name": "PROJECT_NAME",
+      "description": "Name of the React project",
+      "default": "my-react-app",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    {
+      "name": "AUTHOR",
+      "description": "Project author name",
+      "default": "Your Name"
+    },
+    {
+      "name": "DESCRIPTION",
+      "description": "Project description",
+      "default": "A React TypeScript application"
+    },
+    {
+      "name": "PORT",
+      "description": "Development server port",
+      "default": "3000",
+      "pattern": "^[0-9]{4,5}$"
+    }
+  ],
+  "rules": {
+    "fileNaming": "kebab-case",
+    "componentNaming": "PascalCase",
+    "maxFileSize": 500000,
+    "allowedExtensions": [".ts", ".tsx", ".js", ".jsx", ".json", ".css", ".html", ".md"],
+    "requiredFiles": ["package.json", "tsconfig.json", "README.md"]
+  }
+}

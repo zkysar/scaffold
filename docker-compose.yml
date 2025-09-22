@@ -47,6 +47,58 @@ services:
     profiles:
       - test
 
+  # Integration testing service with isolated environment
+  test-integration:
+    build:
+      context: .
+      dockerfile: docker/development/Dockerfile
+    container_name: scaffold-test-integration
+    environment:
+      - NODE_ENV=test
+      - CI=true
+      - TEST_TYPE=integration
+    volumes:
+      # Mount source and test files
+      - .:/app
+      # Preserve node_modules in container
+      - /app/node_modules
+      # Mount test fixtures
+      - ./tests/fixtures:/app/tests/fixtures:ro
+      # Mount for test results and coverage
+      - ./coverage:/app/coverage
+      # Create isolated workspace for test projects
+      - test-workspace:/tmp/scaffold-test
+    working_dir: /app
+    command: npm run test:integration
+    networks:
+      - scaffold-network
+    profiles:
+      - test-integration
+    privileged: true  # Needed for Docker-in-Docker if tests create containers
+
+  # CLI testing service - runs actual CLI commands
+  test-cli:
+    build:
+      context: .
+      dockerfile: docker/testing/Dockerfile
+    container_name: scaffold-test-cli
+    environment:
+      - NODE_ENV=production
+      - TEST_MODE=true
+    volumes:
+      # Mount built CLI
+      - ./dist:/app/dist:ro
+      # Mount test templates
+      - ./tests/fixtures/templates:/root/.scaffold/templates:ro
+      # Test workspace
+      - cli-test-workspace:/workspace
+    working_dir: /workspace
+    command: /app/dist/cli/index.js
+    networks:
+      - scaffold-network
+    profiles:
+      - test-cli
+
   # Production service
   prod:
     build:
@@ -129,4 +181,10 @@ volumes:
     driver: local
   # Named volume for build artifacts
   scaffold_dist:
+    driver: local
+  # Test workspace for integration tests
+  test-workspace:
+    driver: local
+  # CLI test workspace
+  cli-test-workspace:
     driver: local

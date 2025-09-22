@@ -7,3 +7,4 @@ coverage/
 docker/
 tests/
 jest.config.js
+demo-templates/
