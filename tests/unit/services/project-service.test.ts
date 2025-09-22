@@ -123,7 +123,7 @@ describe('ProjectService', () => {
     updated: '2023-01-01T00:00:00.000Z',
     templates: [
       {
-        templateId: 'test-template-123',
+        templateSha: 'test-template-123',
         name: 'Test Template',
         version: '1.0.0',
         rootFolder: 'my-app',
@@ -248,7 +248,7 @@ describe('ProjectService', () => {
       expect(manifest).toBeDefined();
       expect(manifest.projectName).toBe(projectName);
       expect(manifest.templates).toHaveLength(1);
-      expect(manifest.templates[0].templateId).toBe('test-template-123');
+      expect(manifest.templates[0].templateSha).toBe('test-template-123');
       expect(manifest.variables.PROJECT_NAME).toBe(projectName);
       expect(manifest.history).toHaveLength(1);
       expect(manifest.history[0].action).toBe('create');
@@ -524,14 +524,14 @@ describe('ProjectService', () => {
 
       expect(mockFileService.createDirectory).toHaveBeenCalled();
       expect(mockFileService.createFile).toHaveBeenCalled();
-      expect(report.suggestions.some(s => s.includes('Fixed'))).toBe(true);
+      expect(report.suggestions?.some(s => s.includes('Fixed'))).toBe(true);
     });
 
     it('should run in dry-run mode without making changes', async () => {
       const report = await projectService.fixProject(testProjectPath, true);
 
       expect(mockFileService.setDryRun).toHaveBeenCalledWith(true);
-      expect(report.suggestions.some(s => s.includes('dry run'))).toBe(true);
+      expect(report.suggestions?.some(s => s.includes('dry run'))).toBe(true);
     });
 
     it('should skip non-auto-fixable errors', async () => {
@@ -607,7 +607,7 @@ describe('ProjectService', () => {
       );
 
       expect(manifest.templates).toHaveLength(2);
-      expect(manifest.templates[1].templateId).toBe('extension-template');
+      expect(manifest.templates[1].templateSha).toBe('extension-template');
       expect(manifest.variables.NEW_VAR).toBe('value');
       expect(manifest.history.length).toBeGreaterThan(1);
       expect(manifest.history[manifest.history.length - 1].action).toBe(
@@ -702,7 +702,7 @@ describe('ProjectService', () => {
     });
 
     it('should run in dry-run mode', async () => {
-      mockFileService.isDryRun = true;
+      mockFileService.setDryRun(true);
 
       await projectService.cleanProject(testProjectPath);
 

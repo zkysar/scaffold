@@ -461,10 +461,12 @@ describe('TemplateService', () => {
     it('should validate folder paths are relative', async () => {
       const invalidTemplate = {
         ...mockTemplate,
-        folders: [{
-          path: '/absolute/path/src',
-          description: 'Invalid folder'
-        }]
+        folders: [
+          {
+            path: '/absolute/path/src',
+            description: 'Invalid folder',
+          },
+        ],
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
@@ -475,10 +477,12 @@ describe('TemplateService', () => {
     it('should validate file paths are relative', async () => {
       const invalidTemplate = {
         ...mockTemplate,
-        files: [{
-          path: '/absolute/file.txt',
-          content: 'test'
-        }]
+        files: [
+          {
+            path: '/absolute/file.txt',
+            content: 'test',
+          },
+        ],
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
@@ -489,10 +493,12 @@ describe('TemplateService', () => {
     it('should reject paths with directory traversal', async () => {
       const invalidTemplate = {
         ...mockTemplate,
-        files: [{
-          path: '../outside/file.txt',
-          content: 'test'
-        }]
+        files: [
+          {
+            path: '../outside/file.txt',
+            content: 'test',
+          },
+        ],
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
@@ -503,10 +509,12 @@ describe('TemplateService', () => {
     it('should validate file has content or sourcePath', async () => {
       const invalidTemplate = {
         ...mockTemplate,
-        files: [{
-          path: 'empty.txt'
-          // Missing content and sourcePath
-        }]
+        files: [
+          {
+            path: 'empty.txt',
+            // Missing content and sourcePath
+          },
+        ],
       };
 
       const errors = await templateService.validateTemplate(invalidTemplate);
@@ -864,9 +872,16 @@ describe('TemplateService', () => {
 
   describe('installTemplate', () => {
     it('should throw not implemented error', async () => {
-      await expect(templateService.installTemplate()).rejects.toThrow(
-        'Remote template installation not yet implemented'
-      );
+      const mockTemplateSource = {
+        type: 'registry' as const,
+        url: 'https://example.com/templates',
+        priority: 50,
+        enabled: true,
+      };
+
+      await expect(
+        templateService.installTemplate(mockTemplateSource, 'test-template-id')
+      ).rejects.toThrow('Remote template installation not yet implemented');
     });
   });
 

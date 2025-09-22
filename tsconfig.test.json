@@ -3,6 +3,8 @@
   "compilerOptions": {
     "rootDir": ".",
     "baseUrl": ".",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "paths": {
       "@/*": ["src/*"],
       "@tests/*": ["tests/*"]
