@@ -21,7 +21,7 @@ module.exports = {
   // Transform files
   transform: {
     '^.+\\.ts$': ['ts-jest', {
-      tsconfig: 'tsconfig.json'
+      tsconfig: 'tsconfig.test.json'
     }]
   },
 
@@ -72,7 +72,7 @@ module.exports = {
       testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
       transform: {
         '^.+\\.ts$': ['ts-jest', {
-          tsconfig: 'tsconfig.json'
+          tsconfig: 'tsconfig.test.json'
         }]
       },
       setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
@@ -88,7 +88,7 @@ module.exports = {
       testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
       transform: {
         '^.+\\.ts$': ['ts-jest', {
-          tsconfig: 'tsconfig.json'
+          tsconfig: 'tsconfig.test.json'
         }]
       },
       setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
@@ -104,7 +104,7 @@ module.exports = {
       testMatch: ['<rootDir>/tests/contract/**/*.test.ts'],
       transform: {
         '^.+\\.ts$': ['ts-jest', {
-          tsconfig: 'tsconfig.json'
+          tsconfig: 'tsconfig.test.json'
         }]
       },
       setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],

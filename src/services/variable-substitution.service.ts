@@ -193,7 +193,7 @@ export class VariableSubstitutionService
               templateVar.description || `Value for ${templateVar.name}`,
             actual: 'undefined',
             ruleId: `required-var-${templateVar.name}`,
-            templateId: template.id,
+            templateSha: template.id,
             suggestion: templateVar.default
               ? `Provide a value or use default: ${templateVar.default}`
               : `Provide a value for ${templateVar.name}`,
@@ -211,7 +211,7 @@ export class VariableSubstitutionService
               expected: templateVar.pattern,
               actual: String(value),
               ruleId: `pattern-var-${templateVar.name}`,
-              templateId: template.id,
+              templateSha: template.id,
               suggestion: `Ensure ${templateVar.name} matches the pattern: ${templateVar.pattern}`,
               fixable: false,
             });
@@ -260,7 +260,7 @@ export class VariableSubstitutionService
             expected: `Value for ${varName}`,
             actual: 'undefined',
             ruleId: `missing-var-${varName}`,
-            templateId: template.id,
+            templateSha: template.id,
             suggestion: `Provide a value for variable '${varName}'`,
             fixable: false,
           });

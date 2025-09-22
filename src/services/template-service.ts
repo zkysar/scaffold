@@ -13,6 +13,8 @@ import type {
   TemplateSummary,
   TemplateSource,
 } from '../models';
+import { TemplateIdentifierService } from './template-identifier-service';
+import { shortSHA, isValidSHA } from '../lib/sha';
 
 export interface ITemplateService {
   /**
@@ -21,9 +23,9 @@ export interface ITemplateService {
   loadTemplates(): Promise<TemplateLibrary>;
 
   /**
-   * Get a specific template by ID
+   * Get a specific template by ID (SHA, short SHA, or alias)
    */
-  getTemplate(id: string): Promise<Template>;
+  getTemplate(identifier: string): Promise<Template>;
 
   /**
    * Search templates by name or description
@@ -84,10 +86,12 @@ export interface ITemplateService {
 export class TemplateService implements ITemplateService {
   private readonly templatesDir: string;
   private readonly cacheDir: string;
+  private readonly identifierService: TemplateIdentifierService;
 
   constructor() {
     this.templatesDir = path.join(os.homedir(), '.scaffold', 'templates');
     this.cacheDir = path.join(os.homedir(), '.scaffold', 'cache');
+    this.identifierService = TemplateIdentifierService.getInstance();
   }
 
   async loadTemplates(): Promise<TemplateLibrary> {
@@ -100,6 +104,7 @@ export class TemplateService implements ITemplateService {
       for (const templateDir of templateDirs) {
         try {
           const template = await this.loadTemplate(templateDir);
+          const aliases = await this.identifierService.getAliases(template.id, await this.getAllTemplateSHAs());
           templateSummaries.push({
             id: template.id,
             name: template.name,
@@ -108,6 +113,7 @@ export class TemplateService implements ITemplateService {
             source: 'local',
             installed: true,
             lastUpdated: template.updated,
+            aliases: aliases,
           });
         } catch (error) {
           console.warn(`Failed to load template from ${templateDir}:`, error);
@@ -135,19 +141,33 @@ export class TemplateService implements ITemplateService {
     }
   }
 
-  async getTemplate(id: string): Promise<Template> {
-    if (!id || typeof id !== 'string') {
-      throw new Error('Template ID must be a non-empty string');
+  async getTemplate(identifier: string): Promise<Template> {
+    if (!identifier || typeof identifier !== 'string') {
+      throw new Error('Template identifier must be a non-empty string');
     }
 
     await this.ensureDirectoriesExist();
 
-    const templatePath = await this.findTemplateById(id);
-    if (!templatePath) {
-      throw new Error(`Template with ID '${id}' not found`);
+    // Get all available template SHAs
+    const availableSHAs = await this.getAllTemplateSHAs();
+
+    // Resolve the identifier to a full SHA
+    const fullSHA = await this.identifierService.resolveIdentifier(identifier, availableSHAs);
+    if (!fullSHA) {
+      throw new Error(`Template '${identifier}' not found`);
     }
 
-    return this.loadTemplate(templatePath);
+    const templatePath = await this.findTemplateBySHA(fullSHA);
+    if (!templatePath) {
+      throw new Error(`Template with SHA '${shortSHA(fullSHA)}' not found`);
+    }
+
+    const template = await this.loadTemplate(templatePath);
+
+    // Add aliases to the template for display purposes
+    template.aliases = await this.identifierService.getAliases(fullSHA, availableSHAs);
+
+    return template;
   }
 
   async searchTemplates(query: string): Promise<TemplateSummary[]> {
@@ -166,7 +186,17 @@ export class TemplateService implements ITemplateService {
   }
 
   async createTemplate(template: Template): Promise<void> {
-    const validationErrors = await this.validateTemplate(template);
+    // Compute SHA from template content
+    const sha = this.identifierService.computeTemplateSHA(template);
+
+    // Create template with SHA as ID
+    const templateWithSHA: Template = {
+      ...template,
+      id: sha,
+      aliases: undefined, // Aliases are managed separately
+    };
+
+    const validationErrors = await this.validateTemplate(templateWithSHA);
     if (validationErrors.length > 0) {
       throw new Error(
         `Template validation failed: ${validationErrors.join(', ')}`
@@ -175,14 +205,14 @@ export class TemplateService implements ITemplateService {
 
     await this.ensureDirectoriesExist();
 
-    const existingTemplatePath = await this.findTemplateById(template.id);
+    const existingTemplatePath = await this.findTemplateBySHA(sha);
     if (existingTemplatePath) {
-      throw new Error(`Template with ID '${template.id}' already exists`);
+      throw new Error(`Template with SHA '${shortSHA(sha)}' already exists`);
     }
 
     const now = new Date().toISOString();
     const templateWithDates: Template = {
-      ...template,
+      ...templateWithSHA,
       created: template.created || now,
       updated: now,
     };
@@ -191,7 +221,17 @@ export class TemplateService implements ITemplateService {
   }
 
   async updateTemplate(template: Template): Promise<void> {
-    const validationErrors = await this.validateTemplate(template);
+    // Compute SHA from template content
+    const sha = this.identifierService.computeTemplateSHA(template);
+
+    // Create template with SHA as ID
+    const templateWithSHA: Template = {
+      ...template,
+      id: sha,
+      aliases: undefined, // Aliases are managed separately
+    };
+
+    const validationErrors = await this.validateTemplate(templateWithSHA);
     if (validationErrors.length > 0) {
       throw new Error(
         `Template validation failed: ${validationErrors.join(', ')}`
@@ -200,14 +240,23 @@ export class TemplateService implements ITemplateService {
 
     await this.ensureDirectoriesExist();
 
-    const existingTemplatePath = await this.findTemplateById(template.id);
+    const existingTemplatePath = await this.findTemplateBySHA(sha);
     if (!existingTemplatePath) {
-      throw new Error(`Template with ID '${template.id}' not found`);
+      // Check if this is a new version of an existing template
+      // This is a new template (content changed, so SHA changed)
+      const now = new Date().toISOString();
+      const newTemplate: Template = {
+        ...templateWithSHA,
+        created: template.created || now,
+        updated: now,
+      };
+      await this.saveTemplate(newTemplate);
+      return;
     }
 
     const existingTemplate = await this.loadTemplate(existingTemplatePath);
     const updatedTemplate: Template = {
-      ...template,
+      ...templateWithSHA,
       created: existingTemplate.created,
       updated: new Date().toISOString(),
     };
@@ -215,28 +264,35 @@ export class TemplateService implements ITemplateService {
     await this.saveTemplate(updatedTemplate);
   }
 
-  async deleteTemplate(id: string): Promise<void> {
-    if (!id || typeof id !== 'string') {
-      throw new Error('Template ID must be a non-empty string');
+  async deleteTemplate(identifier: string): Promise<void> {
+    if (!identifier || typeof identifier !== 'string') {
+      throw new Error('Template identifier must be a non-empty string');
     }
 
     await this.ensureDirectoriesExist();
 
-    const templatePath = await this.findTemplateById(id);
+    // Get all available template SHAs
+    const availableSHAs = await this.getAllTemplateSHAs();
+
+    // Resolve the identifier to a full SHA
+    const fullSHA = await this.identifierService.resolveIdentifier(identifier, availableSHAs);
+    if (!fullSHA) {
+      throw new Error(`Template '${identifier}' not found`);
+    }
+
+    const templatePath = await this.findTemplateBySHA(fullSHA);
     if (!templatePath) {
-      throw new Error(`Template with ID '${id}' not found`);
+      throw new Error(`Template with SHA '${shortSHA(fullSHA)}' not found`);
     }
 
     try {
       await fs.remove(templatePath);
     } catch (error) {
-      throw new Error(
-        `Failed to delete template '${id}': ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      throw new Error(`Failed to delete template '${shortSHA(fullSHA)}': ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async installTemplate(): Promise<void> {
+  async installTemplate(_source: TemplateSource, _templateId: string): Promise<void> {
     throw new Error('Remote template installation not yet implemented');
   }
 
@@ -245,6 +301,8 @@ export class TemplateService implements ITemplateService {
 
     if (!template.id || typeof template.id !== 'string') {
       errors.push('Template ID is required and must be a string');
+    } else if (!isValidSHA(template.id) || template.id.length !== 64) {
+      errors.push('Template ID must be a valid 64-character SHA-256 hash');
     }
 
     if (!template.name || typeof template.name !== 'string') {
@@ -430,8 +488,8 @@ export class TemplateService implements ITemplateService {
     return errors;
   }
 
-  async getTemplateDependencies(templateId: string): Promise<Template[]> {
-    const template = await this.getTemplate(templateId);
+  async getTemplateDependencies(identifier: string): Promise<Template[]> {
+    const template = await this.getTemplate(identifier);
     const dependencies: Template[] = [];
     const visited = new Set<string>();
 
@@ -465,12 +523,12 @@ export class TemplateService implements ITemplateService {
     return dependencies;
   }
 
-  async exportTemplate(templateId: string, outputPath: string): Promise<void> {
-    const template = await this.getTemplate(templateId);
-    const templatePath = await this.findTemplateById(templateId);
+  async exportTemplate(identifier: string, outputPath: string): Promise<void> {
+    const template = await this.getTemplate(identifier);
+    const templatePath = await this.findTemplateBySHA(template.id);
 
     if (!templatePath) {
-      throw new Error(`Template with ID '${templateId}' not found`);
+      throw new Error(`Template with SHA '${shortSHA(template.id)}' not found`);
     }
 
     try {
@@ -493,9 +551,7 @@ export class TemplateService implements ITemplateService {
 
       await fs.writeJson(outputPath, exportData, { spaces: 2 });
     } catch (error) {
-      throw new Error(
-        `Failed to export template '${templateId}': ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      throw new Error(`Failed to export template '${shortSHA(template.id)}': ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -511,11 +567,19 @@ export class TemplateService implements ITemplateService {
         throw new Error('Invalid export file: missing template data');
       }
 
-      const template: Template = exportData.template;
+      let template: Template = exportData.template;
 
-      const existingTemplatePath = await this.findTemplateById(template.id);
+      // Ensure the template has a SHA-based ID
+      if (!isValidSHA(template.id) || template.id.length !== 64) {
+        // Migrate from old UUID to SHA (in-memory only for imports)
+        // No backup needed as we're not modifying existing files
+        template = this.identifierService.migrateTemplateToSHA(template);
+        console.log(`Imported template migrated to SHA-based ID: ${shortSHA(template.id)}`);
+      }
+
+      const existingTemplatePath = await this.findTemplateBySHA(template.id);
       if (existingTemplatePath) {
-        throw new Error(`Template with ID '${template.id}' already exists`);
+        throw new Error(`Template with SHA '${shortSHA(template.id)}' already exists`);
       }
 
       await this.saveTemplate(template);
@@ -555,7 +619,36 @@ export class TemplateService implements ITemplateService {
     }
 
     try {
-      const templateJson = await fs.readJson(templateJsonPath);
+      let templateJson = await fs.readJson(templateJsonPath);
+
+      // Check if this is an old UUID-based template that needs migration
+      if (!isValidSHA(templateJson.id) || templateJson.id.length !== 64) {
+        // Create backup before migration
+        const backupPath = `${templateJsonPath}.pre-migration-${Date.now()}.backup`;
+        try {
+          await fs.copy(templateJsonPath, backupPath);
+
+          // Migrate to SHA-based ID
+          templateJson = this.identifierService.migrateTemplateToSHA(templateJson);
+
+          // Write to temporary file first for atomicity
+          const tempPath = `${templateJsonPath}.tmp`;
+          await fs.writeJson(tempPath, templateJson, { spaces: 2 });
+
+          // Atomic rename
+          await fs.rename(tempPath, templateJsonPath);
+
+          console.log(`Template migrated to SHA-based ID. Backup saved at: ${backupPath}`);
+        } catch (migrationError) {
+          // If migration fails, restore from backup if it exists
+          if (await fs.pathExists(backupPath)) {
+            await fs.copy(backupPath, templateJsonPath, { overwrite: true });
+            await fs.remove(backupPath);
+          }
+          throw new Error(`Failed to migrate template: ${migrationError instanceof Error ? migrationError.message : 'Unknown error'}`);
+        }
+      }
+
       const validationErrors = await this.validateTemplate(templateJson);
 
       if (validationErrors.length > 0) {
@@ -614,13 +707,13 @@ export class TemplateService implements ITemplateService {
     }
   }
 
-  private async findTemplateById(id: string): Promise<string | null> {
+  private async findTemplateBySHA(sha: string): Promise<string | null> {
     const templateDirs = await this.getTemplateDirectories();
 
     for (const templateDir of templateDirs) {
       try {
         const template = await this.loadTemplate(templateDir);
-        if (template.id === id) {
+        if (template.id === sha) {
           return templateDir;
         }
       } catch (error) {
@@ -629,6 +722,22 @@ export class TemplateService implements ITemplateService {
     }
 
     return null;
+  }
+
+  private async getAllTemplateSHAs(): Promise<string[]> {
+    const templateDirs = await this.getTemplateDirectories();
+    const shas: string[] = [];
+
+    for (const templateDir of templateDirs) {
+      try {
+        const template = await this.loadTemplate(templateDir);
+        shas.push(template.id);
+      } catch (error) {
+        continue;
+      }
+    }
+
+    return shas;
   }
 
   private async getFileList(directory: string): Promise<string[]> {
@@ -650,5 +759,100 @@ export class TemplateService implements ITemplateService {
 
     await processDirectory(directory);
     return files;
+  }
+
+  /**
+   * Migrate all UUID-based templates to SHA-based identifiers
+   * Creates backups before migration and provides rollback capability
+   * @returns Object with migration results
+   */
+  async migrateAllTemplatesToSHA(): Promise<{
+    migrated: string[];
+    failed: Array<{ template: string; error: string }>;
+    backupDir: string;
+  }> {
+    const migrated: string[] = [];
+    const failed: Array<{ template: string; error: string }> = [];
+    const backupDir = path.join(this.templatesDir, '.migration-backups', `migration-${Date.now()}`);
+    await fs.ensureDir(backupDir);
+
+    const templates = await this.loadTemplates();
+
+    for (const summary of templates.templates) {
+      try {
+        const templatePath = path.join(this.templatesDir, summary.id);
+        const templateJsonPath = path.join(templatePath, 'template.json');
+
+        if (!(await fs.pathExists(templateJsonPath))) {
+          continue;
+        }
+
+        const templateJson = await fs.readJson(templateJsonPath);
+
+        // Check if migration is needed
+        if (!isValidSHA(templateJson.id) || templateJson.id.length !== 64) {
+          // Create backup
+          const backupPath = path.join(backupDir, `${summary.id}.backup.json`);
+          await fs.copy(templateJsonPath, backupPath);
+
+          // Migrate template
+          const migratedTemplate = this.identifierService.migrateTemplateToSHA(templateJson);
+
+          // Write to temporary file first
+          const tempPath = `${templateJsonPath}.tmp`;
+          await fs.writeJson(tempPath, migratedTemplate, { spaces: 2 });
+
+          // Validate the migrated template
+          const validationErrors = await this.validateTemplate(migratedTemplate);
+          if (validationErrors.length > 0) {
+            await fs.remove(tempPath);
+            throw new Error(`Validation failed: ${validationErrors.join(', ')}`);
+          }
+
+          // Atomic rename
+          await fs.rename(tempPath, templateJsonPath);
+
+          // If the directory name doesn't match the new SHA ID, rename it
+          if (summary.id !== migratedTemplate.id) {
+            const newTemplatePath = path.join(this.templatesDir, migratedTemplate.id);
+            await fs.move(templatePath, newTemplatePath);
+          }
+
+          migrated.push(`${summary.name} (${summary.id} -> ${shortSHA(migratedTemplate.id)})`);
+        }
+      } catch (error) {
+        failed.push({
+          template: summary.name,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+
+    return { migrated, failed, backupDir };
+  }
+
+  /**
+   * Rollback a migration using backup files
+   * @param backupDir Directory containing backup files from a migration
+   */
+  async rollbackMigration(backupDir: string): Promise<void> {
+    if (!(await fs.pathExists(backupDir))) {
+      throw new Error(`Backup directory not found: ${backupDir}`);
+    }
+
+    const backupFiles = await fs.readdir(backupDir);
+
+    for (const backupFile of backupFiles) {
+      if (backupFile.endsWith('.backup.json')) {
+        const backupPath = path.join(backupDir, backupFile);
+        const templateData = await fs.readJson(backupPath);
+        const templateId = templateData.id;
+        const templatePath = path.join(this.templatesDir, templateId);
+        const templateJsonPath = path.join(templatePath, 'template.json');
+
+        await fs.ensureDir(templatePath);
+        await fs.writeJson(templateJsonPath, templateData, { spaces: 2 });
+      }
+    }
   }
 }
