@@ -110,3 +110,6 @@ function filterObject(obj: any, excludeKeys: string[]): any {
 
   return filtered;
 }
+
+// Export alias for backward compatibility
+export const generateSHA = generateSHA256;

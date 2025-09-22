@@ -571,8 +571,10 @@ export class TemplateService implements ITemplateService {
 
       // Ensure the template has a SHA-based ID
       if (!isValidSHA(template.id) || template.id.length !== 64) {
-        // Migrate from old UUID to SHA
+        // Migrate from old UUID to SHA (in-memory only for imports)
+        // No backup needed as we're not modifying existing files
         template = this.identifierService.migrateTemplateToSHA(template);
+        console.log(`Imported template migrated to SHA-based ID: ${shortSHA(template.id)}`);
       }
 
       const existingTemplatePath = await this.findTemplateBySHA(template.id);
@@ -621,10 +623,30 @@ export class TemplateService implements ITemplateService {
 
       // Check if this is an old UUID-based template that needs migration
       if (!isValidSHA(templateJson.id) || templateJson.id.length !== 64) {
-        // Migrate to SHA-based ID
-        templateJson = this.identifierService.migrateTemplateToSHA(templateJson);
-        // Save the migrated template
-        await fs.writeJson(templateJsonPath, templateJson, { spaces: 2 });
+        // Create backup before migration
+        const backupPath = `${templateJsonPath}.pre-migration-${Date.now()}.backup`;
+        try {
+          await fs.copy(templateJsonPath, backupPath);
+
+          // Migrate to SHA-based ID
+          templateJson = this.identifierService.migrateTemplateToSHA(templateJson);
+
+          // Write to temporary file first for atomicity
+          const tempPath = `${templateJsonPath}.tmp`;
+          await fs.writeJson(tempPath, templateJson, { spaces: 2 });
+
+          // Atomic rename
+          await fs.rename(tempPath, templateJsonPath);
+
+          console.log(`Template migrated to SHA-based ID. Backup saved at: ${backupPath}`);
+        } catch (migrationError) {
+          // If migration fails, restore from backup if it exists
+          if (await fs.pathExists(backupPath)) {
+            await fs.copy(backupPath, templateJsonPath, { overwrite: true });
+            await fs.remove(backupPath);
+          }
+          throw new Error(`Failed to migrate template: ${migrationError instanceof Error ? migrationError.message : 'Unknown error'}`);
+        }
       }
 
       const validationErrors = await this.validateTemplate(templateJson);
@@ -737,5 +759,100 @@ export class TemplateService implements ITemplateService {
 
     await processDirectory(directory);
     return files;
+  }
+
+  /**
+   * Migrate all UUID-based templates to SHA-based identifiers
+   * Creates backups before migration and provides rollback capability
+   * @returns Object with migration results
+   */
+  async migrateAllTemplatesToSHA(): Promise<{
+    migrated: string[];
+    failed: Array<{ template: string; error: string }>;
+    backupDir: string;
+  }> {
+    const migrated: string[] = [];
+    const failed: Array<{ template: string; error: string }> = [];
+    const backupDir = path.join(this.templatesDir, '.migration-backups', `migration-${Date.now()}`);
+    await fs.ensureDir(backupDir);
+
+    const templates = await this.loadTemplates();
+
+    for (const summary of templates.templates) {
+      try {
+        const templatePath = path.join(this.templatesDir, summary.id);
+        const templateJsonPath = path.join(templatePath, 'template.json');
+
+        if (!(await fs.pathExists(templateJsonPath))) {
+          continue;
+        }
+
+        const templateJson = await fs.readJson(templateJsonPath);
+
+        // Check if migration is needed
+        if (!isValidSHA(templateJson.id) || templateJson.id.length !== 64) {
+          // Create backup
+          const backupPath = path.join(backupDir, `${summary.id}.backup.json`);
+          await fs.copy(templateJsonPath, backupPath);
+
+          // Migrate template
+          const migratedTemplate = this.identifierService.migrateTemplateToSHA(templateJson);
+
+          // Write to temporary file first
+          const tempPath = `${templateJsonPath}.tmp`;
+          await fs.writeJson(tempPath, migratedTemplate, { spaces: 2 });
+
+          // Validate the migrated template
+          const validationErrors = await this.validateTemplate(migratedTemplate);
+          if (validationErrors.length > 0) {
+            await fs.remove(tempPath);
+            throw new Error(`Validation failed: ${validationErrors.join(', ')}`);
+          }
+
+          // Atomic rename
+          await fs.rename(tempPath, templateJsonPath);
+
+          // If the directory name doesn't match the new SHA ID, rename it
+          if (summary.id !== migratedTemplate.id) {
+            const newTemplatePath = path.join(this.templatesDir, migratedTemplate.id);
+            await fs.move(templatePath, newTemplatePath);
+          }
+
+          migrated.push(`${summary.name} (${summary.id} -> ${shortSHA(migratedTemplate.id)})`);
+        }
+      } catch (error) {
+        failed.push({
+          template: summary.name,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+
+    return { migrated, failed, backupDir };
+  }
+
+  /**
+   * Rollback a migration using backup files
+   * @param backupDir Directory containing backup files from a migration
+   */
+  async rollbackMigration(backupDir: string): Promise<void> {
+    if (!(await fs.pathExists(backupDir))) {
+      throw new Error(`Backup directory not found: ${backupDir}`);
+    }
+
+    const backupFiles = await fs.readdir(backupDir);
+
+    for (const backupFile of backupFiles) {
+      if (backupFile.endsWith('.backup.json')) {
+        const backupPath = path.join(backupDir, backupFile);
+        const templateData = await fs.readJson(backupPath);
+        const templateId = templateData.id;
+        const templatePath = path.join(this.templatesDir, templateId);
+        const templateJsonPath = path.join(templatePath, 'template.json');
+
+        await fs.ensureDir(templatePath);
+        await fs.writeJson(templateJsonPath, templateData, { spaces: 2 });
+      }
+    }
   }
 }
