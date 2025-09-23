@@ -7,14 +7,14 @@ import { Command } from 'commander';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
-import { logger } from '@/lib/logger';
+import { logger } from '../../lib/logger';
 import {
   ProjectFixService,
   ProjectValidationService,
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '@/services';
+} from '../../services';
 import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 
 interface FixCommandOptions {

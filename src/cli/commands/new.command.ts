@@ -13,9 +13,9 @@ import {
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '@/services';
+} from '../../services';
 import { ExitCode, exitWithCode } from '../../constants/exit-codes';
-import { selectTemplates } from '@/cli/utils/template-selector';
+import { selectTemplates } from '../utils/template-selector';
 
 interface NewCommandOptions {
   template?: string;

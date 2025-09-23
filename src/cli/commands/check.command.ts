@@ -12,10 +12,10 @@ import {
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '@/services';
-import type { ValidationReport } from '@/models';
+} from '../../services';
+import type { ValidationReport } from '../../models';
 import { ExitCode, exitWithCode } from '../../constants/exit-codes';
-import { createLogger, logger } from '@/lib/logger';
+import { createLogger, logger } from '../../lib/logger';
 
 interface CheckCommandOptions {
   verbose?: boolean;
