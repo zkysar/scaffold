@@ -4,12 +4,12 @@
  */
 
 import * as path from 'path';
-import { CompletionService } from '../../../src/services/completion-service';
+import { CompletionService } from '@/services/completion-service';
 import {
   ShellType,
   CompletionConfig,
   CompletionContext,
-} from '../../../src/models';
+} from '@/models';
 
 // Mock fs-extra
 jest.mock('fs-extra');

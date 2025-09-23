@@ -5,16 +5,16 @@
 import mockFs from 'mock-fs';
 import * as path from 'path';
 import * as os from 'os';
-import { TemplateService } from '../../../src/services/template-service';
+import { TemplateService } from '@/services/template-service';
 import type {
   Template,
   TemplateLibrary,
   TemplateSummary,
-} from '../../../src/models';
+} from '@/models';
 import {
   createMockImplementation,
   assertDefined,
-} from '../../helpers/test-utils';
+} from '@tests/helpers/test-utils';
 
 // Mock os module
 jest.mock('os', () => ({

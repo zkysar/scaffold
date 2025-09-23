@@ -6,7 +6,14 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
-      "@/*": ["src/*"],
+      "@/models": ["src/models/index"],
+      "@/models/*": ["src/models/*"],
+      "@/services": ["src/services/index"],
+      "@/services/*": ["src/services/*"],
+      "@/lib/*": ["src/lib/*"],
+      "@/cli/*": ["src/cli/*"],
+      "@/types": ["src/types/index"],
+      "@/types/*": ["src/types/*"],
       "@tests/*": ["tests/*"]
     }
   },

@@ -5,15 +5,15 @@
 import mockFs from 'mock-fs';
 import * as path from 'path';
 import * as os from 'os';
-import { ConfigurationService } from '../../../src/services/configuration.service';
-import { ConfigLevel } from '../../../src/models';
+import { ConfigurationService } from '@/services/configuration.service';
+import { ConfigLevel } from '@/models';
 import type {
   ScaffoldConfig,
   UserPreferences,
   PathConfiguration,
   DefaultSettings,
-} from '../../../src/models';
-import { createMockImplementation } from '../../helpers/test-utils';
+} from '@/models';
+import { createMockImplementation } from '@tests/helpers/test-utils';
 
 // Mock os module
 jest.mock('os', () => ({

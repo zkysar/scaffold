@@ -9,6 +9,7 @@ import { glob } from 'glob';
 
 describe('Import Conventions', () => {
   const srcDir = path.resolve(__dirname, '../../src');
+  const testDir = path.resolve(__dirname, '..');
 
   it('should not use relative parent imports in source files', async () => {
     const files = await glob('**/*.ts', {
@@ -47,6 +48,43 @@ describe('Import Conventions', () => {
     }
   });
 
+  it('should not use relative parent imports in test files', async () => {
+    const files = await glob('**/*.test.ts', {
+      cwd: testDir,
+    });
+
+    const violations: string[] = [];
+
+    for (const file of files) {
+      const filePath = path.join(testDir, file);
+      const content = await fs.readFile(filePath, 'utf-8');
+      const lines = content.split('\n');
+
+      lines.forEach((line, index) => {
+        // Check for relative imports to src directory
+        if (/^import .* from ['"]\.\.\/\.\.\/(\.\.\/)?src\//.test(line.trim())) {
+          violations.push(`${file}:${index + 1} - ${line.trim()}`);
+        }
+      });
+    }
+
+    if (violations.length > 0) {
+      const message = [
+        'Found relative imports to src directory in test files that should use @ aliases:',
+        '',
+        ...violations,
+        '',
+        'Replace these with:',
+        '  ../../../src/models → @/models',
+        '  ../../../src/services → @/services',
+        '  ../../../src/lib/* → @/lib/*',
+        '  ../../helpers/* → @tests/helpers/*'
+      ].join('\n');
+
+      throw new Error(message);
+    }
+  });
+
   it('should use path aliases for cross-module imports', async () => {
     const files = await glob('**/*.ts', {
       cwd: srcDir,
@@ -79,6 +117,47 @@ describe('Import Conventions', () => {
     if (violations.length > 0) {
       const message = [
         'Found cross-module imports not using aliases:',
+        '',
+        ...violations
+      ].join('\n');
+
+      throw new Error(message);
+    }
+  });
+
+  it('should use path aliases for cross-module imports in test files', async () => {
+    const files = await glob('**/*.test.ts', {
+      cwd: testDir,
+    });
+
+    const testCrossModulePatterns = [
+      { pattern: /from ['"]\.\.\/\.\.\/(\.\.\/)?src\/(models|services|lib|types)['"]/, suggestion: '@/$2' },
+      { pattern: /from ['"]\.\.\/\.\.\/(\.\.\/)?src\/(models|services|lib|types)\//, suggestion: '@/$2/' },
+      { pattern: /from ['"]\.\.\/\.\.\/helpers\//, suggestion: '@tests/helpers/' },
+      { pattern: /from ['"]\.\.\/helpers\//, suggestion: '@tests/helpers/' }
+    ];
+
+    const violations: string[] = [];
+
+    for (const file of files) {
+      const filePath = path.join(testDir, file);
+      const content = await fs.readFile(filePath, 'utf-8');
+      const lines = content.split('\n');
+
+      lines.forEach((line, index) => {
+        for (const { pattern, suggestion } of testCrossModulePatterns) {
+          if (pattern.test(line)) {
+            violations.push(
+              `${file}:${index + 1} - Should use ${suggestion} alias`
+            );
+          }
+        }
+      });
+    }
+
+    if (violations.length > 0) {
+      const message = [
+        'Found cross-module imports not using aliases in test files:',
         '',
         ...violations
       ].join('\n');

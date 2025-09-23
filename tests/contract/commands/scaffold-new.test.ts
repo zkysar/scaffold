@@ -3,12 +3,12 @@
  * Tests MUST fail initially as no implementation exists yet (TDD)
  */
 
-import { createNewCommand } from '../../../src/cli/commands/new';
+import { createNewCommand } from '@/cli/commands/new';
 import {
   createMockFileSystem,
   createMockConsole,
   CommandResult,
-} from '../../helpers/cli-helpers';
+} from '@tests/helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
 

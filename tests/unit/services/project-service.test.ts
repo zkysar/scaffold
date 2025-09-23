@@ -5,12 +5,12 @@
 import mockFs from 'mock-fs';
 import * as path from 'path';
 import * as os from 'os';
-import { ProjectService } from '../../../src/services/project-service';
-import { TemplateService } from '../../../src/services/template-service';
-import { FileSystemService } from '../../../src/services/file-system.service';
-import { ConfigurationService } from '../../../src/services/configuration.service';
-import { VariableSubstitutionService } from '../../../src/services/variable-substitution.service';
-import { TemplateIdentifierService } from '../../../src/services/template-identifier-service';
+import { ProjectService } from '@/services/project-service';
+import { TemplateService } from '@/services/template-service';
+import { FileSystemService } from '@/services/file-system.service';
+import { ConfigurationService } from '@/services/configuration.service';
+import { VariableSubstitutionService } from '@/services/variable-substitution.service';
+import { TemplateIdentifierService } from '@/services/template-identifier-service';
 import type {
   ProjectManifest,
   ValidationReport,
@@ -22,11 +22,11 @@ import type {
   ValidationResult,
   TemplateVariable,
   Rule,
-} from '../../../src/models';
+} from '@/models';
 import {
   createMockImplementation,
   assertDefined,
-} from '../../helpers/test-utils';
+} from '@tests/helpers/test-utils';
 
 // Mock os module
 jest.mock('os', () => ({

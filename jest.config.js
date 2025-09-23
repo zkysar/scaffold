@@ -77,7 +77,14 @@ module.exports = {
       },
       setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
       moduleNameMapper: {
-        '^@/(.*)$': '<rootDir>/src/$1',
+        '^@/models$': '<rootDir>/src/models/index',
+        '^@/models/(.*)$': '<rootDir>/src/models/$1',
+        '^@/services$': '<rootDir>/src/services/index',
+        '^@/services/(.*)$': '<rootDir>/src/services/$1',
+        '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
+        '^@/cli/(.*)$': '<rootDir>/src/cli/$1',
+        '^@/types$': '<rootDir>/src/types/index',
+        '^@/types/(.*)$': '<rootDir>/src/types/$1',
         '^@tests/(.*)$': '<rootDir>/tests/$1'
       }
     },
@@ -93,7 +100,14 @@ module.exports = {
       },
       setupFilesAfterEnv: ['<rootDir>/tests/setup.ts', '<rootDir>/tests/integration-setup.ts'],
       moduleNameMapper: {
-        '^@/(.*)$': '<rootDir>/src/$1',
+        '^@/models$': '<rootDir>/src/models/index',
+        '^@/models/(.*)$': '<rootDir>/src/models/$1',
+        '^@/services$': '<rootDir>/src/services/index',
+        '^@/services/(.*)$': '<rootDir>/src/services/$1',
+        '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
+        '^@/cli/(.*)$': '<rootDir>/src/cli/$1',
+        '^@/types$': '<rootDir>/src/types/index',
+        '^@/types/(.*)$': '<rootDir>/src/types/$1',
         '^@tests/(.*)$': '<rootDir>/tests/$1'
       }
     },
@@ -109,7 +123,14 @@ module.exports = {
       },
       setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
       moduleNameMapper: {
-        '^@/(.*)$': '<rootDir>/src/$1',
+        '^@/models$': '<rootDir>/src/models/index',
+        '^@/models/(.*)$': '<rootDir>/src/models/$1',
+        '^@/services$': '<rootDir>/src/services/index',
+        '^@/services/(.*)$': '<rootDir>/src/services/$1',
+        '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
+        '^@/cli/(.*)$': '<rootDir>/src/cli/$1',
+        '^@/types$': '<rootDir>/src/types/index',
+        '^@/types/(.*)$': '<rootDir>/src/types/$1',
         '^@tests/(.*)$': '<rootDir>/tests/$1'
       }
     }
@@ -117,7 +138,14 @@ module.exports = {
 
   // Module name mapping for absolute imports
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@/models$': '<rootDir>/src/models/index',
+    '^@/models/(.*)$': '<rootDir>/src/models/$1',
+    '^@/services$': '<rootDir>/src/services/index',
+    '^@/services/(.*)$': '<rootDir>/src/services/$1',
+    '^@/lib/(.*)$': '<rootDir>/src/lib/$1',
+    '^@/cli/(.*)$': '<rootDir>/src/cli/$1',
+    '^@/types$': '<rootDir>/src/types/index',
+    '^@/types/(.*)$': '<rootDir>/src/types/$1',
     '^@tests/(.*)$': '<rootDir>/tests/$1'
   },
 
