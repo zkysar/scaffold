@@ -121,27 +121,38 @@ async function handleExtendCommand(
       console.log(chalk.blue('Project:'), manifest.projectName);
       console.log(chalk.blue('Template:'), options.template);
       console.log(chalk.blue('Variables:'), variables);
+      console.log(chalk.blue('Target path:'), targetPath);
       return;
     }
 
-    console.log(
-      chalk.yellow(
-        '✓ Command structure created (service implementation pending)'
-      )
-    );
-    console.log(chalk.blue('Would extend project:'), targetPath);
-    console.log(chalk.blue('With template:'), options.template);
-  } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
-      );
-      console.log(chalk.blue('Would extend project:'), targetPath);
-      console.log(chalk.blue('With template:'), options.template);
-      return;
+    if (verbose) {
+      console.log(chalk.blue('Extending project with template:'), options.template);
     }
+
+    // Extend the project using the service
+    const updatedManifest = await projectService.extendProject(
+      targetPath,
+      [options.template],
+      variables
+    );
+
+    console.log(chalk.green('✓ Project extended successfully!'));
+    console.log(chalk.blue('Project name:'), updatedManifest.projectName);
+    console.log(chalk.blue('Location:'), targetPath);
+
+    // Find the newly added template
+    const newTemplate = updatedManifest.templates[updatedManifest.templates.length - 1];
+    console.log(chalk.blue('Template added:'), `${newTemplate.name}@${newTemplate.version}`);
+
+    if (verbose) {
+      console.log(chalk.blue('Updated at:'), updatedManifest.updated);
+      console.log(
+        chalk.blue('Total templates:'),
+        updatedManifest.templates.filter(t => t.status === 'active').length
+      );
+    }
+
+  } catch (error) {
     throw error;
   }
 }
