@@ -22,7 +22,14 @@
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage .scaffold-temp",
-    "prepare": "husky"
+    "prepare": "husky",
+    "burndown:status": "node scripts/burndown.js status",
+    "burndown:list": "node scripts/burndown.js list",
+    "burndown:scan": "node scripts/burndown.js scan",
+    "burndown:test": "node scripts/burndown.js test",
+    "burndown:lint": "node scripts/burndown.js lint",
+    "burndown:check": "node scripts/burndown.js check",
+    "burndown:remove": "node scripts/burndown.js remove"
   },
   "keywords": [
     "cli",

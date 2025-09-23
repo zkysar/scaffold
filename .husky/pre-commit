@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 . "$(dirname "$0")/_/husky.sh"
 
-# Run lint-staged (includes ESLint with no-console rule)
-npx lint-staged
+# Run lint-staged with burndown configuration
+npx lint-staged --config .lintstagedrc.burndown.js
 
-# Skip tests for now due to pre-existing test failures
-# npm run test:unit -- --maxWorkers=2
+# Run tests with burndown blocklist (only non-blocked tests)
+npm test -- --config=jest.config.burndown.js --maxWorkers=2
