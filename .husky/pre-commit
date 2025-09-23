@@ -1,29 +1,7 @@
 #!/usr/bin/env sh
 . "$(dirname "$0")/_/husky.sh"
 
-# Check for direct console usage (except in logger.ts)
-echo "Checking for direct console usage..."
-console_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|js)$' | xargs grep -l 'console\.\(log\|error\|warn\|info\|debug\)' 2>/dev/null | grep -v 'src/lib/logger.ts' | grep -v '/tests/' | grep -v '/fixtures/' | grep -v '/demo-templates/' | grep -v '\.json$' | grep -v 'test-variable-substitution.js' | grep -v 'replace-console.sh' || true)
-
-if [ -n "$console_files" ]; then
-    echo "❌ Direct console usage found in staged files:"
-    echo "$console_files"
-    echo ""
-    echo "Please use the logger utility instead:"
-    echo "  import { log } from '../lib/logger';"
-    echo "  log.info('message') instead of console.log('message')"
-    echo "  log.error('message') instead of console.error('message')"
-    echo "  log.warn('message') instead of console.warn('message')"
-    echo ""
-    echo "Console usage is only allowed in:"
-    echo "  - src/lib/logger.ts (the logger utility itself)"
-    echo "  - Test files"
-    echo "  - Demo templates"
-    echo "  - JSON fixtures"
-    exit 1
-fi
-
-# Run lint-staged
+# Run lint-staged (includes ESLint with no-console rule)
 npx lint-staged
 
 # Skip tests for now due to pre-existing test failures
