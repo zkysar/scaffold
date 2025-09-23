@@ -7,6 +7,7 @@
 import chalk from 'chalk';
 import { createProgram } from './program';
 import { CommandRegistry } from './completion/command-registry';
+import { logger } from '../lib/logger';
 
 // Create the program
 const program = createProgram();
@@ -24,7 +25,7 @@ program.exitOverride(err => {
   if (err.code === 'commander.help' || err.code === 'commander.version') {
     process.exit(0);
   }
-  console.error(chalk.red('Error:'), err.message);
+  logger.error(err.message);
   process.exit(1);
 });
 
@@ -35,3 +36,10 @@ if (process.argv.length <= 2) {
 
 // Parse CLI arguments
 program.parse();
+
+// Configure logger based on global options
+const globalOptions = program.opts();
+logger.setOptions({
+  verbose: globalOptions.verbose,
+  noColor: globalOptions.noColor
+});

@@ -5,7 +5,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { ConfigurationService } from '../../services';
+import { ConfigurationService } from '@/services';
 
 interface ConfigCommandOptions {
   verbose?: boolean;

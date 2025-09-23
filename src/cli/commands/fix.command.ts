@@ -7,13 +7,14 @@ import { Command } from 'commander';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
+import { logger } from '../../lib/logger';
 import {
   ProjectFixService,
   ProjectValidationService,
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '../../services';
+} from '@/services';
 
 interface FixCommandOptions {
   verbose?: boolean;
@@ -35,14 +36,12 @@ export function createFixCommand(): Command {
     .option('--dry-run', 'Show what would be fixed without making changes')
     .option('--force', 'Fix issues without confirmation prompts')
     .option('--backup', 'Create backup before making changes', true)
-    .action(async (projectPath: string, options: FixCommandOptions) => {
+    .option('--no-backup', 'Skip backup creation')
+    .action(async (projectPath: string | undefined, options: FixCommandOptions) => {
       try {
         await handleFixCommand(projectPath, options);
       } catch (error) {
-        console.error(
-          chalk.red('Error:'),
-          error instanceof Error ? error.message : String(error)
-        );
+        logger.error(error instanceof Error ? error.message : String(error));
         process.exit(1);
       }
     });
@@ -51,7 +50,7 @@ export function createFixCommand(): Command {
 }
 
 async function handleFixCommand(
-  projectPath: string,
+  projectPath: string | undefined,
   options: FixCommandOptions
 ): Promise<void> {
   const verbose = options.verbose || false;
@@ -63,16 +62,13 @@ async function handleFixCommand(
     : resolve(process.cwd());
 
   if (verbose) {
-    console.log(chalk.blue('Fixing project:'), targetPath);
-    console.log(chalk.blue('Options:'), JSON.stringify(options, null, 2));
+    logger.info(chalk.blue('Fixing project: ') + targetPath);
+    logger.info(chalk.blue('Options: ') + JSON.stringify(options, null, 2));
   }
 
   // Check if target directory exists
   if (!existsSync(targetPath)) {
-    console.error(
-      chalk.red('Error:'),
-      `Directory "${targetPath}" does not exist`
-    );
+    logger.error(`Directory "${targetPath}" does not exist`);
     process.exit(1);
   }
 
@@ -97,21 +93,18 @@ async function handleFixCommand(
   const manifest = await manifestService.loadProjectManifest(targetPath);
 
   if (!manifest) {
-    console.log(chalk.yellow('Not a scaffold-managed project.'));
-    console.log(chalk.gray('No .scaffold/manifest.json file found.'));
-    console.log(
-      chalk.gray(
-        'Use "scaffold new" to create a new project or "scaffold extend" to add templates.'
-      )
+    logger.yellow('Not a scaffold-managed project.');
+    logger.gray('No .scaffold/manifest.json file found.');
+    logger.gray(
+      'Use "scaffold new" to create a new project or "scaffold extend" to add templates.'
     );
     return;
   }
 
   if (verbose) {
-    console.log(chalk.blue('Project name:'), manifest.projectName);
-    console.log(
-      chalk.blue('Applied templates:'),
-      manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+    logger.infoBlue(`Project name: ${manifest.projectName}`);
+    logger.infoBlue(
+      `Applied templates: ${manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')}`
     );
   }
 
@@ -119,53 +112,53 @@ async function handleFixCommand(
   const report = await fixService.fixProject(targetPath, dryRun);
 
   // Display results
-  console.log(chalk.bold('Project Fix Report'));
-  console.log('─'.repeat(50));
+  logger.bold('Project Fix Report');
+  logger.info('─'.repeat(50));
 
   if (report.valid) {
-    console.log(chalk.green('✓ Project structure is valid - no fixes needed'));
+    logger.green('✓ Project structure is valid - no fixes needed');
   } else {
     // Display errors that couldn't be fixed
     if (report.errors.length > 0) {
-      console.log(chalk.red('Remaining Errors:'));
+      logger.red('Remaining Errors:');
       for (const error of report.errors) {
-        console.log(chalk.red('  ✗'), error.message);
+        logger.info(chalk.red('  ✗ ') + error.message);
         if (error.suggestion) {
-          console.log(chalk.gray(`    Suggestion: ${error.suggestion}`));
+          logger.gray(`    Suggestion: ${error.suggestion}`);
         }
       }
-      console.log('');
+      logger.info('');
     }
 
     // Display warnings
     if (report.warnings.length > 0) {
-      console.log(chalk.yellow('Warnings:'));
+      logger.yellow('Warnings:');
       for (const warning of report.warnings) {
-        console.log(chalk.yellow('  ⚠'), warning.message);
+        logger.info(chalk.yellow('  ⚠ ') + warning.message);
         if (warning.suggestion) {
-          console.log(chalk.gray(`    Suggestion: ${warning.suggestion}`));
+          logger.gray(`    Suggestion: ${warning.suggestion}`);
         }
       }
-      console.log('');
+      logger.info('');
     }
   }
 
   // Display suggestions
   if (report.suggestions && report.suggestions.length > 0) {
-    console.log(chalk.blue('Summary:'));
+    logger.infoBlue('Summary:');
     for (const suggestion of report.suggestions) {
-      console.log(chalk.gray(`  • ${suggestion}`));
+      logger.gray(`  • ${suggestion}`);
     }
-    console.log('');
+    logger.info('');
   }
 
   // Display stats
-  console.log(chalk.blue('Statistics:'));
-  console.log(chalk.gray(`  Files checked: ${report.stats.filesChecked}`));
-  console.log(chalk.gray(`  Folders checked: ${report.stats.foldersChecked}`));
-  console.log(chalk.gray(`  Errors: ${report.stats.errorCount}`));
-  console.log(chalk.gray(`  Warnings: ${report.stats.warningCount}`));
-  console.log(chalk.gray(`  Duration: ${report.stats.duration}ms`));
+  logger.infoBlue('Statistics:');
+  logger.gray(`  Files checked: ${report.stats.filesChecked}`);
+  logger.gray(`  Folders checked: ${report.stats.foldersChecked}`);
+  logger.gray(`  Errors: ${report.stats.errorCount}`);
+  logger.gray(`  Warnings: ${report.stats.warningCount}`);
+  logger.gray(`  Duration: ${report.stats.duration}ms`);
 
   // Set exit code based on results
   if (report.stats.errorCount > 0) {

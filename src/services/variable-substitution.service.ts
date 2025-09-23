@@ -3,8 +3,9 @@
  */
 
 import { randomUUID } from 'crypto';
-import type { Template, ValidationResult } from '../models';
+import type { Template, ValidationResult } from '@/models';
 import type { IFileSystemService } from './file-system.service';
+import { enhanceError } from '../lib';
 
 export interface VariableSubstitutionOptions {
   preserveEscapes?: boolean;
@@ -150,7 +151,7 @@ export class VariableSubstitutionService
         atomic: true,
       });
     } catch (error) {
-      throw this.enhanceError(
+      throw enhanceError(
         error,
         `Failed to substitute variables in file: ${filePath}`,
         {
@@ -468,31 +469,5 @@ export class VariableSubstitutionService
     return value
       .replace(/[-_\s]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ''))
       .replace(/^[a-z]/, char => char.toUpperCase());
-  }
-
-  private enhanceError(
-    originalError: any,
-    message: string,
-    context: {
-      suggestion?: string;
-      path?: string;
-      operation?: string;
-    }
-  ): Error {
-    const error = new Error(`${message}\n${context.suggestion || ''}`);
-
-    // Add context as properties
-    Object.assign(error, {
-      operation: context.operation,
-      path: context.path,
-      originalError,
-    });
-
-    // Preserve original error details in stack trace
-    if (originalError && originalError.stack) {
-      error.stack = `${error.message}\nCaused by: ${originalError.stack}`;
-    }
-
-    return error;
   }
 }

@@ -8,7 +8,7 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 
 // Import command handlers
-import { createNewCommand } from './commands/new';
+import { createNewCommand } from './commands/new.command';
 import { createTemplateCommand } from './commands/template.command';
 import { createCheckCommand } from './commands/check.command';
 import { createFixCommand } from './commands/fix.command';

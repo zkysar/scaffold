@@ -11,9 +11,9 @@ import type {
   CompletionResult,
   CompletionItem,
   ShellCompletionScript,
-} from '../models';
-import { ShellType } from '../models';
-import { CommandRegistry } from '../cli/completion/command-registry';
+} from '@/models';
+import { ShellType } from '@/models';
+import { CommandRegistry } from '@/cli/completion/command-registry';
 import { TemplateService } from './template-service';
 
 export interface ICompletionService {

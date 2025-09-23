@@ -4,8 +4,8 @@
  */
 
 import { Command } from 'commander';
-import { CompletionService } from '../../services';
-import type { CompletionContext } from '../../models';
+import { CompletionService } from '@/services';
+import type { CompletionContext } from '@/models';
 
 interface CompleteCommandOptions {
   line?: string;
