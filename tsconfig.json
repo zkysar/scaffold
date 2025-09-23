@@ -24,7 +24,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node10",
+    "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "ignoreDeprecations": "5.0"
   },
