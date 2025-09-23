@@ -93,16 +93,6 @@ async function handleShowCommand(
         process.exit(1);
     }
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
-      );
-      console.log(chalk.blue('Would show:'), item);
-      console.log(chalk.blue('Format:'), format);
-      return;
-    }
     throw error;
   }
 }
@@ -265,14 +255,6 @@ async function showConfigurationInfo(
       config.preferences?.backupBeforeSync ? 'Yes' : 'No'
     );
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
-      );
-      return;
-    }
     throw error;
   }
 }

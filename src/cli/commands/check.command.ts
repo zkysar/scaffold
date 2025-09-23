@@ -131,40 +131,6 @@ async function handleCheckCommand(
       process.exit(2);
     }
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
-      );
-      console.log(chalk.blue('Would validate project:'), targetPath);
-
-      // Mock validation report for demonstration
-      const mockReport: ValidationReport = {
-        id: 'mock-validation',
-        projectPath: targetPath,
-        timestamp: new Date().toISOString(),
-        errors: [],
-        warnings: [],
-        stats: {
-          filesChecked: 0,
-          foldersChecked: 0,
-          templatesChecked: 0,
-          errorsFound: 0,
-          warningsFound: 0,
-          executionTime: 0,
-          rulesEvaluated: 0,
-          errorCount: 0,
-          warningCount: 0,
-          duration: 0,
-        },
-        passedRules: [],
-        skippedRules: [],
-      };
-
-      displayTable(mockReport, verbose);
-      return;
-    }
     throw error;
   }
 }
