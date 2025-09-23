@@ -16,17 +16,19 @@ npm link  # or use ./dist/cli/index.js directly
 
 ### 1. Project Creation Workflows
 
-#### 1.1 Create a new project with default template
+#### 1.1 Create a new project without specifying template
 ```bash
 scaffold new my-project
 ```
-Expected: Creates a new project directory with default structure
+Expected: Prompts user to select from available templates (or fails if no templates exist)
+Note: There is no "default" template - user must have templates installed first
 
 #### 1.2 Create project with specific template
 ```bash
 scaffold new my-app --template react-app
 ```
 Expected: Creates project using the react-app template
+Note: Template must exist first - users should run `scaffold template list` to see available templates
 
 #### 1.3 Create project in custom directory
 ```bash
@@ -50,7 +52,7 @@ Expected: Shows what would be created without making changes
 ```bash
 scaffold new my-project --verbose
 ```
-Expected: Shows detailed creation process
+Expected: Adds detailed logging of creation process (file operations, template processing, etc.)
 
 #### 1.7 Create project without colors (CI mode)
 ```bash
@@ -70,13 +72,25 @@ Expected: Shows all installed templates
 ```bash
 scaffold template list --verbose
 ```
-Expected: Shows templates with full details including SHA and location
+Expected: Shows templates with extended SHA (12 chars vs 8), full timestamps, source info
+Note: Verbose mode shows how templates were fetched/installed rather than different display format
 
 #### 2.3 Create a new template interactively
 ```bash
 scaffold template create my-template
 ```
-Expected: Prompts for template details and creates new template
+Expected: Interactive prompts for:
+- Template description
+- Root folder for template isolation
+- Version (default: 1.0.0)
+- Strict mode validation (yes/no)
+- Allow extra files in projects (yes/no)
+
+Advanced features (when fully implemented):
+- Scan existing directory as baseline
+- Select allowed subfolders from list
+- Specify allowed file extensions per directory
+- Define required vs optional files/folders
 
 #### 2.4 Create template with dry run
 ```bash
@@ -144,7 +158,7 @@ Expected: Validates specified project directory
 ```bash
 scaffold check ./my-project --verbose
 ```
-Expected: Shows detailed validation results
+Expected: Adds detailed logging during validation (each file/folder checked, rule evaluations, etc.)
 
 #### 3.4 Check with dry run
 ```bash
@@ -166,11 +180,15 @@ scaffold fix
 ```
 Expected: Repairs structural issues in current directory
 
-#### 4.2 Fix specific project
+#### 4.2 Fix specific project (interactive mode)
 ```bash
 scaffold fix ./my-project
 ```
-Expected: Repairs issues in specified project
+Expected: Interactive repair process:
+- Shows each issue found
+- Prompts for confirmation before each fix
+- Allows user to select which fixes to apply
+- Provides options for different fix strategies when available
 
 #### 4.3 Preview fixes without applying
 ```bash
@@ -188,7 +206,7 @@ Expected: Applies fixes without prompting
 ```bash
 scaffold fix ./my-project --verbose
 ```
-Expected: Shows detailed fix operations
+Expected: Adds detailed logging of fix operations (what's being repaired, file operations, etc.)
 
 ### 5. Project Extension Workflows
 
@@ -240,7 +258,7 @@ Expected: Displays current configuration cascade
 ```bash
 scaffold show my-project --verbose
 ```
-Expected: Shows detailed project information
+Expected: Adds detailed logging while gathering project information
 
 ### 7. Configuration Management Workflows
 
@@ -304,7 +322,7 @@ Expected: Shows what would be cleaned
 ```bash
 scaffold clean --verbose
 ```
-Expected: Shows detailed cleanup operations
+Expected: Adds detailed logging of cleanup operations (what's being removed, locations checked, etc.)
 
 ### 9. Shell Completion Workflows
 
