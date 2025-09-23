@@ -189,7 +189,7 @@ describe('scaffold new command contract', () => {
 
       // Assert
       expect(result.code).toBe(1);
-      expect(mockConsole.logs.join(' ')).toContain('No template specified');
+      expect(mockConsole.logs.join(' ')).toContain('No template specified and no templates found');
     });
 
     it('should fail when template not found (exit code 2)', async () => {
@@ -231,7 +231,7 @@ describe('scaffold new command contract', () => {
 
       // Assert
       expect(result.code).toBe(1);
-      expect(mockConsole.logs.join(' ')).toContain('No template specified');
+      expect(mockConsole.logs.join(' ')).toContain('No template specified and no templates found');
     });
   });
 
@@ -262,7 +262,7 @@ describe('scaffold new command contract', () => {
 
       // Assert
       expect(result.code).toBe(1);
-      expect(mockConsole.logs.join(' ')).toContain('No template specified');
+      expect(mockConsole.logs.join(' ')).toContain('No template specified and no templates found');
     });
 
     it('should handle empty project name', async () => {
@@ -272,7 +272,7 @@ describe('scaffold new command contract', () => {
 
       // Assert
       expect(result.code).toBe(1);
-      expect(mockConsole.logs.join(' ')).toContain('No template specified');
+      expect(mockConsole.logs.join(' ')).toContain('No template specified and no templates found');
     });
 
     it('should handle project name with invalid characters', async () => {
@@ -282,7 +282,7 @@ describe('scaffold new command contract', () => {
 
       // Assert
       expect(result.code).toBe(1);
-      expect(mockConsole.logs.join(' ')).toContain('No template specified');
+      expect(mockConsole.logs.join(' ')).toContain('No template specified and no templates found');
     });
   });
 
