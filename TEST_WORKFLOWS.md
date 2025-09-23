@@ -1,6 +1,6 @@
 # Scaffold CLI Testing Workflows
 
-This document contains the top 50 user workflows for testing the Scaffold CLI. These workflows represent common use cases that users would encounter in real-world scenarios.
+This document contains 60+ user workflows for testing the Scaffold CLI. These workflows represent common use cases that users would encounter in real-world scenarios, including backup/recovery operations.
 
 ## Prerequisites
 
@@ -324,80 +324,148 @@ scaffold clean --verbose
 ```
 Expected: Adds detailed logging of cleanup operations (what's being removed, locations checked, etc.)
 
-### 9. Shell Completion Workflows
+### 9. Backup and Recovery Workflows
 
-#### 9.1 Install shell completion (auto-detect)
+#### 9.1 Verify automatic backup creation
+```bash
+# Create project and break it
+scaffold new test-project --template my-template
+rm -rf test-project/src
+scaffold fix test-project
+scaffold backup list
+```
+Expected: Shows backup created automatically before fix operation
+
+#### 9.2 List all backups
+```bash
+scaffold backup list
+```
+Expected: Shows all backups with timestamps, IDs, and sizes
+
+#### 9.3 View backup details
+```bash
+scaffold backup show <backup-id>
+```
+Expected: Shows detailed backup information including files/folders backed up
+
+#### 9.4 Restore from backup
+```bash
+scaffold backup restore <backup-id>
+```
+Expected: Prompts for confirmation and restores files from backup
+
+#### 9.5 Delete old backups
+```bash
+scaffold backup delete <backup-id>
+```
+Expected: Removes specified backup after confirmation
+
+#### 9.6 Check backup space usage
+```bash
+scaffold backup status
+```
+Expected: Shows total space used by backups, warns if >50GB
+
+#### 9.7 Clean old backups (older than 30 days)
+```bash
+scaffold backup clean --older-than 30d
+```
+Expected: Removes backups older than 30 days after confirmation
+
+#### 9.8 Test backup space warning
+```bash
+# Manual test: Create large files in .scaffold/backups to simulate >50GB
+# Then run any command that creates backups
+scaffold fix test-project
+```
+Expected: Warning message about backup space exceeding 50GB
+
+#### 9.9 Export backup to archive
+```bash
+scaffold backup export <backup-id> --output ./my-backup.tar.gz
+```
+Expected: Creates compressed archive of backup
+
+#### 9.10 Verify backup integrity
+```bash
+scaffold backup verify <backup-id>
+```
+Expected: Checks backup files are intact and readable
+
+### 10. Shell Completion Workflows
+
+#### 10.1 Install shell completion (auto-detect)
 ```bash
 scaffold completion install
 ```
 Expected: Installs completion for detected shell
 
-#### 9.2 Install for specific shell
+#### 10.2 Install for specific shell
 ```bash
 scaffold completion install --shell zsh
 ```
 Expected: Installs zsh completion
 
-#### 9.3 Check completion status
+#### 10.3 Check completion status
 ```bash
 scaffold completion status
 ```
 Expected: Shows installation status for all shells
 
-#### 9.4 Output completion script
+#### 10.4 Output completion script
 ```bash
 scaffold completion script --shell bash
 ```
 Expected: Outputs bash completion script
 
-#### 9.5 Uninstall completion
+#### 10.5 Uninstall completion
 ```bash
 scaffold completion uninstall
 ```
 Expected: Removes completion for detected shell
 
-#### 9.6 Uninstall specific shell completion
+#### 10.6 Uninstall specific shell completion
 ```bash
 scaffold completion uninstall --shell fish
 ```
 Expected: Removes fish completion
 
-### 10. Help and Version Workflows
+### 11. Help and Version Workflows
 
-#### 10.1 Show main help
+#### 11.1 Show main help
 ```bash
 scaffold --help
 ```
 Expected: Shows all available commands
 
-#### 10.2 Show command-specific help
+#### 11.2 Show command-specific help
 ```bash
 scaffold template --help
 ```
 Expected: Shows template command help
 
-#### 10.3 Show version
+#### 11.3 Show version
 ```bash
 scaffold --version
 ```
 Expected: Shows CLI version
 
-#### 10.4 Show subcommand help
+#### 11.4 Show subcommand help
 ```bash
 scaffold completion install --help
 ```
 Expected: Shows help for completion install
 
-### 11. Complex Workflows
+### 12. Complex Workflows
 
-#### 11.1 Create project and immediately validate
+#### 12.1 Create project and immediately validate
 ```bash
 scaffold new test-project --template react-app
 scaffold check test-project
 ```
 Expected: Creates project and validates structure
 
-#### 11.2 Create, modify, and fix project
+#### 12.2 Create, modify, and fix project
 ```bash
 scaffold new test-project
 rm -rf test-project/src
@@ -405,7 +473,7 @@ scaffold fix test-project
 ```
 Expected: Creates project, removes folder, then repairs
 
-#### 11.3 Template export and import cycle
+#### 12.3 Template export and import cycle
 ```bash
 scaffold template export my-template --output temp.json
 scaffold template delete my-template --force
@@ -433,6 +501,8 @@ Expected: Exports, deletes, and re-imports template
 4. **Simultaneous operations**: Run multiple scaffold commands in parallel
 5. **Large templates**: Test with templates containing 1000+ files
 6. **Template structure limitations**: Verify that deep folder nesting is prohibited (templates must have flat structure)
+7. **Backup space limits**: Manually create large files in ~/.scaffold/backups to simulate >50GB usage
+8. **Concurrent backups**: Run multiple fix operations simultaneously to test backup collision handling
 
 ### Performance Testing
 
