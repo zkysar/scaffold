@@ -9,7 +9,8 @@ import { existsSync } from 'fs';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import {
-  ProjectService,
+  ProjectExtensionService,
+  ProjectManifestService,
   TemplateService,
   FileSystemService,
 } from '@/services';
@@ -81,13 +82,20 @@ async function handleExtendCommand(
   // Initialize services
   const fileSystemService = new FileSystemService();
   const templateService = new TemplateService();
-  const projectService = new ProjectService(templateService, fileSystemService, undefined);
+  const manifestService = new ProjectManifestService(fileSystemService);
+  const extensionService = new ProjectExtensionService(
+    templateService,
+    fileSystemService,
+    manifestService.getProjectManifest.bind(manifestService),
+    manifestService.updateProjectManifest.bind(manifestService),
+    manifestService.findNearestManifest.bind(manifestService)
+  );
 
   let templateIds: string[] = [];
 
   try {
     // Check if this is a scaffold-managed project
-    const manifest = await projectService.loadProjectManifest(targetPath);
+    const manifest = await manifestService.loadProjectManifest(targetPath);
 
     if (!manifest) {
       console.error(chalk.red('Error:'), 'Not a scaffold-managed project');
@@ -214,8 +222,8 @@ async function handleExtendCommand(
       console.log(chalk.blue('Extending project with template:'), templateIds[0]);
     }
 
-    // Extend the project using the service
-    const updatedManifest = await projectService.extendProject(
+    // Extend the project with the new template
+    const updatedManifest = await extensionService.extendProject(
       targetPath,
       templateIds,
       variables

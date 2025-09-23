@@ -8,7 +8,8 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import {
-  ProjectService,
+  ProjectValidationService,
+  ProjectManifestService,
   TemplateService,
   FileSystemService,
 } from '@/services';
@@ -80,11 +81,16 @@ async function handleCheckCommand(
   // Initialize services
   const fileSystemService = new FileSystemService();
   const templateService = new TemplateService();
-  const projectService = new ProjectService(templateService, fileSystemService);
+  const manifestService = new ProjectManifestService(fileSystemService);
+  const validationService = new ProjectValidationService(
+    templateService,
+    fileSystemService,
+    manifestService.getProjectManifest.bind(manifestService)
+  );
 
   try {
     // Check if this is a scaffold-managed project
-    const manifest = await projectService.loadProjectManifest(targetPath);
+    const manifest = await manifestService.loadProjectManifest(targetPath);
 
     if (!manifest) {
       logger.yellow('Not a scaffold-managed project.');
@@ -105,7 +111,7 @@ async function handleCheckCommand(
     }
 
     // Validate the project
-    const report = await projectService.validateProject(targetPath);
+    const report = await validationService.validateProject(targetPath);
 
     // Display results based on format
     switch (format) {
@@ -128,38 +134,6 @@ async function handleCheckCommand(
       process.exit(2);
     }
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      logger.yellow(
-        '✓ Command structure created (service implementation pending)'
-      );
-      logger.keyValue('Would validate project', targetPath, 'blue');
-
-      // Mock validation report for demonstration
-      const mockReport: ValidationReport = {
-        id: 'mock-validation',
-        projectPath: targetPath,
-        timestamp: new Date().toISOString(),
-        errors: [],
-        warnings: [],
-        stats: {
-          filesChecked: 0,
-          foldersChecked: 0,
-          templatesChecked: 0,
-          errorsFound: 0,
-          warningsFound: 0,
-          executionTime: 0,
-          rulesEvaluated: 0,
-          errorCount: 0,
-          warningCount: 0,
-          duration: 0,
-        },
-        passedRules: [],
-        skippedRules: [],
-      };
-
-      displayTable(mockReport, verbose);
-      return;
-    }
     throw error;
   }
 }

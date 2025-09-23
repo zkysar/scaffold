@@ -9,7 +9,9 @@ import { existsSync } from 'fs';
 import chalk from 'chalk';
 import { logger } from '../../lib/logger';
 import {
-  ProjectService,
+  ProjectFixService,
+  ProjectValidationService,
+  ProjectManifestService,
   TemplateService,
   FileSystemService,
 } from '@/services';
@@ -60,8 +62,8 @@ async function handleFixCommand(
     : resolve(process.cwd());
 
   if (verbose) {
-    logger.info(chalk.blue('Fixing project:'), targetPath);
-    logger.info(chalk.blue('Options:'), JSON.stringify(options, null, 2));
+    logger.info(chalk.blue('Fixing project: ') + targetPath);
+    logger.info(chalk.blue('Options: ') + JSON.stringify(options, null, 2));
   }
 
   // Check if target directory exists
@@ -73,10 +75,22 @@ async function handleFixCommand(
   // Initialize services
   const fileSystemService = new FileSystemService();
   const templateService = new TemplateService();
-  const projectService = new ProjectService(templateService, fileSystemService);
+  const manifestService = new ProjectManifestService(fileSystemService);
+  const validationService = new ProjectValidationService(
+    templateService,
+    fileSystemService,
+    manifestService.getProjectManifest.bind(manifestService)
+  );
+  const fixService = new ProjectFixService(
+    templateService,
+    fileSystemService,
+    validationService,
+    manifestService.getProjectManifest.bind(manifestService),
+    manifestService.updateProjectManifest.bind(manifestService)
+  );
 
   // Check if this is a scaffold-managed project
-  const manifest = await projectService.loadProjectManifest(targetPath);
+  const manifest = await manifestService.loadProjectManifest(targetPath);
 
   if (!manifest) {
     logger.yellow('Not a scaffold-managed project.');
@@ -95,7 +109,7 @@ async function handleFixCommand(
   }
 
   // Fix the project
-  const report = await projectService.fixProject(targetPath, dryRun);
+  const report = await fixService.fixProject(targetPath, dryRun);
 
   // Display results
   logger.bold('Project Fix Report');
@@ -108,7 +122,7 @@ async function handleFixCommand(
     if (report.errors.length > 0) {
       logger.red('Remaining Errors:');
       for (const error of report.errors) {
-        logger.info(chalk.red('  ✗'), error.message);
+        logger.info(chalk.red('  ✗ ') + error.message);
         if (error.suggestion) {
           logger.gray(`    Suggestion: ${error.suggestion}`);
         }
@@ -120,7 +134,7 @@ async function handleFixCommand(
     if (report.warnings.length > 0) {
       logger.yellow('Warnings:');
       for (const warning of report.warnings) {
-        logger.info(chalk.yellow('  ⚠'), warning.message);
+        logger.info(chalk.yellow('  ⚠ ') + warning.message);
         if (warning.suggestion) {
           logger.gray(`    Suggestion: ${warning.suggestion}`);
         }

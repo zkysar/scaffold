@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import { existsSync, statSync } from 'fs';
 import { CompletionService } from '@/services';
 import { createLogger, logger } from '@/lib/logger';
-import type { CompletionInstallStatus } from '@/models';
+import type { CompletionConfig } from '@/models';
 
 interface StatusCommandOptions {
   verbose?: boolean;
@@ -72,7 +72,7 @@ async function handleStatusCommand(options: StatusCommandOptions): Promise<void>
 }
 
 async function displayStatusTable(
-  status: CompletionInstallStatus,
+  status: CompletionConfig,
   verbose: boolean,
   completionService: CompletionService
 ): Promise<void> {
@@ -111,16 +111,8 @@ async function displayStatusTable(
     console.log(chalk.gray(`  Install date: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`));
   }
 
-  if (status.version) {
-    console.log(chalk.gray(`  Version: ${status.version}`));
-
-    if (status.isUpToDate !== undefined) {
-      if (status.isUpToDate) {
-        console.log(chalk.gray('  Status: Up to date'));
-      } else {
-        console.log(chalk.yellow('  Status: Update available'));
-      }
-    }
+  if (status.installedVersion) {
+    console.log(chalk.gray(`  Version: ${status.installedVersion}`));
   }
 
   console.log('');
@@ -138,9 +130,6 @@ async function displayStatusTable(
     console.log(chalk.blue('Next steps:'));
     console.log(chalk.gray('  • Follow the shell-specific setup instructions shown during installation'));
     console.log(chalk.gray('  • Restart your shell or reload your profile'));
-  } else if (!status.isUpToDate) {
-    console.log(chalk.blue('Next steps:'));
-    console.log(chalk.gray('  • Run "scaffold completion install --force" to update to the latest version'));
   }
 
   if (verbose && status.isInstalled) {

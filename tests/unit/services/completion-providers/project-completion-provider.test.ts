@@ -6,32 +6,28 @@
 import * as path from 'path';
 import { ProjectCompletionProvider } from '@/services/completion-providers/project-completion-provider';
 import { CompletionContext, CompletionItem, ProjectManifest, AppliedTemplate } from '@/models';
-import { IProjectService } from '@/services/project-service';
+import { IProjectManifestService } from '@/services/project-manifest.service';
 
 // Mock fs-extra
 jest.mock('fs-extra');
 import * as fs from 'fs-extra';
 const mockFs = fs as jest.Mocked<typeof fs>;
 
-// Mock project service
-const mockProjectService = {
-  createProject: jest.fn(),
-  validateProject: jest.fn(),
-  fixProject: jest.fn(),
-  extendProject: jest.fn(),
+// Mock manifest service
+const mockManifestService = {
   loadProjectManifest: jest.fn(),
+  getProjectManifest: jest.fn(),
   saveProjectManifest: jest.fn(),
   updateProjectManifest: jest.fn(),
-  getProjectStatus: jest.fn(),
-  listProjects: jest.fn(),
-} as jest.Mocked<IProjectService>;
+  findNearestManifest: jest.fn(),
+} as jest.Mocked<IProjectManifestService>;
 
 describe('ProjectCompletionProvider', () => {
   let provider: ProjectCompletionProvider;
   let context: CompletionContext;
 
   beforeEach(() => {
-    provider = new ProjectCompletionProvider(mockProjectService);
+    provider = new ProjectCompletionProvider(mockManifestService);
 
     context = {
       currentWord: '',
@@ -48,7 +44,7 @@ describe('ProjectCompletionProvider', () => {
     // Setup default mock behaviors
     mockFs.pathExists.mockResolvedValue(false);
     mockFs.readdir.mockResolvedValue([]);
-    mockProjectService.loadProjectManifest.mockRejectedValue(new Error('Not found'));
+    mockManifestService.loadProjectManifest.mockRejectedValue(new Error('Not found'));
   });
 
   afterEach(() => {
@@ -72,7 +68,7 @@ describe('ProjectCompletionProvider', () => {
         return Promise.resolve(path === manifestPath);
       });
 
-      mockProjectService.loadProjectManifest.mockResolvedValue(mockManifest);
+      mockManifestService.loadProjectManifest.mockResolvedValue(mockManifest);
 
       const result = await provider.getProjectCompletions(context);
 
@@ -110,7 +106,7 @@ describe('ProjectCompletionProvider', () => {
         return Promise.resolve(path.includes('project1/.scaffold/manifest.json'));
       });
 
-      mockProjectService.loadProjectManifest.mockImplementation((projectPath: string) => {
+      mockManifestService.loadProjectManifest.mockImplementation((projectPath: string) => {
         if (projectPath.includes('project1')) {
           return Promise.resolve(project1Manifest);
         }
@@ -142,7 +138,7 @@ describe('ProjectCompletionProvider', () => {
         return Promise.resolve(path.includes('.scaffold/manifest.json'));
       });
 
-      mockProjectService.loadProjectManifest.mockResolvedValue({
+      mockManifestService.loadProjectManifest.mockResolvedValue({
         version: '1.0.0',
         projectName: 'test',
         templates: [],
@@ -208,7 +204,7 @@ describe('ProjectCompletionProvider', () => {
         return Promise.resolve(path.includes('.scaffold/manifest.json'));
       });
 
-      mockProjectService.loadProjectManifest.mockResolvedValue(null as any);
+      mockManifestService.loadProjectManifest.mockResolvedValue(null as any);
 
       const result = await provider.getProjectCompletions(context);
 
@@ -238,7 +234,7 @@ describe('ProjectCompletionProvider', () => {
         return Promise.resolve(path.includes('parent-project/.scaffold/manifest.json'));
       });
 
-      mockProjectService.loadProjectManifest.mockResolvedValue({
+      mockManifestService.loadProjectManifest.mockResolvedValue({
         version: '1.0.0',
         projectName: 'parent-project',
         templates: [{ id: 'template', version: '1.0.0', appliedAt: new Date(), variables: {} }] as AppliedTemplate[],
@@ -264,7 +260,7 @@ describe('ProjectCompletionProvider', () => {
         return Promise.resolve(path.includes('.scaffold/manifest.json'));
       });
 
-      mockProjectService.loadProjectManifest.mockResolvedValue({
+      mockManifestService.loadProjectManifest.mockResolvedValue({
         version: '1.0.0',
         projectName: 'test',
         templates: [],
@@ -290,7 +286,7 @@ describe('ProjectCompletionProvider', () => {
         return Promise.resolve(path.includes('custom-project/.scaffold/manifest.json'));
       });
 
-      mockProjectService.loadProjectManifest.mockResolvedValue({
+      mockManifestService.loadProjectManifest.mockResolvedValue({
         version: '1.0.0',
         projectName: 'custom-project',
         templates: [],
@@ -363,7 +359,7 @@ describe('ProjectCompletionProvider', () => {
         history: [],
       };
 
-      mockProjectService.loadProjectManifest.mockResolvedValue(mockManifest);
+      mockManifestService.loadProjectManifest.mockResolvedValue(mockManifest);
 
       const result = await provider.getProjectManifest('/test/project');
 
@@ -371,7 +367,7 @@ describe('ProjectCompletionProvider', () => {
     });
 
     it('should return null for invalid project', async () => {
-      mockProjectService.loadProjectManifest.mockRejectedValue(new Error('Not found'));
+      mockManifestService.loadProjectManifest.mockRejectedValue(new Error('Not found'));
 
       const result = await provider.getProjectManifest('/test/project');
 
@@ -420,7 +416,7 @@ describe('ProjectCompletionProvider', () => {
         return Promise.resolve(path.includes('project1/.scaffold/manifest.json'));
       });
 
-      mockProjectService.loadProjectManifest.mockResolvedValue({
+      mockManifestService.loadProjectManifest.mockResolvedValue({
         version: '1.0.0',
         projectName: 'project1',
         templates: [],
@@ -451,7 +447,7 @@ describe('ProjectCompletionProvider', () => {
         return Promise.resolve(path.includes('parent-project/.scaffold/manifest.json'));
       });
 
-      mockProjectService.loadProjectManifest.mockResolvedValue({
+      mockManifestService.loadProjectManifest.mockResolvedValue({
         version: '1.0.0',
         projectName: 'parent-project',
         templates: [],
@@ -536,7 +532,7 @@ describe('ProjectCompletionProvider', () => {
         return Promise.resolve(path.includes('project-@#$/.scaffold/manifest.json'));
       });
 
-      mockProjectService.loadProjectManifest.mockResolvedValue({
+      mockManifestService.loadProjectManifest.mockResolvedValue({
         version: '1.0.0',
         projectName: 'project-@#$',
         templates: [],
@@ -559,7 +555,7 @@ describe('ProjectCompletionProvider', () => {
       })) as AppliedTemplate[];
 
       mockFs.pathExists.mockResolvedValue(true);
-      mockProjectService.loadProjectManifest.mockResolvedValue({
+      mockManifestService.loadProjectManifest.mockResolvedValue({
         version: '1.0.0',
         projectName: 'big-project',
         templates: manyTemplates,

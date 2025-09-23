@@ -6,7 +6,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import {
-  ProjectService,
+  ProjectManifestService,
   TemplateService,
   ConfigurationService,
   FileSystemService,
@@ -106,13 +106,9 @@ async function showProjectInfo(options: ShowCommandOptions): Promise<void> {
 
   try {
     const fileSystemService = new FileSystemService();
-    const templateService = new TemplateService();
-    const projectService = new ProjectService(
-      templateService,
-      fileSystemService
-    );
+    const manifestService = new ProjectManifestService(fileSystemService);
 
-    const manifest = await projectService.loadProjectManifest(process.cwd());
+    const manifest = await manifestService.loadProjectManifest(process.cwd());
 
     if (!manifest) {
       console.log(

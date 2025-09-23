@@ -5,7 +5,7 @@
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import type { CompletionContext, CompletionItem, ProjectManifest } from '@/models';
-import type { IProjectService } from '@/services/project-service';
+import type { IProjectManifestService } from '@/services/project-manifest.service';
 
 export interface IProjectCompletionProvider {
   /**
@@ -30,12 +30,12 @@ export interface IProjectCompletionProvider {
 }
 
 export class ProjectCompletionProvider implements IProjectCompletionProvider {
-  private projectService: IProjectService;
+  private manifestService: IProjectManifestService;
   private cacheExpiry: number = 2 * 60 * 1000; // 2 minutes (shorter than templates)
   private cache: Map<string, { data: CompletionItem[]; timestamp: number }> = new Map();
 
-  constructor(projectService: IProjectService) {
-    this.projectService = projectService;
+  constructor(manifestService: IProjectManifestService) {
+    this.manifestService = manifestService;
   }
 
   async getProjectCompletions(context: CompletionContext): Promise<CompletionItem[]> {
@@ -111,7 +111,7 @@ export class ProjectCompletionProvider implements IProjectCompletionProvider {
    */
   async getProjectManifest(directory: string): Promise<ProjectManifest | null> {
     try {
-      return await this.projectService.loadProjectManifest(directory);
+      return await this.manifestService.loadProjectManifest(directory);
     } catch (error) {
       return null;
     }
