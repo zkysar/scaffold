@@ -63,8 +63,7 @@ module.exports = {
         {title: 'Project', value: 'Scaffold CLI'},
         {title: 'Test Environment', value: 'Node.js'}
       ]
-    }],
-    '<rootDir>/tests/helpers/link-reporter.js'
+    }]
   ],
 
   // Setup files
