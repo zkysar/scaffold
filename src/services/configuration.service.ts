@@ -10,8 +10,8 @@ import type {
   UserPreferences,
   PathConfiguration,
   DefaultSettings,
-} from '../models';
-import { ConfigLevel } from '../models';
+} from '@/models';
+import { ConfigLevel } from '@/models';
 
 export type ConfigScope = ConfigLevel;
 

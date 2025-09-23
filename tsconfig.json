@@ -5,6 +5,17 @@
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
+    "baseUrl": "./src",
+    "paths": {
+      "@/models": ["models/index"],
+      "@/models/*": ["models/*"],
+      "@/services": ["services/index"],
+      "@/services/*": ["services/*"],
+      "@/lib/*": ["lib/*"],
+      "@/cli/*": ["cli/*"],
+      "@/types": ["types/index"],
+      "@/types/*": ["types/*"]
+    },
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

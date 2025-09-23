@@ -5,7 +5,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { CompletionService } from '../../services';
+import { CompletionService } from '@/services';
 
 interface UninstallCommandOptions {
   verbose?: boolean;

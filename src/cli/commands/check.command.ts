@@ -11,8 +11,8 @@ import {
   ProjectService,
   TemplateService,
   FileSystemService,
-} from '../../services';
-import type { ValidationReport } from '../../models';
+} from '@/services';
+import type { ValidationReport } from '@/models';
 
 interface CheckCommandOptions {
   verbose?: boolean;
