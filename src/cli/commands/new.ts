@@ -167,18 +167,7 @@ async function handleNewCommand(
       const library = await templateService.loadTemplates();
 
       if (library.templates.length === 0) {
-        console.log(chalk.yellow('No templates found.'));
-        console.log(
-          chalk.gray(
-            'Use "scaffold template create" to create your first template.'
-          )
-        );
-        console.log(
-          chalk.gray(
-            'Or specify a template with: scaffold new my-project --template <template-name>'
-          )
-        );
-        return;
+        throw new Error('No template specified and no templates found in library');
       }
 
       if (verbose) {
@@ -222,18 +211,7 @@ async function handleNewCommand(
         error instanceof Error &&
         error.message.includes('Failed to load templates')
       ) {
-        console.log(chalk.yellow('No templates found.'));
-        console.log(
-          chalk.gray(
-            'Use "scaffold template create" to create your first template.'
-          )
-        );
-        console.log(
-          chalk.gray(
-            'Or specify a template with: scaffold new my-project --template <template-name>'
-          )
-        );
-        return;
+        throw new Error('No template specified and no templates found in library');
       }
       throw error;
     }
