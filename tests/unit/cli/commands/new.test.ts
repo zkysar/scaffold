@@ -3,7 +3,7 @@
  * Tests option parsing, validation, flow control, and error handling
  */
 
-import { createNewCommand } from '../../../../src/cli/commands/new';
+import { createNewCommand } from '../../../../src/cli/commands/new.command';
 import {
   ProjectService,
   TemplateService,
