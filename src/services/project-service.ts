@@ -14,13 +14,13 @@ import type {
   Template,
   AppliedTemplate,
   HistoryEntry,
-} from '../models';
+} from '@/models';
 import type { ITemplateService } from './template-service';
 import type { IFileSystemService } from './file-system.service';
 import type { IConfigurationService } from './configuration.service';
 import { VariableSubstitutionService } from './variable-substitution.service';
 import { TemplateIdentifierService } from './template-identifier-service';
-import { shortSHA } from '../lib/sha';
+import { shortSHA } from '@/lib/sha';
 
 export interface IProjectService {
   /**

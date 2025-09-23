@@ -3,7 +3,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import type { Template, ValidationResult } from '../models';
+import type { Template, ValidationResult } from '@/models';
 import type { IFileSystemService } from './file-system.service';
 
 export interface VariableSubstitutionOptions {

@@ -12,7 +12,7 @@ import {
   ProjectService,
   TemplateService,
   FileSystemService,
-} from '../../services';
+} from '@/services';
 
 interface NewCommandOptions {
   template?: string;
