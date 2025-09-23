@@ -3,8 +3,10 @@
  */
 
 import { randomUUID } from 'crypto';
+import { injectable, inject } from 'tsyringe';
 import type { Template, ValidationResult } from '../models';
 import type { IFileSystemService } from './file-system.service';
+import { FileSystemService } from './file-system.service';
 import { enhanceError } from '../lib';
 
 export interface VariableSubstitutionOptions {
@@ -72,13 +74,16 @@ export interface IVariableSubstitutionService {
   createContext(variables: Record<string, any>): SubstitutionContext;
 }
 
+@injectable()
 export class VariableSubstitutionService
   implements IVariableSubstitutionService
 {
   private readonly variablePattern = /\\?\{\{([^}]+)\}\}/g;
   private readonly escapePattern = /\\(\{\{[^}]+\}\})/g;
 
-  constructor(private readonly fileService: IFileSystemService) {}
+  constructor(
+    @inject(FileSystemService) private readonly fileService: IFileSystemService
+  ) {}
 
   substituteVariables(
     content: string,

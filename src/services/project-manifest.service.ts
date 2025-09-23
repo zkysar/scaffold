@@ -3,8 +3,10 @@
  */
 
 import * as path from 'path';
+import { injectable, inject } from 'tsyringe';
 import type { ProjectManifest } from '../models';
 import type { IFileSystemService } from './file-system.service';
+import { FileSystemService } from './file-system.service';
 
 export interface IProjectManifestService {
   /**
@@ -41,8 +43,11 @@ export interface IProjectManifestService {
   ): Promise<{ manifestPath: string; projectPath: string } | null>;
 }
 
+@injectable()
 export class ProjectManifestService implements IProjectManifestService {
-  constructor(private readonly fileService: IFileSystemService) {}
+  constructor(
+    @inject(FileSystemService) private readonly fileService: IFileSystemService
+  ) {}
 
   async loadProjectManifest(
     projectPath: string

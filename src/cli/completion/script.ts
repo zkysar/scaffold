@@ -5,6 +5,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { DependencyContainer } from 'tsyringe';
 import { CompletionService } from '../../services';
 import { ShellType } from '../../models';
 
@@ -14,7 +15,7 @@ interface ScriptCommandOptions {
   verbose?: boolean;
 }
 
-export function createScriptCommand(): Command {
+export function createScriptCommand(container: DependencyContainer): Command {
   const command = new Command('script');
 
   command
@@ -24,7 +25,7 @@ export function createScriptCommand(): Command {
     .option('--verbose', 'Show detailed output')
     .action(async (options: ScriptCommandOptions) => {
       try {
-        await handleScriptCommand(options);
+        await handleScriptCommand(options, container);
       } catch (error) {
         console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -34,11 +35,14 @@ export function createScriptCommand(): Command {
   return command;
 }
 
-async function handleScriptCommand(options: ScriptCommandOptions): Promise<void> {
+async function handleScriptCommand(
+  options: ScriptCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   const verbose = options.verbose || false;
   const showInstructions = options.instructions || false;
 
-  const completionService = new CompletionService();
+  const completionService = container.resolve(CompletionService);
 
   // Determine shell type
   let shellType = options.shell;

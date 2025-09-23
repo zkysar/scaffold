@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs-extra';
 import * as semver from 'semver';
+import { injectable, inject } from 'tsyringe';
 
 import type {
   Template,
@@ -89,19 +90,18 @@ export interface TemplateServiceOptions {
   identifierService?: TemplateIdentifierService;
 }
 
+@injectable()
 export class TemplateService implements ITemplateService {
   private readonly templatesDir: string;
   private readonly cacheDir: string;
-  private readonly identifierService: TemplateIdentifierService;
 
-  constructor(options?: TemplateServiceOptions) {
+  constructor(
+    @inject(TemplateIdentifierService) private readonly identifierService: TemplateIdentifierService,
+    options?: TemplateServiceOptions
+  ) {
     const homeDir = os.homedir();
     this.templatesDir = options?.templatesDir ?? path.join(homeDir, '.scaffold', 'templates');
     this.cacheDir = options?.cacheDir ?? path.join(homeDir, '.scaffold', 'cache');
-
-    // If a custom templatesDir is provided, use a custom aliasFilePath too
-    const aliasFilePath = options?.templatesDir ? path.join(options.templatesDir, 'aliases.json') : undefined;
-    this.identifierService = options?.identifierService ?? TemplateIdentifierService.getInstance(aliasFilePath);
   }
 
   async loadTemplates(): Promise<TemplateLibrary> {

@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
+import { DependencyContainer } from 'tsyringe';
 import {
   ProjectValidationService,
   ProjectManifestService,
@@ -24,7 +25,7 @@ interface CheckCommandOptions {
   format?: 'table' | 'json' | 'summary';
 }
 
-export function createCheckCommand(): Command {
+export function createCheckCommand(container: DependencyContainer): Command {
   const command = new Command('check');
 
   command
@@ -43,7 +44,7 @@ export function createCheckCommand(): Command {
     )
     .action(async (projectPath: string, options: CheckCommandOptions) => {
       try {
-        await handleCheckCommand(projectPath, options);
+        await handleCheckCommand(projectPath, options, container);
       } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
         // Determine exit code based on error type
@@ -64,7 +65,8 @@ export function createCheckCommand(): Command {
 
 async function handleCheckCommand(
   projectPath: string,
-  options: CheckCommandOptions
+  options: CheckCommandOptions,
+  container: DependencyContainer
 ): Promise<void> {
   const verbose = options.verbose || false;
   const format = options.format || 'table';
@@ -90,15 +92,11 @@ async function handleCheckCommand(
     );
   }
 
-  // Initialize services
-  const fileSystemService = new FileSystemService();
-  const templateService = new TemplateService();
-  const manifestService = new ProjectManifestService(fileSystemService);
-  const validationService = new ProjectValidationService(
-    templateService,
-    fileSystemService,
-    manifestService.getProjectManifest.bind(manifestService)
-  );
+  // Resolve services from DI container
+  const fileSystemService = container.resolve(FileSystemService);
+  const templateService = container.resolve(TemplateService);
+  const manifestService = container.resolve(ProjectManifestService);
+  const validationService = container.resolve(ProjectValidationService);
 
   try {
     // Check if this is a scaffold-managed project

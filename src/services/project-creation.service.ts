@@ -3,6 +3,7 @@
  */
 
 import { randomUUID } from 'crypto';
+import { injectable, inject } from 'tsyringe';
 import type {
   ProjectManifest,
   Template,
@@ -10,7 +11,10 @@ import type {
   HistoryEntry,
 } from '../models';
 import type { ITemplateService } from './template-service';
+import { TemplateService } from './template-service';
 import type { IFileSystemService } from './file-system.service';
+import { FileSystemService } from './file-system.service';
+import type { IVariableSubstitutionService } from './variable-substitution.service';
 import { VariableSubstitutionService } from './variable-substitution.service';
 
 export interface IProjectCreationService {
@@ -38,15 +42,13 @@ export interface IProjectCreationService {
   ensureProjectDirectory(projectPath: string): Promise<void>;
 }
 
+@injectable()
 export class ProjectCreationService implements IProjectCreationService {
-  private readonly variableService: VariableSubstitutionService;
-
   constructor(
-    private readonly templateService: ITemplateService,
-    private readonly fileService: IFileSystemService
-  ) {
-    this.variableService = new VariableSubstitutionService(this.fileService);
-  }
+    @inject(TemplateService) private readonly templateService: ITemplateService,
+    @inject(FileSystemService) private readonly fileService: IFileSystemService,
+    @inject(VariableSubstitutionService) private readonly variableService: IVariableSubstitutionService
+  ) {}
 
   async createProject(
     projectName: string,
