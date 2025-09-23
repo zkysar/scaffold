@@ -1,6 +1,19 @@
 #!/usr/bin/env sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Check code coverage before push
+echo "🧪 Checking code coverage (minimum 50% required)..."
+npm run test:coverage:check
+
+if [ $? -ne 0 ]; then
+    echo "❌ Code coverage check failed!"
+    echo "📊 Minimum coverage requirement: 50% for all metrics (branches, functions, lines, statements)"
+    echo "💡 Run 'npm run test:coverage' to see detailed coverage report"
+    exit 1
+fi
+
+echo "✅ Code coverage check passed!"
+
 # Run all tests including Docker integration tests
 echo "Running all tests before push..."
 
