@@ -37,6 +37,7 @@
     "@typescript-eslint/explicit-function-return-type": "warn",
     "@typescript-eslint/no-inferrable-types": "off",
     "prefer-const": "error",
+    "no-console": "error",
 
     "import/no-unresolved": "error",
     "import/order": ["warn", {
@@ -69,5 +70,25 @@
       ]
     }]
   },
+  "overrides": [
+    {
+      "files": ["src/lib/logger.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["**/*.test.ts", "**/*.spec.ts", "**/tests/**/*", "**/test/**/*"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": ["**/demo-templates/**/*", "**/templates/**/*"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ],
   "ignorePatterns": ["dist/", "node_modules/", "*.js"]
 }
