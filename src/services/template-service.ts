@@ -12,9 +12,9 @@ import type {
   TemplateLibrary,
   TemplateSummary,
   TemplateSource,
-} from '../models';
+} from '@/models';
 import { TemplateIdentifierService } from './template-identifier-service';
-import { shortSHA, isValidSHA } from '../lib/sha';
+import { shortSHA, isValidSHA } from '@/lib/sha';
 
 export interface ITemplateService {
   /**

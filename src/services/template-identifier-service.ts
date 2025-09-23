@@ -6,8 +6,8 @@
 import * as path from 'path';
 import * as os from 'os';
 import { IdentifierService } from './identifier-service';
-import { generateSHAFromObject } from '../lib/sha';
-import type { Template } from '../models';
+import { generateSHAFromObject } from '@/lib/sha';
+import type { Template } from '@/models';
 
 /**
  * Service for managing template identifiers (SHAs and aliases)

@@ -6,10 +6,10 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { TemplateService } from '../../services';
-import { TemplateIdentifierService } from '../../services/template-identifier-service';
-import { shortSHA } from '../../lib/sha';
-import type { Template } from '../../models';
+import { TemplateService } from '@/services';
+import { TemplateIdentifierService } from '@/services/template-identifier-service';
+import { shortSHA } from '@/lib/sha';
+import type { Template } from '@/models';
 
 interface TemplateCommandOptions {
   verbose?: boolean;
