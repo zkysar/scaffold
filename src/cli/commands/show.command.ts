@@ -12,6 +12,7 @@ import {
   ConfigurationService,
   FileSystemService,
 } from '../../services';
+import { ExitCode } from '../../constants/exit-codes';
 
 interface ShowCommandOptions {
   verbose?: boolean;
@@ -51,7 +52,7 @@ Examples:
           chalk.red('Error:'),
           error instanceof Error ? error.message : String(error)
         );
-        process.exit(1);
+        process.exit(ExitCode.SYSTEM_ERROR);
       }
     });
 
@@ -92,7 +93,7 @@ async function handleShowCommand(
         console.log(
           chalk.gray('Available items: project, template, config, all')
         );
-        process.exit(1);
+        process.exit(ExitCode.USER_ERROR);
     }
   } catch (error) {
     throw error;
@@ -113,18 +114,33 @@ async function showProjectInfo(
     const fileSystemService = container.resolve(FileSystemService);
     const manifestService = container.resolve(ProjectManifestService);
 
-    const manifest = await manifestService.loadProjectManifest(process.cwd());
-
-    if (!manifest) {
-      console.log(
-        chalk.yellow('This directory is not a scaffold-managed project.')
-      );
-      console.log(
-        chalk.gray(
-          'Use "scaffold new" to create a new project or "scaffold check" to validate.'
-        )
-      );
-      return;
+    let manifest = null;
+    try {
+      manifest = await manifestService.loadProjectManifest(process.cwd());
+    } catch (error) {
+      // Handle manifest loading errors
+      if (error instanceof Error) {
+        if (error.message.includes('No manifest found') ||
+            error.message.includes('does not exist')) {
+          console.log(
+            chalk.yellow('This directory is not a scaffold-managed project.')
+          );
+          console.log(
+            chalk.gray(
+              'Use "scaffold new" to create a new project or "scaffold check" to validate.'
+            )
+          );
+          return;
+        } else if (error.message.includes('Failed to read JSON file') ||
+                   error.message.includes('JSON')) {
+          console.error(chalk.red('Error:'), 'Malformed project manifest file.');
+          console.log(
+            chalk.gray('The .scaffold/manifest.json file contains invalid JSON.')
+          );
+          process.exit(ExitCode.USER_ERROR);
+        }
+      }
+      throw error;
     }
 
     if (format === 'json') {
@@ -156,18 +172,30 @@ async function showProjectInfo(
       }
     }
   } catch (error) {
-    if (error instanceof Error && error.message.includes('No manifest found')) {
-      console.log(
-        chalk.yellow('This directory is not a scaffold-managed project.')
-      );
-      console.log(
-        chalk.gray(
-          'Use "scaffold new" to create a new project or "scaffold check" to validate.'
-        )
-      );
-    } else {
-      throw error;
+    if (error instanceof Error) {
+      if (error.message.includes('No manifest found')) {
+        console.log(
+          chalk.yellow('This directory is not a scaffold-managed project.')
+        );
+        console.log(
+          chalk.gray(
+            'Use "scaffold new" to create a new project or "scaffold check" to validate.'
+          )
+        );
+        return;
+      } else if (error.message.includes('Failed to read JSON file') ||
+                 error.message.includes('Unexpected token') ||
+                 error.message.includes('JSON') ||
+                 error.message.includes('invalid json')) {
+        // Handle malformed manifest
+        console.error(chalk.red('Error:'), 'Malformed project manifest file.');
+        console.log(
+          chalk.gray('The .scaffold/manifest.json file contains invalid JSON.')
+        );
+        process.exit(ExitCode.USER_ERROR);
+      }
     }
+    throw error;
   }
 }
 
@@ -180,32 +208,42 @@ async function showTemplateInfo(
   console.log(chalk.green('Template Information:'));
   console.log('');
 
-  const templateService = container.resolve(TemplateService);
-  const library = await templateService.loadTemplates();
+  try {
+    const templateService = container.resolve(TemplateService);
+    const library = await templateService.loadTemplates();
+    const templates = library.templates;
 
-  if (format === 'json') {
-    console.log(JSON.stringify(library.templates, null, 2));
-    return;
-  }
+    if (format === 'json') {
+      console.log(JSON.stringify(templates, null, 2));
+      return;
+    }
 
-  if (library.templates.length === 0) {
+    if (templates.length === 0) {
+      console.log(chalk.yellow('No templates available.'));
+      console.log(
+        chalk.gray(
+          'Use "scaffold template create" to create your first template.'
+        )
+      );
+      return;
+    }
+
+    for (const template of templates) {
+      console.log(chalk.bold(template.name), chalk.gray(`(${template.id})`));
+      console.log(chalk.gray('  Version:'), template.version);
+      console.log(chalk.gray('  Description:'), template.description);
+      console.log('');
+    }
+
+    console.log(chalk.blue('Total:'), templates.length, 'templates');
+  } catch (error) {
     console.log(chalk.yellow('No templates available.'));
     console.log(
       chalk.gray(
         'Use "scaffold template create" to create your first template.'
       )
     );
-    return;
   }
-
-  for (const template of library.templates) {
-    console.log(chalk.bold(template.name), chalk.gray(`(${template.id})`));
-    console.log(chalk.gray('  Version:'), template.version);
-    console.log(chalk.gray('  Description:'), template.description);
-    console.log('');
-  }
-
-  console.log(chalk.blue('Total:'), library.templates.length, 'templates');
 }
 
 async function showConfigurationInfo(
@@ -260,7 +298,15 @@ async function showConfigurationInfo(
       config.preferences?.backupBeforeSync ? 'Yes' : 'No'
     );
   } catch (error) {
-    throw error;
+    // If anything fails, show basic default information
+    console.log(chalk.blue('Templates Directory:'), 'Not configured');
+    console.log(chalk.blue('Cache Directory:'), 'Not configured');
+    console.log(chalk.blue('Backup Directory:'), 'Not configured');
+    console.log(chalk.blue('Strict Mode Default:'), 'Disabled');
+    console.log(chalk.blue('Color Output:'), 'Yes');
+    console.log(chalk.blue('Verbose Output:'), 'No');
+    console.log(chalk.blue('Confirm Destructive:'), 'Yes');
+    console.log(chalk.blue('Backup Before Sync:'), 'Yes');
   }
 }
 

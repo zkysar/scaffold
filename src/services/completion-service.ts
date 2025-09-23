@@ -26,12 +26,17 @@ export interface ICompletionService {
   /**
    * Generate shell-specific completion script
    */
-  generateCompletionScript(shellType: ShellType): Promise<ShellCompletionScript>;
+  generateCompletionScript(
+    shellType: ShellType
+  ): Promise<ShellCompletionScript>;
 
   /**
    * Install completion script in user's shell configuration
    */
-  installCompletion(shellType?: ShellType, force?: boolean): Promise<CompletionConfig>;
+  installCompletion(
+    shellType?: ShellType,
+    force?: boolean
+  ): Promise<CompletionConfig>;
 
   /**
    * Remove completion script from user's shell configuration
@@ -81,26 +86,33 @@ export class CompletionService implements ICompletionService {
     try {
       const ppid = process.ppid;
       if (ppid) {
+        // Dynamic require needed for optional shell detection
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { exec } = require('child_process');
         const result = await new Promise<string>((resolve, reject) => {
-          exec(`ps -p ${ppid} -o comm=`, (error: Error | null, stdout: string) => {
-            if (error) reject(error);
-            else resolve(stdout.trim());
-          });
+          exec(
+            `ps -p ${ppid} -o comm=`,
+            (error: Error | null, stdout: string) => {
+              if (error) reject(error);
+              else resolve(stdout.trim());
+            }
+          );
         });
 
         if (result.includes('zsh')) return ShellType.ZSH;
         if (result.includes('fish')) return ShellType.FISH;
         if (result.includes('bash')) return ShellType.BASH;
       }
-    } catch (error) {
+    } catch {
       // Ignore detection errors, fall back to bash
     }
 
     return ShellType.BASH; // Default fallback
   }
 
-  async generateCompletionScript(shellType: ShellType): Promise<ShellCompletionScript> {
+  async generateCompletionScript(
+    shellType: ShellType
+  ): Promise<ShellCompletionScript> {
     switch (shellType) {
       case ShellType.BASH:
         return this.generateBashScript();
@@ -113,12 +125,17 @@ export class CompletionService implements ICompletionService {
     }
   }
 
-  async installCompletion(shellType?: ShellType, force = false): Promise<CompletionConfig> {
-    const detectedShell = shellType || await this.detectShell();
+  async installCompletion(
+    shellType?: ShellType,
+    force = false
+  ): Promise<CompletionConfig> {
+    const detectedShell = shellType || (await this.detectShell());
     const config = await this.getCompletionStatus(detectedShell);
 
     if (config.isInstalled && !force) {
-      throw new Error(`Completion already installed for ${detectedShell}. Use --force to reinstall.`);
+      throw new Error(
+        `Completion already installed for ${detectedShell}. Use --force to reinstall.`
+      );
     }
 
     await this.ensureDirectoriesExist();
@@ -127,7 +144,11 @@ export class CompletionService implements ICompletionService {
     const installPath = await this.getInstallPath(detectedShell);
 
     try {
-      await this.writeCompletionScript(detectedShell, script.content, installPath);
+      await this.writeCompletionScript(
+        detectedShell,
+        script.content,
+        installPath
+      );
       await this.addToShellConfig(detectedShell, installPath);
 
       const newConfig: CompletionConfig = {
@@ -142,12 +163,14 @@ export class CompletionService implements ICompletionService {
       await this.saveCompletionConfig(newConfig);
       return newConfig;
     } catch (error) {
-      throw new Error(`Failed to install completion: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to install completion: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   async uninstallCompletion(shellType?: ShellType): Promise<void> {
-    const detectedShell = shellType || await this.detectShell();
+    const detectedShell = shellType || (await this.detectShell());
     const config = await this.getCompletionStatus(detectedShell);
 
     if (!config.isInstalled) {
@@ -163,18 +186,23 @@ export class CompletionService implements ICompletionService {
 
       await this.removeCompletionConfig(detectedShell);
     } catch (error) {
-      throw new Error(`Failed to uninstall completion: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to uninstall completion: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   async getCompletionStatus(shellType?: ShellType): Promise<CompletionConfig> {
-    const detectedShell = shellType || await this.detectShell();
+    const detectedShell = shellType || (await this.detectShell());
 
     try {
-      const configPath = path.join(this.configDir, `completion-${detectedShell}.json`);
+      const configPath = path.join(
+        this.configDir,
+        `completion-${detectedShell}.json`
+      );
 
       if (await fs.pathExists(configPath)) {
-        const config = await fs.readJson(configPath) as CompletionConfig;
+        const config = (await fs.readJson(configPath)) as CompletionConfig;
 
         // Check if script file still exists
         const scriptExists = config.installPath && await fs.pathExists(config.installPath);
@@ -200,25 +228,36 @@ export class CompletionService implements ICompletionService {
     };
   }
 
-  async generateCompletions(context: CompletionContext): Promise<CompletionResult> {
+  async generateCompletions(
+    context: CompletionContext
+  ): Promise<CompletionResult> {
     const suggestions: string[] = [];
     const errors: string[] = [];
 
     try {
       // Parse command line to determine completion type
-      const { command, subcommand, isOptionValue, isFlag } = this.parseCommandLine(context);
+      const { command, subcommand, isOptionValue, isFlag } =
+        this.parseCommandLine(context);
 
       if (isOptionValue) {
         // When completing an option value, only show value completions
-        suggestions.push(...await this.getOptionValueCompletions(context));
+        suggestions.push(...(await this.getOptionValueCompletions(context)));
       } else {
         // For all other cases, show mixed completions (commands/subcommands + flags)
 
         // Get command/subcommand completions
-        const commandSuggestions = await this.getCommandCompletions(command, subcommand, context);
+        const commandSuggestions = await this.getCommandCompletions(
+          command,
+          subcommand,
+          context
+        );
 
         // Get flag completions
-        const flagSuggestions = await this.getOptionCompletions(command, subcommand, context);
+        const flagSuggestions = await this.getOptionCompletions(
+          command,
+          subcommand,
+          context
+        );
 
         // If user is typing a flag (starts with -), show only flags
         if (isFlag) {
@@ -231,7 +270,10 @@ export class CompletionService implements ICompletionService {
       }
 
       return {
-        completions: this.filterAndSortSuggestions(suggestions, context.currentWord).map(value => ({
+        completions: this.filterAndSortSuggestions(
+          suggestions,
+          context.currentWord
+        ).map(value => ({
           value,
           description: null,
           type: 'command' as const,
@@ -242,7 +284,9 @@ export class CompletionService implements ICompletionService {
         errors: [],
       };
     } catch (error) {
-      errors.push(error instanceof Error ? error.message : 'Unknown completion error');
+      errors.push(
+        error instanceof Error ? error.message : 'Unknown completion error'
+      );
 
       return {
         completions: [],
@@ -269,7 +313,7 @@ _scaffold_completion() {
         # Parse JSON output and extract values
         local suggestions=""
         while IFS= read -r line; do
-            if [[ "$line" =~ \"value\":\"([^\"]+)\" ]]; then
+            if [[ "$line" =~ "value":"([^"]+)" ]]; then
                 suggestions="$suggestions \${BASH_REMATCH[1]}"
             fi
         done <<< "$completion_result"
@@ -336,7 +380,7 @@ _scaffold "$@"`;
     return {
       shellType: ShellType.ZSH,
       content: script,
-      filename: '_scaffold',  // Use underscore prefix for zsh completion files
+      filename: '_scaffold', // Use underscore prefix for zsh completion files
       installPath: await this.getInstallPath(ShellType.ZSH),
     };
   }
@@ -382,16 +426,21 @@ complete -c scaffold -f -a "(__scaffold_complete)"
         return path.join(homeDir, '.scaffold', 'completion-bash.sh');
       case ShellType.ZSH:
         return path.join(homeDir, '.scaffold', 'completions', '_scaffold');
-      case ShellType.FISH:
+      case ShellType.FISH: {
         const fishDir = path.join(homeDir, '.config', 'fish', 'completions');
         await fs.ensureDir(fishDir);
         return path.join(fishDir, 'scaffold.fish');
+      }
       default:
         throw new Error(`Unsupported shell type: ${shellType}`);
     }
   }
 
-  private async writeCompletionScript(shellType: ShellType, script: string, installPath: string): Promise<void> {
+  private async writeCompletionScript(
+    shellType: ShellType,
+    script: string,
+    installPath: string
+  ): Promise<void> {
     await fs.ensureDir(path.dirname(installPath));
     await fs.writeFile(installPath, script, 'utf-8');
 
@@ -401,21 +450,26 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     }
   }
 
-  private async addToShellConfig(shellType: ShellType, installPath: string): Promise<void> {
+  private async addToShellConfig(
+    shellType: ShellType,
+    installPath: string
+  ): Promise<void> {
     const homeDir = os.homedir();
     let configFile: string;
     let sourceCommand: string;
 
     switch (shellType) {
-      case ShellType.BASH:
+      case ShellType.BASH: {
         configFile = path.join(homeDir, '.bashrc');
         sourceCommand = `source "${installPath}"`;
         break;
-      case ShellType.ZSH:
+      }
+      case ShellType.ZSH: {
         configFile = path.join(homeDir, '.zshrc');
         const completionDir = path.dirname(installPath);
         sourceCommand = `fpath=(${completionDir} $fpath)`;
         break;
+      }
       case ShellType.FISH:
         // Fish auto-loads from completions directory
         return;
@@ -436,18 +490,23 @@ complete -c scaffold -f -a "(__scaffold_complete)"
 
         // Insert fpath before compinit
         const lines = content.split('\n');
-        const compInitIndex = lines.findIndex(line => line.includes('compinit'));
+        const compInitIndex = lines.findIndex(line =>
+          line.includes('compinit')
+        );
 
         if (compInitIndex > 0) {
           // Insert before compinit
-          lines.splice(compInitIndex, 0,
+          lines.splice(
+            compInitIndex,
+            0,
             '# Scaffold CLI completion',
             sourceCommand
           );
           await fs.writeFile(configFile, lines.join('\n'), 'utf-8');
         } else {
           // No compinit found, append to start of file
-          await fs.writeFile(configFile,
+          await fs.writeFile(
+            configFile,
             `# Scaffold CLI completion\n${sourceCommand}\n\n${content}`,
             'utf-8'
           );
@@ -467,7 +526,10 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     await fs.appendFile(configFile, `\n${configLine}`);
   }
 
-  private async removeFromShellConfig(shellType: ShellType, installPath: string): Promise<void> {
+  private async removeFromShellConfig(
+    shellType: ShellType,
+    installPath: string
+  ): Promise<void> {
     const homeDir = os.homedir();
     let configFile: string;
 
@@ -485,15 +547,16 @@ complete -c scaffold -f -a "(__scaffold_complete)"
         return;
     }
 
-    if (!await fs.pathExists(configFile)) {
+    if (!(await fs.pathExists(configFile))) {
       return;
     }
 
     const content = await fs.readFile(configFile, 'utf-8');
     const lines = content.split('\n');
-    const filteredLines = lines.filter(line =>
-      !line.includes(installPath) &&
-      !line.includes('# Scaffold CLI completion')
+    const filteredLines = lines.filter(
+      line =>
+        !line.includes(installPath) &&
+        !line.includes('# Scaffold CLI completion')
     );
 
     await fs.writeFile(configFile, filteredLines.join('\n'), 'utf-8');
@@ -501,12 +564,18 @@ complete -c scaffold -f -a "(__scaffold_complete)"
 
   private async saveCompletionConfig(config: CompletionConfig): Promise<void> {
     await this.ensureDirectoriesExist();
-    const configPath = path.join(this.configDir, `completion-${config.shellType}.json`);
+    const configPath = path.join(
+      this.configDir,
+      `completion-${config.shellType}.json`
+    );
     await fs.writeJson(configPath, config, { spaces: 2 });
   }
 
   private async removeCompletionConfig(shellType: ShellType): Promise<void> {
-    const configPath = path.join(this.configDir, `completion-${shellType}.json`);
+    const configPath = path.join(
+      this.configDir,
+      `completion-${shellType}.json`
+    );
     if (await fs.pathExists(configPath)) {
       await fs.remove(configPath);
     }
@@ -532,7 +601,7 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     isOptionValue: boolean;
     isFlag: boolean;
   } {
-    const { commandLine, cursorPosition } = context;
+    const { commandLine } = context;
     const currentWord = context.currentWord;
     const previousWord = context.previousWord;
 
@@ -542,9 +611,10 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     // Check if we're completing an option value
     // Only certain flags take values
     const flagsThatTakeValues = ['--shell', '--template', '--workspace'];
-    const isOptionValue = previousWord !== null &&
-                         flagsThatTakeValues.includes(previousWord) &&
-                         !currentWord.startsWith('-');
+    const isOptionValue =
+      previousWord !== null &&
+      flagsThatTakeValues.includes(previousWord) &&
+      !currentWord.startsWith('-');
 
     // Skip the 'scaffold' executable name if present
     let words = commandLine;
@@ -566,7 +636,11 @@ complete -c scaffold -f -a "(__scaffold_complete)"
 
       if (word.startsWith('-')) {
         // This is a flag - check if it takes a value
-        if (word === '--shell' || word === '--template' || word === '--workspace') {
+        if (
+          word === '--shell' ||
+          word === '--template' ||
+          word === '--workspace'
+        ) {
           skipNext = true; // Skip the next word as it's the flag's value
         }
         continue;
@@ -579,13 +653,17 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     }
 
     // Extract command and subcommand from non-flag words
-    let command = nonFlagWords[0] || null;
-    let subcommand = nonFlagWords.length > 1 ? nonFlagWords[1] : null;
+    const command = nonFlagWords[0] || null;
+    const subcommand = nonFlagWords.length > 1 ? nonFlagWords[1] : null;
 
     return { command, subcommand, isOptionValue, isFlag };
   }
 
-  private async getOptionCompletions(command: string | null, subcommand: string | null, context: CompletionContext): Promise<string[]> {
+  private async getOptionCompletions(
+    command: string | null,
+    subcommand: string | null,
+    context: CompletionContext
+  ): Promise<string[]> {
     const registry = CommandRegistry.getInstance();
 
     const commandPath: string[] = [];
@@ -606,7 +684,9 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     return allOptions.filter(option => !usedFlags.has(option));
   }
 
-  private async getOptionValueCompletions(context: CompletionContext): Promise<string[]> {
+  private async getOptionValueCompletions(
+    context: CompletionContext
+  ): Promise<string[]> {
     const previousWord = context.previousWord;
 
     if (previousWord === '--shell') {
@@ -628,7 +708,11 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     return [];
   }
 
-  private async getCommandCompletions(command: string | null, subcommand: string | null, context: CompletionContext): Promise<string[]> {
+  private async getCommandCompletions(
+    command: string | null,
+    subcommand: string | null,
+    context: CompletionContext
+  ): Promise<string[]> {
     const registry = CommandRegistry.getInstance();
 
     if (!command) {
@@ -645,9 +729,16 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     if (command === 'template' && ['delete', 'export'].includes(subcommand)) {
       // For template delete/export, we should provide template name completions
       // Import the template provider to get template names
-      const { TemplateCompletionProvider } = require('./completion-providers/template-completion-provider');
+      // Dynamic requires needed for completion providers
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const {
+        TemplateCompletionProvider,
+      } = require('./completion-providers/template-completion-provider');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { TemplateService } = require('./template-service');
-      const templateProvider = new TemplateCompletionProvider(new TemplateService());
+      const templateProvider = new TemplateCompletionProvider(
+        new TemplateService()
+      );
       const templates = await templateProvider.getTemplateCompletions(context);
       return templates.map((t: CompletionItem) => t.value);
     }
@@ -660,7 +751,10 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     return subSubcommands;
   }
 
-  private filterAndSortSuggestions(suggestions: string[], currentWord: string): string[] {
+  private filterAndSortSuggestions(
+    suggestions: string[],
+    currentWord: string
+  ): string[] {
     if (!currentWord) {
       return suggestions.sort();
     }
@@ -670,7 +764,9 @@ complete -c scaffold -f -a "(__scaffold_complete)"
       .sort();
   }
 
-  async getCompletionScript(shellType: ShellType): Promise<ShellCompletionScript> {
+  async getCompletionScript(
+    shellType: ShellType
+  ): Promise<ShellCompletionScript> {
     return this.generateCompletionScript(shellType);
   }
 

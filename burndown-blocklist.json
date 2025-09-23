@@ -18,7 +18,6 @@
       "tests/contract/commands/scaffold-new.test.ts",
       "tests/contract/commands/scaffold-show.test.ts",
       "tests/contract/commands/scaffold-template.test.ts",
-      "tests/integration/cli/cli-commands.test.ts",
       "tests/integration/cli/completion/complete.test.ts",
       "tests/integration/cli/completion/install.test.ts",
       "tests/integration/cli/completion/script.test.ts",

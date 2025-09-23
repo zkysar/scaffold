@@ -34,6 +34,11 @@ export interface IProjectValidationService {
   findNearestManifest(
     startPath: string
   ): Promise<{ manifestPath: string; projectPath: string } | null>;
+
+  /**
+   * Validate project name format
+   */
+  validateProjectName(projectName: string): { isValid: boolean; error?: string };
 }
 
 @injectable()
@@ -391,5 +396,27 @@ export class ProjectValidationService implements IProjectValidationService {
     }
 
     return null;
+  }
+
+  validateProjectName(projectName: string): { isValid: boolean; error?: string } {
+    if (!projectName || typeof projectName !== 'string') {
+      return { isValid: false, error: 'Project name must be a non-empty string' };
+    }
+
+    const trimmedName = projectName.trim();
+
+    if (trimmedName.length === 0) {
+      return { isValid: false, error: 'Project name cannot be empty' };
+    }
+
+    // Validate project name (no special characters except dash and underscore)
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedName)) {
+      return {
+        isValid: false,
+        error: 'Project name can only contain letters, numbers, dashes, and underscores'
+      };
+    }
+
+    return { isValid: true };
   }
 }

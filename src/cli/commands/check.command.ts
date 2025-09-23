@@ -15,6 +15,7 @@ import {
   FileSystemService,
 } from '@/services';
 import type { ValidationReport } from '@/models';
+import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 import { createLogger, logger } from '@/lib/logger';
 
 interface CheckCommandOptions {
@@ -46,7 +47,16 @@ export function createCheckCommand(container: DependencyContainer): Command {
         await handleCheckCommand(projectPath, options, container);
       } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
-        process.exit(1);
+        // Determine exit code based on error type
+        if (
+          (error instanceof Error && error.message.includes('permission')) ||
+          (error instanceof Error && error.message.includes('EACCES')) ||
+          (error instanceof Error && error.message.includes('EPERM'))
+        ) {
+          exitWithCode(ExitCode.SYSTEM_ERROR);
+        } else {
+          exitWithCode(ExitCode.USER_ERROR);
+        }
       }
     });
 
@@ -76,8 +86,10 @@ async function handleCheckCommand(
 
   // Check if target directory exists
   if (!existsSync(targetPath)) {
-    logger.error(`Directory "${targetPath}" does not exist`);
-    process.exit(1);
+    exitWithCode(
+      ExitCode.USER_ERROR,
+      `Error: Directory "${targetPath}" does not exist`
+    );
   }
 
   // Resolve services from DI container
@@ -88,7 +100,53 @@ async function handleCheckCommand(
 
   try {
     // Check if this is a scaffold-managed project
-    const manifest = await manifestService.loadProjectManifest(targetPath);
+    let manifest;
+    try {
+      manifest = await manifestService.loadProjectManifest(targetPath);
+    } catch (manifestError) {
+      // Handle JSON parsing or file read errors
+      if (manifestError instanceof Error) {
+        const errorMessage = manifestError.message.toLowerCase();
+
+        // Log error details for debugging
+        if (verbose) {
+          console.log(
+            chalk.gray('Manifest error details:'),
+            manifestError.message
+          );
+        }
+
+        // Check for any manifest-related errors that indicate invalid project data
+        if (
+          errorMessage.includes('json') ||
+          errorMessage.includes('parse') ||
+          errorMessage.includes('syntax') ||
+          errorMessage.includes('manifest') ||
+          errorMessage.includes('invalid') ||
+          errorMessage.includes('unexpected')
+        ) {
+          // Throw error to be caught by outer catch block for synchronous exit
+          throw new Error(
+            'INVALID_MANIFEST: Invalid or corrupted project manifest file'
+          );
+        }
+
+        // For file not found errors, treat as non-scaffold project
+        if (
+          errorMessage.includes('does not exist') ||
+          errorMessage.includes('no such file') ||
+          errorMessage.includes('enoent')
+        ) {
+          manifest = null;
+        } else {
+          // For other unknown errors, treat as USER_ERROR since it's project-related
+          throw new Error('MANIFEST_ERROR: Failed to read project manifest');
+        }
+      } else {
+        // For non-Error objects, treat as USER_ERROR
+        throw new Error('MANIFEST_ERROR: Failed to read project manifest');
+      }
+    }
 
     if (!manifest) {
       logger.yellow('Not a scaffold-managed project.');
@@ -127,12 +185,41 @@ async function handleCheckCommand(
 
     // Set exit code based on validation results
     if (report.stats.errorCount > 0) {
-      process.exit(1);
-    } else if (report.stats.warningCount > 0) {
-      process.exit(2);
+      process.exit(ExitCode.USER_ERROR);
     }
+    // Note: Warnings don't cause non-zero exit code as per specification
   } catch (error) {
-    throw error;
+    // Handle specific error cases
+    if (error instanceof Error) {
+      // Handle our custom error codes
+      if (error.message.startsWith('INVALID_MANIFEST:')) {
+        exitWithCode(
+          ExitCode.USER_ERROR,
+          `Error: ${error.message.replace('INVALID_MANIFEST: ', '')}`
+        );
+      } else if (error.message.startsWith('MANIFEST_ERROR:')) {
+        exitWithCode(
+          ExitCode.USER_ERROR,
+          `Error: ${error.message.replace('MANIFEST_ERROR: ', '')}`
+        );
+      } else if (
+        error.message.includes('permission') ||
+        error.message.includes('EACCES') ||
+        error.message.includes('EPERM')
+      ) {
+        exitWithCode(ExitCode.SYSTEM_ERROR, error.message);
+      } else if (
+        error.message.includes('JSON') ||
+        error.message.includes('manifest') ||
+        error.message.includes('parse')
+      ) {
+        exitWithCode(ExitCode.USER_ERROR, error.message);
+      } else {
+        exitWithCode(ExitCode.USER_ERROR, error.message);
+      }
+    } else {
+      exitWithCode(ExitCode.USER_ERROR, String(error));
+    }
   }
 }
 
@@ -218,7 +305,7 @@ function displayTable(report: ValidationReport, verbose: boolean): void {
     console.log('');
     console.log(chalk.blue('Passed Rules:'));
     if (report.passedRules && report.passedRules.length > 0) {
-      for (const rule of report.passedRules!) {
+      for (const rule of report.passedRules) {
         console.log(chalk.green('  ✓'), rule);
       }
     } else {
@@ -228,7 +315,7 @@ function displayTable(report: ValidationReport, verbose: boolean): void {
     if (report.skippedRules && report.skippedRules.length > 0) {
       console.log('');
       console.log(chalk.blue('Skipped Rules:'));
-      for (const rule of report.skippedRules!) {
+      for (const rule of report.skippedRules) {
         console.log(chalk.gray('  -'), rule);
       }
     }

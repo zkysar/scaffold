@@ -14,7 +14,10 @@ import {
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '../../services';
+  ProjectValidationService,
+} from '@/services';
+import { ExitCode, exitWithCode } from '../../constants/exit-codes';
+import { selectTemplates } from '@/cli/utils/template-selector';
 
 interface NewCommandOptions {
   template?: string;
@@ -43,11 +46,19 @@ export function createNewCommand(container: DependencyContainer): Command {
         try {
           await handleNewCommand(projectName, options, container);
         } catch (error) {
-          console.error(
-            chalk.red('Error:'),
-            error instanceof Error ? error.message : String(error)
-          );
-          process.exit(1);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          // Check if it's a system/permission error
+          if (errorMessage.includes('permission denied') ||
+              errorMessage.includes('EACCES') ||
+              errorMessage.includes('EPERM') ||
+              errorMessage.includes('ENOENT') ||
+              errorMessage.includes('no such file or directory')) {
+            exitWithCode(ExitCode.SYSTEM_ERROR, `System error: ${errorMessage}`);
+          } else {
+            // Default to user error for other cases
+            exitWithCode(ExitCode.USER_ERROR, `Error: ${errorMessage}`);
+          }
         }
       }
     );
@@ -63,29 +74,64 @@ async function handleNewCommand(
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 
+  // Resolve services from DI container
+  const fileSystemService = container.resolve(FileSystemService);
+  const templateService = container.resolve(TemplateService);
+  const manifestService = container.resolve(ProjectManifestService);
+  const projectCreationService = container.resolve(ProjectCreationService);
+  const validationService = container.resolve(ProjectValidationService);
+
+  let templateToUse = options.template;
+
+  // If no template specified, try to use default template
+  if (!templateToUse) {
+    try {
+      const library = await templateService.loadTemplates();
+      const defaultTemplate = library.templates.find(t => t.name === 'default');
+      if (defaultTemplate) {
+        templateToUse = 'default';
+        if (verbose) {
+          console.log('No template specified, using default template');
+        }
+      } else {
+        console.log('No template specified. Use --template option to specify a template.');
+        process.exit(ExitCode.USER_ERROR);
+      }
+    } catch (error) {
+      console.log('No template specified. Use --template option to specify a template.');
+      process.exit(ExitCode.USER_ERROR);
+    }
+  }
+
+  // Second check: Validate project name if provided as argument
+  if (projectName !== undefined) {
+    const validation = validationService.validateProjectName(projectName);
+    if (!validation.isValid) {
+      console.log(validation.error);
+      process.exit(ExitCode.USER_ERROR);
+    }
+  }
+
+  // If project name was provided as an empty string, it should be treated as not provided
+  const hasValidProjectName = projectName !== undefined && projectName.trim().length > 0;
+
   // Prompt for project name if not provided
   let finalProjectName: string;
-  if (!projectName) {
+  if (!hasValidProjectName) {
     const { name } = await inquirer.prompt([
       {
         type: 'input',
         name: 'name',
         message: 'Enter project name:',
         validate: (input: string): string | boolean => {
-          if (!input || input.trim().length === 0) {
-            return 'Project name is required';
-          }
-          // Validate project name (no special characters except dash and underscore)
-          if (!/^[a-zA-Z0-9_-]+$/.test(input.trim())) {
-            return 'Project name can only contain letters, numbers, dashes, and underscores';
-          }
-          return true;
+          const validation = validationService.validateProjectName(input);
+          return validation.isValid ? true : validation.error!;
         },
       },
     ]);
     finalProjectName = name.trim();
   } else {
-    finalProjectName = projectName;
+    finalProjectName = projectName.trim();
   }
 
   if (verbose) {
@@ -147,17 +193,11 @@ async function handleNewCommand(
     ]);
 
     if (!overwrite) {
-      console.log(chalk.yellow('Operation cancelled.'));
-      return;
+      exitWithCode(ExitCode.SUCCESS, 'Operation cancelled.');
     }
   }
 
-  // Resolve services from DI container
-  const fileSystemService = container.resolve(FileSystemService);
-  const templateService = container.resolve(TemplateService);
-  const manifestService = container.resolve(ProjectManifestService);
-  const projectCreationService = container.resolve(ProjectCreationService);
-
+  // Handle template selection
   let templateIds: string[] = [];
 
   if (options.template) {
@@ -166,57 +206,9 @@ async function handleNewCommand(
       console.log(chalk.blue('Using template:'), options.template);
     }
   } else {
-    // Load available templates and prompt user to select
+    // Use the new template selector utility
     try {
-      const library = await templateService.loadTemplates();
-
-      if (library.templates.length === 0) {
-        console.log(chalk.yellow('No template specified and no templates found in library.'));
-        console.log(
-          chalk.gray(
-            'Use "scaffold template create" to create your first template.'
-          )
-        );
-        console.log(
-          chalk.gray(
-            'Or specify a template with: scaffold new my-project --template <template-name>'
-          )
-        );
-        process.exit(1);
-      }
-
-      if (verbose) {
-        console.log(
-          chalk.blue('Found'),
-          library.templates.length,
-          'available templates'
-        );
-      }
-
-      // Create choices for inquirer
-      const templateChoices = library.templates.map(template => ({
-        name: `${template.name} - ${template.description}`,
-        value: template.id,
-        short: template.name,
-      }));
-
-      const { selectedTemplates } = await inquirer.prompt([
-        {
-          type: 'checkbox',
-          name: 'selectedTemplates',
-          message:
-            'Select templates to apply (use spacebar to select, enter to confirm):',
-          choices: templateChoices,
-          validate: (input: string[]): string | boolean => {
-            if (input.length === 0) {
-              return 'You must select at least one template';
-            }
-            return true;
-          },
-        },
-      ]);
-
-      templateIds = selectedTemplates;
+      templateIds = await selectTemplates(templateService, { verbose });
 
       if (verbose) {
         console.log(chalk.blue('Selected templates:'), templateIds);
@@ -237,11 +229,12 @@ async function handleNewCommand(
             'Or specify a template with: scaffold new my-project --template <template-name>'
           )
         );
-        process.exit(1);
+        exitWithCode(ExitCode.USER_ERROR);
       }
       throw error;
     }
   }
+
 
   // Parse variables if provided
   let variables: Record<string, string> = {};
@@ -264,34 +257,32 @@ async function handleNewCommand(
     console.log(chalk.blue('Target path:'), targetPath);
     console.log(chalk.blue('Templates:'), templateIds);
     console.log(chalk.blue('Variables:'), variables);
-    return;
+    exitWithCode(ExitCode.SUCCESS);
   }
 
-  try {
-    // Create the project
-    const manifest = await projectCreationService.createProject(
-      finalProjectName,
-      templateIds,
-      targetPath,
-      variables
-    );
+  // Create the project
+  const manifest = await projectCreationService.createProject(
+    finalProjectName,
+    templateIds,
+    targetPath,
+    variables
+  );
 
-    // Save the manifest using the manifest service
-    await manifestService.updateProjectManifest(targetPath, manifest);
+  // Save the manifest using the manifest service
+  await manifestService.updateProjectManifest(targetPath, manifest);
 
-    console.log(chalk.green('✓ Project created successfully!'));
-    console.log(chalk.blue('Project name:'), manifest.projectName);
-    console.log(chalk.blue('Location:'), targetPath);
-    console.log(
-      chalk.blue('Templates applied:'),
-      manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
-    );
+  console.log(chalk.green('✓ Project created successfully!'));
+  console.log(chalk.blue('Project name:'), manifest.projectName);
+  console.log(chalk.blue('Location:'), targetPath);
+  console.log(
+    chalk.blue('Templates applied:'),
+    manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+  );
 
-    if (verbose) {
-      console.log(chalk.blue('Manifest ID:'), manifest.id);
-      console.log(chalk.blue('Created at:'), manifest.created);
-    }
-  } catch (error) {
-    throw error;
+  if (verbose) {
+    console.log(chalk.blue('Manifest ID:'), manifest.id);
+    console.log(chalk.blue('Created at:'), manifest.created);
   }
+
+  exitWithCode(ExitCode.SUCCESS);
 }
