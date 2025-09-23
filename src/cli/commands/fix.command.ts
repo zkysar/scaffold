@@ -33,7 +33,8 @@ export function createFixCommand(): Command {
     .option('--dry-run', 'Show what would be fixed without making changes')
     .option('--force', 'Fix issues without confirmation prompts')
     .option('--backup', 'Create backup before making changes', true)
-    .action(async (projectPath: string, options: FixCommandOptions) => {
+    .option('--no-backup', 'Skip backup creation')
+    .action(async (projectPath: string | undefined, options: FixCommandOptions) => {
       try {
         await handleFixCommand(projectPath, options);
       } catch (error) {
@@ -49,7 +50,7 @@ export function createFixCommand(): Command {
 }
 
 async function handleFixCommand(
-  projectPath: string,
+  projectPath: string | undefined,
   options: FixCommandOptions
 ): Promise<void> {
   const verbose = options.verbose || false;
