@@ -14,6 +14,7 @@ import {
   TemplateService,
   FileSystemService,
 } from '../../services';
+import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 
 interface NewCommandOptions {
   template?: string;
@@ -42,11 +43,19 @@ export function createNewCommand(): Command {
         try {
           await handleNewCommand(projectName, options);
         } catch (error) {
-          console.error(
-            chalk.red('Error:'),
-            error instanceof Error ? error.message : String(error)
-          );
-          process.exit(1);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          // Check if it's a system/permission error
+          if (errorMessage.includes('permission denied') ||
+              errorMessage.includes('EACCES') ||
+              errorMessage.includes('EPERM') ||
+              errorMessage.includes('ENOENT') ||
+              errorMessage.includes('no such file or directory')) {
+            exitWithCode(ExitCode.SYSTEM_ERROR, `System error: ${errorMessage}`);
+          } else {
+            // Default to user error for other cases
+            exitWithCode(ExitCode.USER_ERROR, `Error: ${errorMessage}`);
+          }
         }
       }
     );
@@ -61,9 +70,51 @@ async function handleNewCommand(
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 
+  // Initialize services to check for templates
+  const fileSystemService = new FileSystemService();
+  const templateService = new TemplateService();
+
+  let templateToUse = options.template;
+
+  // If no template specified, try to use default template
+  if (!templateToUse) {
+    try {
+      const library = await templateService.loadTemplates();
+      const defaultTemplate = library.templates.find(t => t.name === 'default');
+      if (defaultTemplate) {
+        templateToUse = 'default';
+        if (verbose) {
+          console.log('No template specified, using default template');
+        }
+      } else {
+        console.log('No template specified. Use --template option to specify a template.');
+        process.exit(ExitCode.USER_ERROR);
+      }
+    } catch (error) {
+      console.log('No template specified. Use --template option to specify a template.');
+      process.exit(ExitCode.USER_ERROR);
+    }
+  }
+
+  // Second check: Validate project name if provided as argument
+  if (projectName !== undefined) {
+    if (!projectName || projectName.trim().length === 0) {
+      console.log('Project name cannot be empty');
+      process.exit(ExitCode.USER_ERROR);
+    }
+    // Validate project name (no special characters except dash and underscore)
+    if (!/^[a-zA-Z0-9_-]+$/.test(projectName.trim())) {
+      console.log('Project name can only contain letters, numbers, dashes, and underscores');
+      process.exit(ExitCode.USER_ERROR);
+    }
+  }
+
+  // If project name was provided as an empty string, it should be treated as not provided
+  const hasValidProjectName = projectName !== undefined && projectName.trim().length > 0;
+
   // Prompt for project name if not provided
   let finalProjectName: string;
-  if (!projectName) {
+  if (!hasValidProjectName) {
     const { name } = await inquirer.prompt([
       {
         type: 'input',
@@ -83,7 +134,7 @@ async function handleNewCommand(
     ]);
     finalProjectName = name.trim();
   } else {
-    finalProjectName = projectName;
+    finalProjectName = projectName.trim();
   }
 
   if (verbose) {
@@ -145,104 +196,24 @@ async function handleNewCommand(
     ]);
 
     if (!overwrite) {
-      console.log(chalk.yellow('Operation cancelled.'));
-      return;
+      exitWithCode(ExitCode.SUCCESS, 'Operation cancelled.');
     }
   }
 
-  // Initialize services
-  const fileSystemService = new FileSystemService();
-  const templateService = new TemplateService();
+  // Initialize remaining services (file system and template service already initialized above)
   const manifestService = new ProjectManifestService(fileSystemService);
   const projectCreationService = new ProjectCreationService(
     templateService,
     fileSystemService
   );
 
-  let templateIds: string[] = [];
+  // At this point we know template is specified (either directly or default)
+  let templateIds: string[] = [templateToUse];
 
-  if (options.template) {
-    templateIds = [options.template];
-    if (verbose) {
-      console.log(chalk.blue('Using template:'), options.template);
-    }
-  } else {
-    // Load available templates and prompt user to select
-    try {
-      const library = await templateService.loadTemplates();
-
-      if (library.templates.length === 0) {
-        console.log(chalk.yellow('No templates found.'));
-        console.log(
-          chalk.gray(
-            'Use "scaffold template create" to create your first template.'
-          )
-        );
-        console.log(
-          chalk.gray(
-            'Or specify a template with: scaffold new my-project --template <template-name>'
-          )
-        );
-        return;
-      }
-
-      if (verbose) {
-        console.log(
-          chalk.blue('Found'),
-          library.templates.length,
-          'available templates'
-        );
-      }
-
-      // Create choices for inquirer
-      const templateChoices = library.templates.map(template => ({
-        name: `${template.name} - ${template.description}`,
-        value: template.id,
-        short: template.name,
-      }));
-
-      const { selectedTemplates } = await inquirer.prompt([
-        {
-          type: 'checkbox',
-          name: 'selectedTemplates',
-          message:
-            'Select templates to apply (use spacebar to select, enter to confirm):',
-          choices: templateChoices,
-          validate: (input: string[]): string | boolean => {
-            if (input.length === 0) {
-              return 'You must select at least one template';
-            }
-            return true;
-          },
-        },
-      ]);
-
-      templateIds = selectedTemplates;
-
-      if (verbose) {
-        console.log(chalk.blue('Selected templates:'), templateIds);
-      }
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes('Failed to load templates')
-      ) {
-        console.log(chalk.yellow('No templates found.'));
-        console.log(
-          chalk.gray(
-            'Use "scaffold template create" to create your first template.'
-          )
-        );
-        console.log(
-          chalk.gray(
-            'Or specify a template with: scaffold new my-project --template <template-name>'
-          )
-        );
-        return;
-      }
-      throw error;
-    }
+  if (verbose) {
+    console.log(chalk.blue('Using template:'), templateToUse);
   }
+
 
   // Parse variables if provided
   let variables: Record<string, string> = {};
@@ -265,7 +236,7 @@ async function handleNewCommand(
     console.log(chalk.blue('Target path:'), targetPath);
     console.log(chalk.blue('Templates:'), templateIds);
     console.log(chalk.blue('Variables:'), variables);
-    return;
+    exitWithCode(ExitCode.SUCCESS);
   }
 
   try {
@@ -292,6 +263,8 @@ async function handleNewCommand(
       console.log(chalk.blue('Manifest ID:'), manifest.id);
       console.log(chalk.blue('Created at:'), manifest.created);
     }
+
+    exitWithCode(ExitCode.SUCCESS);
   } catch (error) {
     throw error;
   }
