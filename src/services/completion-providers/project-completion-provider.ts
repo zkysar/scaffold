@@ -4,8 +4,10 @@
 
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import { injectable, inject } from 'tsyringe';
 import type { CompletionContext, CompletionItem, ProjectManifest } from '@/models';
 import type { IProjectManifestService } from '@/services/project-manifest.service';
+import { ProjectManifestService } from '@/services/project-manifest.service';
 
 export interface IProjectCompletionProvider {
   /**
@@ -29,14 +31,14 @@ export interface IProjectCompletionProvider {
   isScaffoldProject(directory: string): Promise<boolean>;
 }
 
+@injectable()
 export class ProjectCompletionProvider implements IProjectCompletionProvider {
-  private manifestService: IProjectManifestService;
   private cacheExpiry: number = 2 * 60 * 1000; // 2 minutes (shorter than templates)
   private cache: Map<string, { data: CompletionItem[]; timestamp: number }> = new Map();
 
-  constructor(manifestService: IProjectManifestService) {
-    this.manifestService = manifestService;
-  }
+  constructor(
+    @inject(ProjectManifestService) private readonly manifestService: IProjectManifestService
+  ) {}
 
   async getProjectCompletions(context: CompletionContext): Promise<CompletionItem[]> {
     const currentDir = context.currentDirectory;

@@ -6,6 +6,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { existsSync, statSync } from 'fs';
+import { DependencyContainer } from 'tsyringe';
 import { CompletionService } from '@/services';
 import { createLogger, logger } from '@/lib/logger';
 import type { CompletionConfig } from '@/models';
@@ -15,7 +16,7 @@ interface StatusCommandOptions {
   format?: 'table' | 'json';
 }
 
-export function createStatusCommand(): Command {
+export function createStatusCommand(container: DependencyContainer): Command {
   const command = new Command('status');
 
   command
@@ -24,7 +25,7 @@ export function createStatusCommand(): Command {
     .option('-f, --format <format>', 'Output format (table|json)', 'table')
     .action(async (options: StatusCommandOptions) => {
       try {
-        await handleStatusCommand(options);
+        await handleStatusCommand(options, container);
       } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -34,14 +35,17 @@ export function createStatusCommand(): Command {
   return command;
 }
 
-async function handleStatusCommand(options: StatusCommandOptions): Promise<void> {
+async function handleStatusCommand(
+  options: StatusCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   const verbose = options.verbose || false;
   const format = options.format || 'table';
 
   // Create logger with command options
   const cmdLogger = createLogger({ verbose });
 
-  const completionService = new CompletionService();
+  const completionService = container.resolve(CompletionService);
 
   try {
     const shellType = await completionService.detectShell();

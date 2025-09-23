@@ -5,6 +5,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import { injectable } from 'tsyringe';
 import { shortSHA, isValidSHA, findSHAByPrefix } from '@/lib/sha';
 
 /**

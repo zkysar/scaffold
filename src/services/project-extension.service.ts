@@ -3,6 +3,7 @@
  */
 
 import { randomUUID } from 'crypto';
+import { injectable, inject } from 'tsyringe';
 import type {
   ProjectManifest,
   Template,
@@ -10,8 +11,15 @@ import type {
   HistoryEntry,
 } from '../models';
 import type { ITemplateService } from './template-service';
+import { TemplateService } from './template-service';
 import type { IFileSystemService } from './file-system.service';
+import { FileSystemService } from './file-system.service';
+import type { IVariableSubstitutionService } from './variable-substitution.service';
 import { VariableSubstitutionService } from './variable-substitution.service';
+import type { IProjectManifestService } from './project-manifest.service';
+import { ProjectManifestService } from './project-manifest.service';
+import type { IProjectValidationService } from './project-validation.service';
+import { ProjectValidationService } from './project-validation.service';
 
 export interface IProjectExtensionService {
   /**
@@ -24,25 +32,15 @@ export interface IProjectExtensionService {
   ): Promise<ProjectManifest>;
 }
 
+@injectable()
 export class ProjectExtensionService implements IProjectExtensionService {
-  private readonly variableService: VariableSubstitutionService;
-
   constructor(
-    private readonly templateService: ITemplateService,
-    private readonly fileService: IFileSystemService,
-    private readonly getProjectManifest: (
-      projectPath: string
-    ) => Promise<ProjectManifest | null>,
-    private readonly updateProjectManifest: (
-      projectPath: string,
-      manifest: ProjectManifest
-    ) => Promise<void>,
-    private readonly findNearestManifest: (
-      startPath: string
-    ) => Promise<{ manifestPath: string; projectPath: string } | null>
-  ) {
-    this.variableService = new VariableSubstitutionService(this.fileService);
-  }
+    @inject(TemplateService) private readonly templateService: ITemplateService,
+    @inject(FileSystemService) private readonly fileService: IFileSystemService,
+    @inject(VariableSubstitutionService) private readonly variableService: IVariableSubstitutionService,
+    @inject(ProjectManifestService) private readonly manifestService: IProjectManifestService,
+    @inject(ProjectValidationService) private readonly validationService: IProjectValidationService
+  ) {}
 
   async extendProject(
     projectPath: string,
@@ -59,7 +57,7 @@ export class ProjectExtensionService implements IProjectExtensionService {
 
     try {
       // Load existing project manifest
-      const manifest = await this.getProjectManifest(projectPath);
+      const manifest = await this.manifestService.getProjectManifest(projectPath);
       if (!manifest) {
         throw new Error(
           `No project manifest found at '${projectPath}'. This directory is not a scaffold-managed project.`
@@ -67,7 +65,7 @@ export class ProjectExtensionService implements IProjectExtensionService {
       }
 
       // Find the actual project root where the manifest is located
-      const nearestManifest = await this.findNearestManifest(projectPath);
+      const nearestManifest = await this.validationService.findNearestManifest(projectPath);
       const actualProjectPath = nearestManifest?.projectPath || projectPath;
 
       // Merge variables with existing ones
@@ -181,7 +179,7 @@ export class ProjectExtensionService implements IProjectExtensionService {
       manifest.updated = new Date().toISOString();
 
       // Save manifest
-      await this.updateProjectManifest(actualProjectPath, manifest);
+      await this.manifestService.updateProjectManifest(actualProjectPath, manifest);
 
       return manifest;
     } catch (error) {

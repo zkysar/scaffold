@@ -6,6 +6,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import { DependencyContainer } from 'tsyringe';
 import { TemplateService } from '@/services';
 import { TemplateIdentifierService } from '@/services/template-identifier-service';
 import { shortSHA } from '@/lib/sha';
@@ -18,7 +19,7 @@ interface TemplateCommandOptions {
   output?: string;
 }
 
-export function createTemplateCommand(): Command {
+export function createTemplateCommand(container: DependencyContainer): Command {
   const command = new Command('template');
 
   command
@@ -35,7 +36,7 @@ export function createTemplateCommand(): Command {
         // Handle the overloaded arguments
         const options = (action === 'alias' ? maybeOptions : aliasOrOptions) as TemplateCommandOptions || {};
         const alias = action === 'alias' ? aliasOrOptions as string : undefined;
-        await handleTemplateCommand(action, identifier, alias, options);
+        await handleTemplateCommand(action, identifier, alias, options, container);
       } catch (error) {
         console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -45,7 +46,13 @@ export function createTemplateCommand(): Command {
   return command;
 }
 
-async function handleTemplateCommand(action: string, identifier: string, alias: string | undefined, options: TemplateCommandOptions): Promise<void> {
+async function handleTemplateCommand(
+  action: string,
+  identifier: string,
+  alias: string | undefined,
+  options: TemplateCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   const verbose = options.verbose || false;
 
   if (verbose) {
@@ -55,8 +62,8 @@ async function handleTemplateCommand(action: string, identifier: string, alias: 
     console.log(chalk.blue('Options:'), JSON.stringify(options, null, 2));
   }
 
-  const templateService = new TemplateService();
-  const identifierService = TemplateIdentifierService.getInstance();
+  const templateService = container.resolve(TemplateService);
+  const identifierService = container.resolve(TemplateIdentifierService);
 
   switch (action.toLowerCase()) {
     case 'list':

@@ -2,8 +2,10 @@
  * Template completion provider for dynamic template name completions
  */
 
+import { injectable, inject } from 'tsyringe';
 import type { CompletionContext, CompletionItem } from '@/models';
 import type { ITemplateService } from '@/services/template-service';
+import { TemplateService } from '@/services/template-service';
 
 export interface ITemplateCompletionProvider {
   /**
@@ -22,14 +24,14 @@ export interface ITemplateCompletionProvider {
   getTemplateDetails(context: CompletionContext): Promise<CompletionItem[]>;
 }
 
+@injectable()
 export class TemplateCompletionProvider implements ITemplateCompletionProvider {
-  private templateService: ITemplateService;
   private cacheExpiry: number = 5 * 60 * 1000; // 5 minutes
   private cache: Map<string, { data: CompletionItem[]; timestamp: number }> = new Map();
 
-  constructor(templateService: ITemplateService) {
-    this.templateService = templateService;
-  }
+  constructor(
+    @inject(TemplateService) private readonly templateService: ITemplateService
+  ) {}
 
   async getTemplateCompletions(context: CompletionContext): Promise<CompletionItem[]> {
     const cacheKey = 'template-completions';

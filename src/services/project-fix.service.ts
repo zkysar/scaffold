@@ -3,6 +3,7 @@
  */
 
 import { randomUUID } from 'crypto';
+import { injectable, inject } from 'tsyringe';
 import type {
   ValidationReport,
   ValidationError,
@@ -12,9 +13,15 @@ import type {
   HistoryEntry,
 } from '../models';
 import type { ITemplateService } from './template-service';
+import { TemplateService } from './template-service';
 import type { IFileSystemService } from './file-system.service';
+import { FileSystemService } from './file-system.service';
 import type { IProjectValidationService } from './project-validation.service';
+import { ProjectValidationService } from './project-validation.service';
+import type { IVariableSubstitutionService } from './variable-substitution.service';
 import { VariableSubstitutionService } from './variable-substitution.service';
+import type { IProjectManifestService } from './project-manifest.service';
+import { ProjectManifestService } from './project-manifest.service';
 
 export interface IProjectFixService {
   /**
@@ -23,23 +30,15 @@ export interface IProjectFixService {
   fixProject(projectPath: string, dryRun?: boolean): Promise<ValidationReport>;
 }
 
+@injectable()
 export class ProjectFixService implements IProjectFixService {
-  private readonly variableService: VariableSubstitutionService;
-
   constructor(
-    private readonly templateService: ITemplateService,
-    private readonly fileService: IFileSystemService,
-    private readonly validationService: IProjectValidationService,
-    private readonly getProjectManifest: (
-      projectPath: string
-    ) => Promise<ProjectManifest | null>,
-    private readonly updateProjectManifest: (
-      projectPath: string,
-      manifest: ProjectManifest
-    ) => Promise<void>
-  ) {
-    this.variableService = new VariableSubstitutionService(this.fileService);
-  }
+    @inject(TemplateService) private readonly templateService: ITemplateService,
+    @inject(FileSystemService) private readonly fileService: IFileSystemService,
+    @inject(ProjectValidationService) private readonly validationService: IProjectValidationService,
+    @inject(VariableSubstitutionService) private readonly variableService: IVariableSubstitutionService,
+    @inject(ProjectManifestService) private readonly manifestService: IProjectManifestService
+  ) {}
 
   async fixProject(
     projectPath: string,
@@ -70,7 +69,7 @@ export class ProjectFixService implements IProjectFixService {
           return validationReport;
         }
 
-        const manifest = await this.getProjectManifest(projectPath);
+        const manifest = await this.manifestService.getProjectManifest(projectPath);
         if (!manifest) {
           throw new Error(`No project manifest found at '${projectPath}'`);
         }
@@ -212,7 +211,7 @@ export class ProjectFixService implements IProjectFixService {
 
           manifest.history.push(historyEntry);
           manifest.updated = new Date().toISOString();
-          await this.updateProjectManifest(actualProjectPath, manifest);
+          await this.manifestService.updateProjectManifest(actualProjectPath, manifest);
         }
 
         const executionTime = Date.now() - startTime;

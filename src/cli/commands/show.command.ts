@@ -5,6 +5,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { DependencyContainer } from 'tsyringe';
 import {
   ProjectManifestService,
   TemplateService,
@@ -17,7 +18,7 @@ interface ShowCommandOptions {
   format?: 'table' | 'json' | 'summary';
 }
 
-export function createShowCommand(): Command {
+export function createShowCommand(container: DependencyContainer): Command {
   const command = new Command('show');
 
   command
@@ -44,7 +45,7 @@ Examples:
     )
     .action(async (item: string, options: ShowCommandOptions) => {
       try {
-        await handleShowCommand(item, options);
+        await handleShowCommand(item, options, container);
       } catch (error) {
         console.error(
           chalk.red('Error:'),
@@ -59,7 +60,8 @@ Examples:
 
 async function handleShowCommand(
   item: string,
-  options: ShowCommandOptions
+  options: ShowCommandOptions,
+  container: DependencyContainer
 ): Promise<void> {
   const verbose = options.verbose || false;
   const format = options.format || 'table';
@@ -72,18 +74,18 @@ async function handleShowCommand(
   try {
     switch (item.toLowerCase()) {
       case 'project':
-        await showProjectInfo(options);
+        await showProjectInfo(options, container);
         break;
       case 'template':
       case 'templates':
-        await showTemplateInfo(options);
+        await showTemplateInfo(options, container);
         break;
       case 'config':
       case 'configuration':
-        await showConfigurationInfo(options);
+        await showConfigurationInfo(options, container);
         break;
       case 'all':
-        await showAllInfo(options);
+        await showAllInfo(options, container);
         break;
       default:
         console.error(chalk.red('Error:'), `Unknown item: ${item}`);
@@ -97,7 +99,10 @@ async function handleShowCommand(
   }
 }
 
-async function showProjectInfo(options: ShowCommandOptions): Promise<void> {
+async function showProjectInfo(
+  options: ShowCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   const verbose = options.verbose || false;
   const format = options.format || 'table';
 
@@ -105,8 +110,8 @@ async function showProjectInfo(options: ShowCommandOptions): Promise<void> {
   console.log('');
 
   try {
-    const fileSystemService = new FileSystemService();
-    const manifestService = new ProjectManifestService(fileSystemService);
+    const fileSystemService = container.resolve(FileSystemService);
+    const manifestService = container.resolve(ProjectManifestService);
 
     const manifest = await manifestService.loadProjectManifest(process.cwd());
 
@@ -166,13 +171,16 @@ async function showProjectInfo(options: ShowCommandOptions): Promise<void> {
   }
 }
 
-async function showTemplateInfo(options: ShowCommandOptions): Promise<void> {
+async function showTemplateInfo(
+  options: ShowCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   const format = options.format || 'table';
 
   console.log(chalk.green('Template Information:'));
   console.log('');
 
-  const templateService = new TemplateService();
+  const templateService = container.resolve(TemplateService);
   const library = await templateService.loadTemplates();
 
   if (format === 'json') {
@@ -201,7 +209,8 @@ async function showTemplateInfo(options: ShowCommandOptions): Promise<void> {
 }
 
 async function showConfigurationInfo(
-  options: ShowCommandOptions
+  options: ShowCommandOptions,
+  container: DependencyContainer
 ): Promise<void> {
   const format = options.format || 'table';
 
@@ -209,7 +218,7 @@ async function showConfigurationInfo(
   console.log('');
 
   try {
-    const configService = new ConfigurationService();
+    const configService = container.resolve(ConfigurationService);
     await configService.loadConfiguration();
     const config = configService.getEffectiveConfiguration();
 
@@ -255,15 +264,18 @@ async function showConfigurationInfo(
   }
 }
 
-async function showAllInfo(options: ShowCommandOptions): Promise<void> {
+async function showAllInfo(
+  options: ShowCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   console.log(chalk.green('=== Scaffold Information ==='));
   console.log('');
 
-  await showProjectInfo(options);
+  await showProjectInfo(options, container);
   console.log('');
 
-  await showTemplateInfo(options);
+  await showTemplateInfo(options, container);
   console.log('');
 
-  await showConfigurationInfo(options);
+  await showConfigurationInfo(options, container);
 }

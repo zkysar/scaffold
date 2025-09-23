@@ -8,6 +8,7 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import { DependencyContainer } from 'tsyringe';
 import {
   ProjectExtensionService,
   ProjectManifestService,
@@ -24,7 +25,7 @@ interface ExtendCommandOptions {
   force?: boolean;
 }
 
-export function createExtendCommand(): Command {
+export function createExtendCommand(container: DependencyContainer): Command {
   const command = new Command('extend');
 
   command
@@ -40,7 +41,7 @@ export function createExtendCommand(): Command {
     .option('--force', 'Add template without confirmation prompts')
     .action(async (projectPath: string, options: ExtendCommandOptions) => {
       try {
-        await handleExtendCommand(projectPath, options);
+        await handleExtendCommand(projectPath, options, container);
       } catch (error) {
         console.error(
           chalk.red('Error:'),
@@ -55,7 +56,8 @@ export function createExtendCommand(): Command {
 
 async function handleExtendCommand(
   projectPath: string,
-  options: ExtendCommandOptions
+  options: ExtendCommandOptions,
+  container: DependencyContainer
 ): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
@@ -79,17 +81,11 @@ async function handleExtendCommand(
     process.exit(1);
   }
 
-  // Initialize services
-  const fileSystemService = new FileSystemService();
-  const templateService = new TemplateService();
-  const manifestService = new ProjectManifestService(fileSystemService);
-  const extensionService = new ProjectExtensionService(
-    templateService,
-    fileSystemService,
-    manifestService.getProjectManifest.bind(manifestService),
-    manifestService.updateProjectManifest.bind(manifestService),
-    manifestService.findNearestManifest.bind(manifestService)
-  );
+  // Resolve services from DI container
+  const fileSystemService = container.resolve(FileSystemService);
+  const templateService = container.resolve(TemplateService);
+  const manifestService = container.resolve(ProjectManifestService);
+  const extensionService = container.resolve(ProjectExtensionService);
 
   let templateIds: string[] = [];
 

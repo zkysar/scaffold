@@ -5,6 +5,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { DependencyContainer } from 'tsyringe';
 import { ConfigurationService } from '@/services';
 
 interface ConfigCommandOptions {
@@ -15,7 +16,7 @@ interface ConfigCommandOptions {
   project?: boolean;
 }
 
-export function createConfigCommand(): Command {
+export function createConfigCommand(container: DependencyContainer): Command {
   const command = new Command('config');
 
   command
@@ -36,7 +37,7 @@ export function createConfigCommand(): Command {
         options: ConfigCommandOptions
       ) => {
         try {
-          await handleConfigCommand(action, key, value, options);
+          await handleConfigCommand(action, key, value, options, container);
         } catch (error) {
           console.error(
             chalk.red('Error:'),
@@ -54,7 +55,8 @@ async function handleConfigCommand(
   action: string,
   key: string,
   value: string,
-  options: ConfigCommandOptions
+  options: ConfigCommandOptions,
+  container: DependencyContainer
 ): Promise<void> {
   const verbose = options.verbose || false;
 
@@ -65,7 +67,7 @@ async function handleConfigCommand(
     console.log(chalk.blue('Options:'), JSON.stringify(options, null, 2));
   }
 
-  const configService = new ConfigurationService();
+  const configService = container.resolve(ConfigurationService);
 
   try {
     switch (action.toLowerCase()) {

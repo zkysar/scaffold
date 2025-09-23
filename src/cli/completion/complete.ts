@@ -4,6 +4,7 @@
  */
 
 import { Command } from 'commander';
+import { DependencyContainer } from 'tsyringe';
 import { CompletionService } from '@/services';
 import type { CompletionContext } from '@/models';
 
@@ -12,7 +13,7 @@ interface CompleteCommandOptions {
   point?: string;
 }
 
-export function createCompleteCommand(): Command {
+export function createCompleteCommand(container: DependencyContainer): Command {
   const command = new Command('complete');
 
   command
@@ -21,7 +22,7 @@ export function createCompleteCommand(): Command {
     .option('--point <point>', 'Cursor position in command line')
     .action(async (options: CompleteCommandOptions) => {
       try {
-        await handleCompleteCommand(options);
+        await handleCompleteCommand(options, container);
       } catch (error) {
         // Silent failure for completion - don't show errors to user in shell
         process.exit(1);
@@ -34,8 +35,11 @@ export function createCompleteCommand(): Command {
   return command;
 }
 
-async function handleCompleteCommand(options: CompleteCommandOptions): Promise<void> {
-  const completionService = new CompletionService();
+async function handleCompleteCommand(
+  options: CompleteCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
+  const completionService = container.resolve(CompletionService);
 
   // Parse completion context from shell parameters
   const context = parseCompletionContext(options);

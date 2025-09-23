@@ -8,6 +8,7 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import { DependencyContainer } from 'tsyringe';
 import {
   ProjectCreationService,
   ProjectManifestService,
@@ -23,7 +24,7 @@ interface NewCommandOptions {
   dryRun?: boolean;
 }
 
-export function createNewCommand(): Command {
+export function createNewCommand(container: DependencyContainer): Command {
   const command = new Command('new');
 
   command
@@ -40,7 +41,7 @@ export function createNewCommand(): Command {
     .action(
       async (projectName: string | undefined, options: NewCommandOptions) => {
         try {
-          await handleNewCommand(projectName, options);
+          await handleNewCommand(projectName, options, container);
         } catch (error) {
           console.error(
             chalk.red('Error:'),
@@ -56,7 +57,8 @@ export function createNewCommand(): Command {
 
 async function handleNewCommand(
   projectName: string | undefined,
-  options: NewCommandOptions
+  options: NewCommandOptions,
+  container: DependencyContainer
 ): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
@@ -150,14 +152,11 @@ async function handleNewCommand(
     }
   }
 
-  // Initialize services
-  const fileSystemService = new FileSystemService();
-  const templateService = new TemplateService();
-  const manifestService = new ProjectManifestService(fileSystemService);
-  const projectCreationService = new ProjectCreationService(
-    templateService,
-    fileSystemService
-  );
+  // Resolve services from DI container
+  const fileSystemService = container.resolve(FileSystemService);
+  const templateService = container.resolve(TemplateService);
+  const manifestService = container.resolve(ProjectManifestService);
+  const projectCreationService = container.resolve(ProjectCreationService);
 
   let templateIds: string[] = [];
 

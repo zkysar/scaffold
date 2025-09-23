@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
+import { DependencyContainer } from 'tsyringe';
 import { logger } from '../../lib/logger';
 import {
   ProjectFixService,
@@ -23,7 +24,7 @@ interface FixCommandOptions {
   backup?: boolean;
 }
 
-export function createFixCommand(): Command {
+export function createFixCommand(container: DependencyContainer): Command {
   const command = new Command('fix');
 
   command
@@ -39,7 +40,7 @@ export function createFixCommand(): Command {
     .option('--no-backup', 'Skip backup creation')
     .action(async (projectPath: string | undefined, options: FixCommandOptions) => {
       try {
-        await handleFixCommand(projectPath, options);
+        await handleFixCommand(projectPath, options, container);
       } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -51,7 +52,8 @@ export function createFixCommand(): Command {
 
 async function handleFixCommand(
   projectPath: string | undefined,
-  options: FixCommandOptions
+  options: FixCommandOptions,
+  container: DependencyContainer
 ): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
@@ -72,22 +74,12 @@ async function handleFixCommand(
     process.exit(1);
   }
 
-  // Initialize services
-  const fileSystemService = new FileSystemService();
-  const templateService = new TemplateService();
-  const manifestService = new ProjectManifestService(fileSystemService);
-  const validationService = new ProjectValidationService(
-    templateService,
-    fileSystemService,
-    manifestService.getProjectManifest.bind(manifestService)
-  );
-  const fixService = new ProjectFixService(
-    templateService,
-    fileSystemService,
-    validationService,
-    manifestService.getProjectManifest.bind(manifestService),
-    manifestService.updateProjectManifest.bind(manifestService)
-  );
+  // Resolve services from DI container
+  const fileSystemService = container.resolve(FileSystemService);
+  const templateService = container.resolve(TemplateService);
+  const manifestService = container.resolve(ProjectManifestService);
+  const validationService = container.resolve(ProjectValidationService);
+  const fixService = container.resolve(ProjectFixService);
 
   // Check if this is a scaffold-managed project
   const manifest = await manifestService.loadProjectManifest(targetPath);

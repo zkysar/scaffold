@@ -5,6 +5,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
+import { injectable } from 'tsyringe';
 import type {
   ScaffoldConfig,
   UserPreferences,
@@ -62,15 +63,30 @@ export interface IConfigurationService {
   getEffectiveConfiguration(): ScaffoldConfig;
 }
 
+@injectable()
 export class ConfigurationService implements IConfigurationService {
   private readonly configCache = new Map<ConfigScope, ScaffoldConfig>();
   private readonly lockCache = new Map<ConfigScope, Promise<void>>();
   private loaded = false;
+  private readonly projectRoot?: string;
+  private readonly workspaceRoot?: string;
 
-  constructor(
-    private readonly projectRoot?: string,
-    private readonly workspaceRoot?: string
-  ) {}
+  constructor() {
+    // These will be set via setter injection or initialization method
+    this.projectRoot = undefined;
+    this.workspaceRoot = undefined;
+  }
+
+  /**
+   * Initialize the service with optional project and workspace roots
+   */
+  initialize(projectRoot?: string, workspaceRoot?: string): void {
+    (this as any).projectRoot = projectRoot;
+    (this as any).workspaceRoot = workspaceRoot;
+    this.loaded = false;
+    this.configCache.clear();
+    this.lockCache.clear();
+  }
 
   get<T = any>(key: string, scope?: ConfigScope): T | undefined {
     // Ensure configurations are loaded (sync operation)

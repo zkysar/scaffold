@@ -5,6 +5,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
+import { injectable } from 'tsyringe';
 import { enhanceError } from '../lib';
 
 export interface BackupInfo {
@@ -190,6 +191,7 @@ export interface IFileSystemService {
   ): Promise<void>;
 }
 
+@injectable()
 export class FileSystemService implements IFileSystemService {
   private _isDryRun: boolean = false;
   private readonly backupDir: string;

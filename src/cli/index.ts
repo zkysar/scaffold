@@ -4,13 +4,18 @@
  * CLI entry point for the Scaffold CLI tool
  */
 
+import 'reflect-metadata';
 import chalk from 'chalk';
 import { createProgram } from './program';
 import { CommandRegistry } from './completion/command-registry';
 import { logger } from '../lib/logger';
+import { configureContainer } from '../di/container';
+
+// Initialize DI container
+const container = configureContainer();
 
 // Create the program
-const program = createProgram();
+const program = createProgram(container);
 
 // Register program with command registry for completion
 CommandRegistry.getInstance().setProgram(program);

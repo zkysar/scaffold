@@ -5,13 +5,14 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { DependencyContainer } from 'tsyringe';
 import { CompletionService } from '@/services';
 
 interface UninstallCommandOptions {
   verbose?: boolean;
 }
 
-export function createUninstallCommand(): Command {
+export function createUninstallCommand(container: DependencyContainer): Command {
   const command = new Command('uninstall');
 
   command
@@ -19,7 +20,7 @@ export function createUninstallCommand(): Command {
     .option('--verbose', 'Show detailed output')
     .action(async (options: UninstallCommandOptions) => {
       try {
-        await handleUninstallCommand(options);
+        await handleUninstallCommand(options, container);
       } catch (error) {
         console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -29,10 +30,13 @@ export function createUninstallCommand(): Command {
   return command;
 }
 
-async function handleUninstallCommand(options: UninstallCommandOptions): Promise<void> {
+async function handleUninstallCommand(
+  options: UninstallCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   const verbose = options.verbose || false;
 
-  const completionService = new CompletionService();
+  const completionService = container.resolve(CompletionService);
 
   if (verbose) {
     console.log(chalk.blue('Checking completion status...'));
