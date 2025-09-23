@@ -5,7 +5,10 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { existsSync, statSync } from 'fs';
 import { CompletionService } from '@/services';
+import { createLogger, logger } from '@/lib/logger';
+import type { CompletionConfig } from '@/models';
 
 interface StatusCommandOptions {
   verbose?: boolean;
@@ -23,7 +26,7 @@ export function createStatusCommand(): Command {
       try {
         await handleStatusCommand(options);
       } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+        logger.error(error instanceof Error ? error.message : String(error));
         process.exit(1);
       }
     });
@@ -34,6 +37,9 @@ export function createStatusCommand(): Command {
 async function handleStatusCommand(options: StatusCommandOptions): Promise<void> {
   const verbose = options.verbose || false;
   const format = options.format || 'table';
+
+  // Create logger with command options
+  const cmdLogger = createLogger({ verbose });
 
   const completionService = new CompletionService();
 
@@ -46,7 +52,7 @@ async function handleStatusCommand(options: StatusCommandOptions): Promise<void>
     // Output based on format
     switch (format) {
       case 'json':
-        console.log(JSON.stringify(status, null, 2));
+        cmdLogger.raw(JSON.stringify(status, null, 2));
         break;
       case 'table':
       default:
@@ -60,13 +66,13 @@ async function handleStatusCommand(options: StatusCommandOptions): Promise<void>
     }
 
   } catch (error) {
-    console.error(chalk.red('Failed to check completion status:'), error instanceof Error ? error.message : String(error));
+    cmdLogger.error(`Failed to check completion status: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 }
 
 async function displayStatusTable(
-  status: any,
+  status: CompletionConfig,
   verbose: boolean,
   completionService: CompletionService
 ): Promise<void> {
@@ -105,16 +111,8 @@ async function displayStatusTable(
     console.log(chalk.gray(`  Install date: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`));
   }
 
-  if (status.version) {
-    console.log(chalk.gray(`  Version: ${status.version}`));
-
-    if (status.isUpToDate !== undefined) {
-      if (status.isUpToDate) {
-        console.log(chalk.gray('  Status: Up to date'));
-      } else {
-        console.log(chalk.yellow('  Status: Update available'));
-      }
-    }
+  if (status.installedVersion) {
+    console.log(chalk.gray(`  Version: ${status.installedVersion}`));
   }
 
   console.log('');
@@ -132,9 +130,6 @@ async function displayStatusTable(
     console.log(chalk.blue('Next steps:'));
     console.log(chalk.gray('  • Follow the shell-specific setup instructions shown during installation'));
     console.log(chalk.gray('  • Restart your shell or reload your profile'));
-  } else if (!status.isUpToDate) {
-    console.log(chalk.blue('Next steps:'));
-    console.log(chalk.gray('  • Run "scaffold completion install --force" to update to the latest version'));
   }
 
   if (verbose && status.isInstalled) {
@@ -143,13 +138,12 @@ async function displayStatusTable(
 
     // Check if completion script file exists
     if (status.installPath) {
-      const fs = require('fs');
-      const exists = fs.existsSync(status.installPath);
+      const exists = existsSync(status.installPath);
       console.log(chalk.gray(`  Script file exists: ${exists ? 'Yes' : 'No'}`));
 
       if (exists) {
         try {
-          const stats = fs.statSync(status.installPath);
+          const stats = statSync(status.installPath);
           console.log(chalk.gray(`  Script file size: ${stats.size} bytes`));
           console.log(chalk.gray(`  Script modified: ${stats.mtime.toLocaleString()}`));
         } catch (error) {
