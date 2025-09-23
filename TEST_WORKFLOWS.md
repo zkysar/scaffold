@@ -1,6 +1,6 @@
 # Scaffold CLI Testing Workflows
 
-This document contains 60+ user workflows for testing the Scaffold CLI. These workflows represent common use cases that users would encounter in real-world scenarios, including backup/recovery operations.
+This document contains 60+ user workflows for testing the Scaffold CLI. These workflows represent common use cases that users would encounter in real-world scenarios, including automatic backup behavior testing.
 
 ## Prerequisites
 
@@ -324,73 +324,98 @@ scaffold clean --verbose
 ```
 Expected: Adds detailed logging of cleanup operations (what's being removed, locations checked, etc.)
 
-### 9. Backup and Recovery Workflows
+### 9. Automatic Backup and Recovery Testing
 
-#### 9.1 Verify automatic backup creation
+#### 9.1 Verify automatic backup on destructive operations
 ```bash
 # Create project and break it
 scaffold new test-project --template my-template
 rm -rf test-project/src
 scaffold fix test-project
-scaffold backup list
+# Check ~/.scaffold/backups/ for automatic backup
+ls -la ~/.scaffold/backups/
 ```
-Expected: Shows backup created automatically before fix operation
+Expected: Automatic backup created before fix modifies files
 
-#### 9.2 List all backups
+#### 9.2 Test backup on file modifications
 ```bash
-scaffold backup list
+# Modify project files
+echo "new content" > test-project/README.md
+scaffold fix test-project
+ls -la ~/.scaffold/backups/
 ```
-Expected: Shows all backups with timestamps, IDs, and sizes
+Expected: Previous version backed up automatically before changes
 
-#### 9.3 View backup details
+#### 9.3 Test 25GB warning threshold
 ```bash
-scaffold backup show <backup-id>
-```
-Expected: Shows detailed backup information including files/folders backed up
-
-#### 9.4 Restore from backup
-```bash
-scaffold backup restore <backup-id>
-```
-Expected: Prompts for confirmation and restores files from backup
-
-#### 9.5 Delete old backups
-```bash
-scaffold backup delete <backup-id>
-```
-Expected: Removes specified backup after confirmation
-
-#### 9.6 Check backup space usage
-```bash
-scaffold backup status
-```
-Expected: Shows total space used by backups, warns if >50GB
-
-#### 9.7 Clean old backups (older than 30 days)
-```bash
-scaffold backup clean --older-than 30d
-```
-Expected: Removes backups older than 30 days after confirmation
-
-#### 9.8 Test backup space warning
-```bash
-# Manual test: Create large files in .scaffold/backups to simulate >50GB
-# Then run any command that creates backups
+# Manual test: Add large files to ~/.scaffold/backups to simulate 25GB usage
+dd if=/dev/zero of=~/.scaffold/backups/large-file bs=1G count=25
 scaffold fix test-project
 ```
-Expected: Warning message about backup space exceeding 50GB
+Expected: Warning message that backup cache is approaching limit (25GB)
 
-#### 9.9 Export backup to archive
+#### 9.4 Test 50GB auto-cleanup
 ```bash
-scaffold backup export <backup-id> --output ./my-backup.tar.gz
+# Manual test: Add files to exceed 50GB in ~/.scaffold/backups
+dd if=/dev/zero of=~/.scaffold/backups/large-file bs=1G count=50
+scaffold fix test-project
 ```
-Expected: Creates compressed archive of backup
+Expected: Automatic cleanup of oldest backups to stay under 50GB limit
 
-#### 9.10 Verify backup integrity
+#### 9.5 Verify backup cache rotation
 ```bash
-scaffold backup verify <backup-id>
+# Run multiple destructive operations
+for i in {1..10}; do
+  echo "change $i" >> test-project/file.txt
+  scaffold fix test-project
+done
+ls -la ~/.scaffold/backups/
 ```
-Expected: Checks backup files are intact and readable
+Expected: Only recent backups kept, older ones rotated out
+
+#### 9.6 Test configurable backup limits
+```bash
+# Set custom max size in config
+scaffold config set backup.maxSize "10GB"
+scaffold config set backup.warnSize "5GB"
+# Then test with operations
+scaffold fix test-project
+```
+Expected: Respects configured thresholds for warning and cleanup
+
+#### 9.7 Verify backup metadata
+```bash
+# Check backup metadata files
+ls -la ~/.scaffold/backups/*/metadata.json
+cat ~/.scaffold/backups/*/metadata.json | head
+```
+Expected: Each backup has metadata with timestamp, operation, files backed up
+
+#### 9.8 Test backup restoration (manual)
+```bash
+# Break project
+rm -rf test-project/src
+# Manually restore from backup
+cp -r ~/.scaffold/backups/latest/* test-project/
+scaffold check test-project
+```
+Expected: Project restored to working state from backup
+
+#### 9.9 Monitor backup space during operations
+```bash
+# Check space before and after operations
+du -sh ~/.scaffold/backups
+scaffold fix test-project
+du -sh ~/.scaffold/backups
+```
+Expected: Space usage tracked and managed automatically
+
+#### 9.10 Test backup cleanup on clean command
+```bash
+scaffold clean
+ls -la ~/.scaffold/backups/
+```
+Expected: Old/unnecessary backups removed during cleanup
 
 ### 10. Shell Completion Workflows
 
@@ -501,8 +526,8 @@ Expected: Exports, deletes, and re-imports template
 4. **Simultaneous operations**: Run multiple scaffold commands in parallel
 5. **Large templates**: Test with templates containing 1000+ files
 6. **Template structure limitations**: Verify that deep folder nesting is prohibited (templates must have flat structure)
-7. **Backup space limits**: Manually create large files in ~/.scaffold/backups to simulate >50GB usage
-8. **Concurrent backups**: Run multiple fix operations simultaneously to test backup collision handling
+7. **Backup space limits**: Manually create large files in ~/.scaffold/backups to test 25GB warning and 50GB auto-cleanup
+8. **Concurrent backups**: Run multiple fix operations simultaneously to test automatic backup collision handling
 
 ### Performance Testing
 
