@@ -13,9 +13,9 @@ import type {
   TemplateLibrary,
   TemplateSummary,
   TemplateSource,
-} from '@/models';
+} from '../models';
 import { TemplateIdentifierService } from './template-identifier-service';
-import { shortSHA, isValidSHA } from '@/lib/sha';
+import { shortSHA, isValidSHA } from '../lib/sha';
 
 export interface ITemplateService {
   /**
@@ -84,16 +84,24 @@ export interface ITemplateService {
   saveTemplate(template: Template): Promise<void>;
 }
 
+export interface TemplateServiceOptions {
+  templatesDir?: string;
+  cacheDir?: string;
+  identifierService?: TemplateIdentifierService;
+}
+
 @injectable()
 export class TemplateService implements ITemplateService {
   private readonly templatesDir: string;
   private readonly cacheDir: string;
 
   constructor(
-    @inject(TemplateIdentifierService) private readonly identifierService: TemplateIdentifierService
+    @inject(TemplateIdentifierService) private readonly identifierService: TemplateIdentifierService,
+    options?: TemplateServiceOptions
   ) {
-    this.templatesDir = path.join(os.homedir(), '.scaffold', 'templates');
-    this.cacheDir = path.join(os.homedir(), '.scaffold', 'cache');
+    const homeDir = os.homedir();
+    this.templatesDir = options?.templatesDir ?? path.join(homeDir, '.scaffold', 'templates');
+    this.cacheDir = options?.cacheDir ?? path.join(homeDir, '.scaffold', 'cache');
   }
 
   async loadTemplates(): Promise<TemplateLibrary> {

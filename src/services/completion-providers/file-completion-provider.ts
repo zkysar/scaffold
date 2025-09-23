@@ -5,7 +5,7 @@
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { injectable } from 'tsyringe';
-import type { CompletionContext, CompletionItem } from '@/models';
+import type { CompletionContext, CompletionItem } from '../../models';
 
 export interface IFileCompletionProvider {
   /**

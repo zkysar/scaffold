@@ -5,8 +5,8 @@
 
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
-import { CompletionService } from '@/services';
-import type { CompletionContext } from '@/models';
+import { CompletionService } from '../../services';
+import type { CompletionContext } from '../../models';
 
 interface CompleteCommandOptions {
   line?: string;

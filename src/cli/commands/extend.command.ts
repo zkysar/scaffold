@@ -15,7 +15,7 @@ import {
   TemplateService,
   FileSystemService,
 } from '@/services';
-import { selectTemplates } from '../utils/template-selector';
+import { selectTemplates } from '@/cli/utils/template-selector';
 
 interface ExtendCommandOptions {
   template?: string;

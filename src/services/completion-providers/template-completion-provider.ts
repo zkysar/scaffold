@@ -3,9 +3,8 @@
  */
 
 import { injectable, inject } from 'tsyringe';
-import type { CompletionContext, CompletionItem } from '@/models';
-import type { ITemplateService } from '@/services/template-service';
-import { TemplateService } from '@/services/template-service';
+import type { CompletionContext, CompletionItem } from '../../models';
+import { TemplateService } from '../template-service';
 
 export interface ITemplateCompletionProvider {
   /**
@@ -30,7 +29,7 @@ export class TemplateCompletionProvider implements ITemplateCompletionProvider {
   private cache: Map<string, { data: CompletionItem[]; timestamp: number }> = new Map();
 
   constructor(
-    @inject(TemplateService) private readonly templateService: ITemplateService
+    @inject(TemplateService) private readonly templateService: TemplateService
   ) {}
 
   async getTemplateCompletions(context: CompletionContext): Promise<CompletionItem[]> {

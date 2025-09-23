@@ -15,7 +15,7 @@ import {
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '@/services';
+} from '../../services';
 
 interface FixCommandOptions {
   verbose?: boolean;

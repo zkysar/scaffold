@@ -6,8 +6,8 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { DependencyContainer } from 'tsyringe';
-import { CompletionService } from '@/services';
-import { ShellType } from '@/models';
+import { CompletionService } from '../../services';
+import { ShellType } from '../../models';
 
 interface InstallCommandOptions {
   shell?: ShellType;
@@ -23,9 +23,16 @@ export function createInstallCommand(container: DependencyContainer): Command {
     .option('-s, --shell <shell>', 'Shell type (bash|zsh|fish)', validateShellType)
     .option('-f, --force', 'Force reinstall if already installed')
     .option('--verbose', 'Show detailed output')
-    .action(async (options: InstallCommandOptions) => {
+    .action(async (options: InstallCommandOptions, command: Command) => {
       try {
-        await handleInstallCommand(options, container);
+        // Check for global verbose flag from root command
+        let rootCommand = command;
+        while (rootCommand.parent) {
+          rootCommand = rootCommand.parent;
+        }
+        const rootOptions = rootCommand.opts() || {};
+        const verbose = options.verbose || rootOptions.verbose || false;
+        await handleInstallCommand({ ...options, verbose }, container);
       } catch (error) {
         console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
         process.exit(1);

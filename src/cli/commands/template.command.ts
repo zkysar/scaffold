@@ -7,10 +7,10 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
-import { TemplateService } from '@/services';
-import { TemplateIdentifierService } from '@/services/template-identifier-service';
-import { shortSHA } from '@/lib/sha';
-import type { Template } from '@/models';
+import { TemplateService } from '../../services';
+import { TemplateIdentifierService } from '../../services/template-identifier-service';
+import { shortSHA } from '../../lib/sha';
+import type { Template } from '../../models';
 
 interface TemplateCommandOptions {
   verbose?: boolean;
@@ -31,12 +31,11 @@ export function createTemplateCommand(container: DependencyContainer): Command {
     .option('--dry-run', 'Show what would be done without making changes')
     .option('--force', 'Force operation without confirmation')
     .option('-o, --output <path>', 'Output path for export operations')
-    .action(async (action: string, identifier: string, aliasOrOptions?: string | TemplateCommandOptions, maybeOptions?: TemplateCommandOptions) => {
+    .action(async (action: string, identifier?: string, alias?: string, options?: TemplateCommandOptions) => {
       try {
-        // Handle the overloaded arguments
-        const options = (action === 'alias' ? maybeOptions : aliasOrOptions) as TemplateCommandOptions || {};
-        const alias = action === 'alias' ? aliasOrOptions as string : undefined;
-        await handleTemplateCommand(action, identifier, alias, options, container);
+        // Extract options from the last argument if it's options
+        const finalOptions = options || {};
+        await handleTemplateCommand(action, identifier, alias, finalOptions, container);
       } catch (error) {
         console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -48,7 +47,7 @@ export function createTemplateCommand(container: DependencyContainer): Command {
 
 async function handleTemplateCommand(
   action: string,
-  identifier: string,
+  identifier: string | undefined,
   alias: string | undefined,
   options: TemplateCommandOptions,
   container: DependencyContainer
@@ -158,7 +157,7 @@ async function handleListTemplates(
 
 async function handleCreateTemplate(
   templateService: TemplateService,
-  name: string,
+  name: string | undefined,
   options: TemplateCommandOptions
 ): Promise<void> {
   const verbose = options.verbose || false;
@@ -285,7 +284,7 @@ async function handleCreateTemplate(
 
 async function handleDeleteTemplate(
   templateService: TemplateService,
-  name: string,
+  name: string | undefined,
   options: TemplateCommandOptions
 ): Promise<void> {
   const verbose = options.verbose || false;
@@ -355,7 +354,7 @@ async function handleDeleteTemplate(
 
 async function handleExportTemplate(
   templateService: TemplateService,
-  name: string,
+  name: string | undefined,
   options: TemplateCommandOptions
 ): Promise<void> {
   const verbose = options.verbose || false;
@@ -418,7 +417,7 @@ async function handleExportTemplate(
 
 async function handleImportTemplate(
   templateService: TemplateService,
-  archivePath: string,
+  archivePath: string | undefined,
   options: TemplateCommandOptions
 ): Promise<void> {
   const verbose = options.verbose || false;
@@ -483,7 +482,7 @@ async function handleImportTemplate(
 async function handleAliasTemplate(
   identifierService: TemplateIdentifierService,
   templateService: TemplateService,
-  identifier: string,
+  identifier: string | undefined,
   alias: string | undefined,
   options: TemplateCommandOptions
 ): Promise<void> {
