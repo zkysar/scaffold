@@ -167,7 +167,7 @@ async function handleNewCommand(
       const library = await templateService.loadTemplates();
 
       if (library.templates.length === 0) {
-        console.log(chalk.yellow('No templates found.'));
+        console.log(chalk.yellow('No template specified and no templates found in library.'));
         console.log(
           chalk.gray(
             'Use "scaffold template create" to create your first template.'
@@ -178,7 +178,7 @@ async function handleNewCommand(
             'Or specify a template with: scaffold new my-project --template <template-name>'
           )
         );
-        return;
+        process.exit(1);
       }
 
       if (verbose) {
@@ -222,7 +222,7 @@ async function handleNewCommand(
         error instanceof Error &&
         error.message.includes('Failed to load templates')
       ) {
-        console.log(chalk.yellow('No templates found.'));
+        console.log(chalk.yellow('No template specified and no templates found in library.'));
         console.log(
           chalk.gray(
             'Use "scaffold template create" to create your first template.'
@@ -233,7 +233,7 @@ async function handleNewCommand(
             'Or specify a template with: scaffold new my-project --template <template-name>'
           )
         );
-        return;
+        process.exit(1);
       }
       throw error;
     }
@@ -285,17 +285,6 @@ async function handleNewCommand(
       console.log(chalk.blue('Created at:'), manifest.created);
     }
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
-      );
-      console.log(chalk.blue('Would create project:'), finalProjectName);
-      console.log(chalk.blue('Target path:'), targetPath);
-      console.log(chalk.blue('Templates:'), templateIds);
-      return;
-    }
     throw error;
   }
 }

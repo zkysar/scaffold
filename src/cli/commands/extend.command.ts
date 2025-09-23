@@ -132,16 +132,6 @@ async function handleExtendCommand(
     console.log(chalk.blue('Would extend project:'), targetPath);
     console.log(chalk.blue('With template:'), options.template);
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
-      );
-      console.log(chalk.blue('Would extend project:'), targetPath);
-      console.log(chalk.blue('With template:'), options.template);
-      return;
-    }
     throw error;
   }
 }
