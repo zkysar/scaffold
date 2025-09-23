@@ -12,8 +12,7 @@ import {
   ProjectService,
   TemplateService,
   FileSystemService,
-} from '../../services';
-import { selectTemplates } from '../utils/template-selector';
+} from '@/services';
 
 interface NewCommandOptions {
   template?: string;
@@ -163,17 +162,12 @@ async function handleNewCommand(
       console.log(chalk.blue('Using template:'), options.template);
     }
   } else {
-    // Use shared template selection utility
+    // Load available templates and prompt user to select
     try {
-      templateIds = await selectTemplates(templateService, {
-        verbose,
-        allowMultiple: true,
-        required: false, // We handle the case when no templates are available
-      });
+      const library = await templateService.loadTemplates();
 
-      // Handle case where no templates are available or user cancels
-      if (templateIds.length === 0) {
-        console.log(chalk.yellow('No templates found.'));
+      if (library.templates.length === 0) {
+        console.log(chalk.yellow('No template specified and no templates found in library.'));
         console.log(
           chalk.gray(
             'Use "scaffold template create" to create your first template.'
@@ -184,15 +178,51 @@ async function handleNewCommand(
             'Or specify a template with: scaffold new my-project --template <template-name>'
           )
         );
-        return;
+        process.exit(1);
+      }
+
+      if (verbose) {
+        console.log(
+          chalk.blue('Found'),
+          library.templates.length,
+          'available templates'
+        );
+      }
+
+      // Create choices for inquirer
+      const templateChoices = library.templates.map(template => ({
+        name: `${template.name} - ${template.description}`,
+        value: template.id,
+        short: template.name,
+      }));
+
+      const { selectedTemplates } = await inquirer.prompt([
+        {
+          type: 'checkbox',
+          name: 'selectedTemplates',
+          message:
+            'Select templates to apply (use spacebar to select, enter to confirm):',
+          choices: templateChoices,
+          validate: (input: string[]): string | boolean => {
+            if (input.length === 0) {
+              return 'You must select at least one template';
+            }
+            return true;
+          },
+        },
+      ]);
+
+      templateIds = selectedTemplates;
+
+      if (verbose) {
+        console.log(chalk.blue('Selected templates:'), templateIds);
       }
     } catch (error) {
       if (
         error instanceof Error &&
-        (error.message.includes('Failed to load templates') ||
-         error.message.includes('No templates available'))
+        error.message.includes('Failed to load templates')
       ) {
-        console.log(chalk.yellow('No templates found.'));
+        console.log(chalk.yellow('No template specified and no templates found in library.'));
         console.log(
           chalk.gray(
             'Use "scaffold template create" to create your first template.'
@@ -203,7 +233,7 @@ async function handleNewCommand(
             'Or specify a template with: scaffold new my-project --template <template-name>'
           )
         );
-        return;
+        process.exit(1);
       }
       throw error;
     }
@@ -247,7 +277,7 @@ async function handleNewCommand(
     console.log(chalk.blue('Location:'), targetPath);
     console.log(
       chalk.blue('Templates applied:'),
-      manifest.templates.map((t) => `${t.name}@${t.version}`).join(', ')
+      manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
     );
 
     if (verbose) {
@@ -255,17 +285,6 @@ async function handleNewCommand(
       console.log(chalk.blue('Created at:'), manifest.created);
     }
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
-      );
-      console.log(chalk.blue('Would create project:'), finalProjectName);
-      console.log(chalk.blue('Target path:'), targetPath);
-      console.log(chalk.blue('Templates:'), templateIds);
-      return;
-    }
     throw error;
   }
 }

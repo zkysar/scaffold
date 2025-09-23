@@ -11,8 +11,9 @@ import {
   ProjectService,
   TemplateService,
   FileSystemService,
-} from '../../services';
-import type { ValidationReport } from '../../models';
+} from '@/services';
+import type { ValidationReport } from '@/models';
+import { createLogger, logger } from '@/lib/logger';
 
 interface CheckCommandOptions {
   verbose?: boolean;
@@ -42,10 +43,7 @@ export function createCheckCommand(): Command {
       try {
         await handleCheckCommand(projectPath, options);
       } catch (error) {
-        console.error(
-          chalk.red('Error:'),
-          error instanceof Error ? error.message : String(error)
-        );
+        logger.error(error instanceof Error ? error.message : String(error));
         process.exit(1);
       }
     });
@@ -60,22 +58,22 @@ async function handleCheckCommand(
   const verbose = options.verbose || false;
   const format = options.format || 'table';
 
+  // Create logger with command options
+  const logger = createLogger({ verbose, noColor: false });
+
   // Determine target path
   const targetPath = projectPath
     ? resolve(projectPath)
     : resolve(process.cwd());
 
   if (verbose) {
-    console.log(chalk.blue('Checking project:'), targetPath);
-    console.log(chalk.blue('Options:'), JSON.stringify(options, null, 2));
+    logger.keyValue('Checking project', targetPath, 'blue');
+    logger.keyValue('Options', JSON.stringify(options, null, 2), 'blue');
   }
 
   // Check if target directory exists
   if (!existsSync(targetPath)) {
-    console.error(
-      chalk.red('Error:'),
-      `Directory "${targetPath}" does not exist`
-    );
+    logger.error(`Directory "${targetPath}" does not exist`);
     process.exit(1);
   }
 
@@ -89,21 +87,20 @@ async function handleCheckCommand(
     const manifest = await projectService.loadProjectManifest(targetPath);
 
     if (!manifest) {
-      console.log(chalk.yellow('Not a scaffold-managed project.'));
-      console.log(chalk.gray('No .scaffold/manifest.json file found.'));
-      console.log(
-        chalk.gray(
-          'Use "scaffold new" to create a new project or "scaffold extend" to add templates.'
-        )
+      logger.yellow('Not a scaffold-managed project.');
+      logger.gray('No .scaffold/manifest.json file found.');
+      logger.gray(
+        'Use "scaffold new" to create a new project or "scaffold extend" to add templates.'
       );
       return;
     }
 
     if (verbose) {
-      console.log(chalk.blue('Project name:'), manifest.projectName);
-      console.log(
-        chalk.blue('Applied templates:'),
-        manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+      logger.keyValue('Project name', manifest.projectName, 'blue');
+      logger.keyValue(
+        'Applied templates',
+        manifest.templates.map(t => `${t.name}@${t.version}`).join(', '),
+        'blue'
       );
     }
 
@@ -113,7 +110,7 @@ async function handleCheckCommand(
     // Display results based on format
     switch (format) {
       case 'json':
-        console.log(JSON.stringify(report, null, 2));
+        logger.raw(JSON.stringify(report, null, 2));
         break;
       case 'summary':
         displaySummary(report);
@@ -132,12 +129,10 @@ async function handleCheckCommand(
     }
   } catch (error) {
     if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
+      logger.yellow(
+        '✓ Command structure created (service implementation pending)'
       );
-      console.log(chalk.blue('Would validate project:'), targetPath);
+      logger.keyValue('Would validate project', targetPath, 'blue');
 
       // Mock validation report for demonstration
       const mockReport: ValidationReport = {
@@ -170,19 +165,18 @@ async function handleCheckCommand(
 }
 
 function displaySummary(report: ValidationReport): void {
-  console.log(chalk.bold('Validation Summary'));
-  console.log('─'.repeat(50));
+  const logger = createLogger({});
+  logger.bold('Validation Summary');
+  logger.raw('─'.repeat(50));
 
   if (report.stats.errorCount === 0 && report.stats.warningCount === 0) {
-    console.log(chalk.green('✓ All validation checks passed'));
+    logger.green('✓ All validation checks passed');
   } else {
     if (report.stats.errorCount > 0) {
-      console.log(chalk.red(`✗ ${report.stats.errorCount} error(s) found`));
+      logger.red(`✗ ${report.stats.errorCount} error(s) found`);
     }
     if (report.stats.warningCount > 0) {
-      console.log(
-        chalk.yellow(`⚠ ${report.stats.warningCount} warning(s) found`)
-      );
+      logger.yellow(`⚠ ${report.stats.warningCount} warning(s) found`);
     }
   }
 
@@ -193,8 +187,9 @@ function displaySummary(report: ValidationReport): void {
 }
 
 function displayTable(report: ValidationReport, verbose: boolean): void {
-  console.log(chalk.bold('Project Validation Report'));
-  console.log('─'.repeat(50));
+  const logger = createLogger({ verbose });
+  logger.bold('Project Validation Report');
+  logger.raw('─'.repeat(50));
 
   // Display errors
   if (report.errors.length > 0) {

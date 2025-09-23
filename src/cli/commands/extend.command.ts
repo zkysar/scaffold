@@ -12,7 +12,7 @@ import {
   ProjectService,
   TemplateService,
   FileSystemService,
-} from '../../services';
+} from '@/services';
 import { selectTemplates } from '../utils/template-selector';
 
 interface ExtendCommandOptions {
@@ -210,43 +210,31 @@ async function handleExtendCommand(
       }
     }
 
-    try {
-      // Extend the project with the new template
-      const updatedManifest = await projectService.extendProject(
-        targetPath,
-        templateIds,
-        variables
-      );
+    if (verbose) {
+      console.log(chalk.blue('Extending project with template:'), templateIds[0]);
+    }
 
-      console.log(chalk.green('✓ Project extended successfully!'));
-      console.log(chalk.blue('Project name:'), updatedManifest.projectName);
-      console.log(chalk.blue('Location:'), targetPath);
+    // Extend the project using the service
+    const updatedManifest = await projectService.extendProject(
+      targetPath,
+      templateIds,
+      variables
+    );
 
-      const newTemplate = updatedManifest.templates[updatedManifest.templates.length - 1];
+    console.log(chalk.green('✓ Project extended successfully!'));
+    console.log(chalk.blue('Project name:'), updatedManifest.projectName);
+    console.log(chalk.blue('Location:'), targetPath);
+
+    // Find the newly added template
+    const newTemplate = updatedManifest.templates[updatedManifest.templates.length - 1];
+    console.log(chalk.blue('Template added:'), `${newTemplate.name}@${newTemplate.version}`);
+
+    if (verbose) {
+      console.log(chalk.blue('Updated at:'), updatedManifest.updated);
       console.log(
-        chalk.blue('Template added:'),
-        `${newTemplate.name}@${newTemplate.version}`
+        chalk.blue('Total templates:'),
+        updatedManifest.templates.filter(t => t.status === 'active').length
       );
-
-      if (verbose) {
-        console.log(chalk.blue('Updated at:'), updatedManifest.updated);
-        console.log(
-          chalk.blue('Total templates:'),
-          updatedManifest.templates.filter((t) => t.status === 'active').length
-        );
-      }
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Not implemented') {
-        console.log(
-          chalk.yellow(
-            '✓ Command structure created (service implementation pending)'
-          )
-        );
-        console.log(chalk.blue('Would extend project:'), targetPath);
-        console.log(chalk.blue('With templates:'), templateIds);
-        return;
-      }
-      throw error;
     }
   } catch (error) {
     throw error;

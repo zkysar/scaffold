@@ -243,19 +243,16 @@ describe('scaffold new command integration tests', () => {
   });
 
   describe('real template creation (when available)', () => {
-    it('should handle service implementation pending gracefully', async () => {
-      // This test assumes the service throws "Not implemented" error
+    it('should handle template not found errors appropriately', async () => {
+      // This test uses a fake template that doesn't exist
       const result = runCLI('new test-project --template fake-template');
 
       if (result.exitCode === 0) {
-        // If implementation is complete
+        // If implementation creates default template or handles gracefully
         expect(result.stdout).toContain('Project created successfully');
       } else {
-        // If still in development
-        expect([
-          result.stdout.includes('Command structure created'),
-          result.stderr.includes('Error')
-        ]).toContain(true);
+        // Expected case: should error when template not found
+        expect(result.stderr).toContain('Error');
       }
     });
   });

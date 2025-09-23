@@ -5,7 +5,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { ConfigurationService } from '../../services';
+import { ConfigurationService } from '@/services';
 
 interface ConfigCommandOptions {
   verbose?: boolean;
@@ -87,17 +87,6 @@ async function handleConfigCommand(
         process.exit(1);
     }
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
-      );
-      console.log(chalk.blue('Would perform config action:'), action);
-      if (key) console.log(chalk.blue('Key:'), key);
-      if (value) console.log(chalk.blue('Value:'), value);
-      return;
-    }
     throw error;
   }
 }
