@@ -2,8 +2,8 @@
  * Template completion provider for dynamic template name completions
  */
 
-import type { CompletionContext, CompletionItem } from '@/models';
-import type { ITemplateService } from '@/services/template-service';
+import type { CompletionContext, CompletionItem } from '../../models';
+import type { ITemplateService } from '../template-service';
 
 export interface ITemplateCompletionProvider {
   /**

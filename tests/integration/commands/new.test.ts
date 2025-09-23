@@ -36,7 +36,7 @@ describe('scaffold new command integration tests', () => {
     try {
       const result = execSync(`node "${cliPath}" ${args}`, {
         encoding: 'utf-8',
-        env: { ...process.env, NO_COLOR: '1' },
+        env: { ...process.env, NO_COLOR: '1', HOME: testWorkspace },
         input,
         timeout: 10000,
       });

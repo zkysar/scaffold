@@ -22,9 +22,16 @@ export function createStatusCommand(): Command {
     .description('Check shell completion status')
     .option('--verbose', 'Show detailed status information')
     .option('-f, --format <format>', 'Output format (table|json)', 'table')
-    .action(async (options: StatusCommandOptions) => {
+    .action(async (options: StatusCommandOptions, command: Command) => {
       try {
-        await handleStatusCommand(options);
+        // Check for global verbose flag from root command
+        let rootCommand = command;
+        while (rootCommand.parent) {
+          rootCommand = rootCommand.parent;
+        }
+        const rootOptions = rootCommand.opts() || {};
+        const verbose = options.verbose || rootOptions.verbose || false;
+        await handleStatusCommand({ ...options, verbose });
       } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -95,7 +102,7 @@ async function displayStatusTable(
   console.log(chalk.gray(`  Installed: ${status.isInstalled ? 'Yes' : 'No'}`));
   console.log(chalk.gray(`  Enabled: ${status.isEnabled ? 'Yes' : 'No'}`));
 
-  if (status.shellType) {
+  if (status.isInstalled && status.shellType) {
     console.log(chalk.gray(`  Shell: ${status.shellType}`));
   } else {
     const detectedShell = await completionService.detectShell();
@@ -132,11 +139,11 @@ async function displayStatusTable(
     console.log(chalk.gray('  • Restart your shell or reload your profile'));
   }
 
-  if (verbose && status.isInstalled) {
+  if (verbose) {
     console.log('');
     console.log(chalk.blue('Verbose information:'));
 
-    // Check if completion script file exists
+    // Check if completion script file exists (show even if not fully installed)
     if (status.installPath) {
       const exists = existsSync(status.installPath);
       console.log(chalk.gray(`  Script file exists: ${exists ? 'Yes' : 'No'}`));

@@ -13,7 +13,7 @@ import {
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '@/services';
+} from '../../services';
 
 interface NewCommandOptions {
   template?: string;

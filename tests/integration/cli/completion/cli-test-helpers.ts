@@ -45,7 +45,7 @@ export async function runScaffoldCLI(
         ...process.env,
         ...env,
       },
-      stdio: input ? 'pipe' : 'inherit',
+      stdio: 'pipe',
     };
 
     const child = spawn('node', [cliPath, ...args], spawnOptions);
@@ -205,7 +205,7 @@ export async function waitFor(
 export async function completionFileExists(shellType: string, homeDir: string): Promise<boolean> {
   const paths = {
     bash: path.join(homeDir, '.scaffold', 'completion-bash.sh'),
-    zsh: path.join(homeDir, '.scaffold', 'completion-zsh.sh'),
+    zsh: path.join(homeDir, '.scaffold', 'completions', '_scaffold'),
     fish: path.join(homeDir, '.config', 'fish', 'completions', 'scaffold.fish'),
   };
 
