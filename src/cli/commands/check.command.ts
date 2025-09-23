@@ -8,7 +8,8 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import {
-  ProjectService,
+  ProjectValidationService,
+  ProjectManifestService,
   TemplateService,
   FileSystemService,
 } from '../../services';
@@ -82,11 +83,16 @@ async function handleCheckCommand(
   // Initialize services
   const fileSystemService = new FileSystemService();
   const templateService = new TemplateService();
-  const projectService = new ProjectService(templateService, fileSystemService);
+  const manifestService = new ProjectManifestService(fileSystemService);
+  const validationService = new ProjectValidationService(
+    templateService,
+    fileSystemService,
+    manifestService.getProjectManifest.bind(manifestService)
+  );
 
   try {
     // Check if this is a scaffold-managed project
-    const manifest = await projectService.loadProjectManifest(targetPath);
+    const manifest = await manifestService.loadProjectManifest(targetPath);
 
     if (!manifest) {
       console.log(chalk.yellow('Not a scaffold-managed project.'));
@@ -108,7 +114,7 @@ async function handleCheckCommand(
     }
 
     // Validate the project
-    const report = await projectService.validateProject(targetPath);
+    const report = await validationService.validateProject(targetPath);
 
     // Display results based on format
     switch (format) {

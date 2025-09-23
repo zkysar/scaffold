@@ -9,7 +9,8 @@ import { existsSync } from 'fs';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import {
-  ProjectService,
+  ProjectCreationService,
+  ProjectManifestService,
   TemplateService,
   FileSystemService,
 } from '../../services';
@@ -152,7 +153,11 @@ async function handleNewCommand(
   // Initialize services
   const fileSystemService = new FileSystemService();
   const templateService = new TemplateService();
-  const projectService = new ProjectService(templateService, fileSystemService);
+  const manifestService = new ProjectManifestService(fileSystemService);
+  const projectCreationService = new ProjectCreationService(
+    templateService,
+    fileSystemService
+  );
 
   let templateIds: string[] = [];
 
@@ -265,12 +270,15 @@ async function handleNewCommand(
 
   try {
     // Create the project
-    const manifest = await projectService.createProject(
+    const manifest = await projectCreationService.createProject(
       finalProjectName,
       templateIds,
       targetPath,
       variables
     );
+
+    // Save the manifest using the manifest service
+    await manifestService.updateProjectManifest(targetPath, manifest);
 
     console.log(chalk.green('✓ Project created successfully!'));
     console.log(chalk.blue('Project name:'), manifest.projectName);

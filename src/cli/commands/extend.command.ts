@@ -8,7 +8,8 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import {
-  ProjectService,
+  ProjectExtensionService,
+  ProjectManifestService,
   TemplateService,
   FileSystemService,
 } from '../../services';
@@ -79,11 +80,18 @@ async function handleExtendCommand(
   // Initialize services
   const fileSystemService = new FileSystemService();
   const templateService = new TemplateService();
-  const projectService = new ProjectService(templateService, fileSystemService);
+  const manifestService = new ProjectManifestService(fileSystemService);
+  const extensionService = new ProjectExtensionService(
+    templateService,
+    fileSystemService,
+    manifestService.getProjectManifest.bind(manifestService),
+    manifestService.updateProjectManifest.bind(manifestService),
+    manifestService.findNearestManifest.bind(manifestService)
+  );
 
   try {
     // Check if this is a scaffold-managed project
-    const manifest = await projectService.loadProjectManifest(targetPath);
+    const manifest = await manifestService.loadProjectManifest(targetPath);
 
     if (!manifest) {
       console.error(chalk.red('Error:'), 'Not a scaffold-managed project');
@@ -124,13 +132,20 @@ async function handleExtendCommand(
       return;
     }
 
-    console.log(
-      chalk.yellow(
-        '✓ Command structure created (service implementation pending)'
-      )
+    // Extend the project with the new template
+    const updatedManifest = await extensionService.extendProject(
+      targetPath,
+      [options.template],
+      variables
     );
-    console.log(chalk.blue('Would extend project:'), targetPath);
-    console.log(chalk.blue('With template:'), options.template);
+
+    console.log(chalk.green('✓ Project extended successfully!'));
+    console.log(chalk.blue('Project name:'), updatedManifest.projectName);
+    console.log(chalk.blue('Template added:'), options.template);
+    console.log(
+      chalk.blue('Total templates:'),
+      updatedManifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+    );
   } catch (error) {
     throw error;
   }

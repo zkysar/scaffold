@@ -3,7 +3,6 @@
  */
 
 export * from './template-service';
-export * from './project-service';
 export * from './project-creation.service';
 export * from './project-validation.service';
 export * from './project-fix.service';
