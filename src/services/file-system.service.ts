@@ -5,6 +5,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
+import { enhanceError } from '../lib';
 
 export interface BackupInfo {
   id: string;
@@ -244,7 +245,7 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
-      throw this.enhanceError(error, `Failed to create file: ${resolvedPath}`, {
+      throw enhanceError(error, `Failed to create file: ${resolvedPath}`, {
         suggestion:
           'Ensure the parent directory exists and you have write permissions.',
         path: resolvedPath,
@@ -271,16 +272,12 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to create directory: ${resolvedPath}`,
-        {
-          suggestion:
-            'Ensure you have write permissions in the parent directory.',
-          path: resolvedPath,
-          operation: 'createDirectory',
-        }
-      );
+      throw enhanceError(error, `Failed to create directory: ${resolvedPath}`, {
+        suggestion:
+          'Ensure you have write permissions in the parent directory.',
+        path: resolvedPath,
+        operation: 'createDirectory',
+      });
     }
   }
 
@@ -316,7 +313,7 @@ export class FileSystemService implements IFileSystemService {
 
       await fs.copy(resolvedSource, resolvedDest, copyOptions);
     } catch (error) {
-      throw this.enhanceError(
+      throw enhanceError(
         error,
         `Failed to copy: ${resolvedSource} -> ${resolvedDest}`,
         {
@@ -375,7 +372,7 @@ export class FileSystemService implements IFileSystemService {
 
       throw lastError;
     } catch (error) {
-      throw this.enhanceError(error, `Failed to delete: ${resolvedPath}`, {
+      throw enhanceError(error, `Failed to delete: ${resolvedPath}`, {
         suggestion: options.recursive
           ? 'Ensure you have write permissions and no files are in use.'
           : 'For directories, use recursive option or ensure directory is empty.',
@@ -413,15 +410,11 @@ export class FileSystemService implements IFileSystemService {
 
       return await fs.readJson(resolvedPath);
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to read JSON file: ${resolvedPath}`,
-        {
-          suggestion: 'Ensure the file exists and contains valid JSON.',
-          path: resolvedPath,
-          operation: 'readJson',
-        }
-      );
+      throw enhanceError(error, `Failed to read JSON file: ${resolvedPath}`, {
+        suggestion: 'Ensure the file exists and contains valid JSON.',
+        path: resolvedPath,
+        operation: 'readJson',
+      });
     }
   }
 
@@ -470,16 +463,12 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to write JSON file: ${resolvedPath}`,
-        {
-          suggestion:
-            'Ensure the parent directory exists and you have write permissions.',
-          path: resolvedPath,
-          operation: 'writeJson',
-        }
-      );
+      throw enhanceError(error, `Failed to write JSON file: ${resolvedPath}`, {
+        suggestion:
+          'Ensure the parent directory exists and you have write permissions.',
+        path: resolvedPath,
+        operation: 'writeJson',
+      });
     }
   }
 
@@ -496,7 +485,7 @@ export class FileSystemService implements IFileSystemService {
 
       return await fs.readFile(resolvedPath, encoding);
     } catch (error) {
-      throw this.enhanceError(error, `Failed to read file: ${resolvedPath}`, {
+      throw enhanceError(error, `Failed to read file: ${resolvedPath}`, {
         suggestion: 'Ensure the file exists and you have read permissions.',
         path: resolvedPath,
         operation: 'readFile',
@@ -541,7 +530,7 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
-      throw this.enhanceError(error, `Failed to write file: ${resolvedPath}`, {
+      throw enhanceError(error, `Failed to write file: ${resolvedPath}`, {
         suggestion:
           'Ensure the parent directory exists and you have write permissions.',
         path: resolvedPath,
@@ -556,15 +545,11 @@ export class FileSystemService implements IFileSystemService {
     try {
       return await fs.stat(resolvedPath);
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to get stats for: ${resolvedPath}`,
-        {
-          suggestion: 'Ensure the path exists and you have read permissions.',
-          path: resolvedPath,
-          operation: 'stat',
-        }
-      );
+      throw enhanceError(error, `Failed to get stats for: ${resolvedPath}`, {
+        suggestion: 'Ensure the path exists and you have read permissions.',
+        path: resolvedPath,
+        operation: 'stat',
+      });
     }
   }
 
@@ -609,16 +594,12 @@ export class FileSystemService implements IFileSystemService {
 
       return await fs.readdir(resolvedPath);
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to read directory: ${resolvedPath}`,
-        {
-          suggestion:
-            'Ensure the directory exists and you have read permissions.',
-          path: resolvedPath,
-          operation: 'readDirectory',
-        }
-      );
+      throw enhanceError(error, `Failed to read directory: ${resolvedPath}`, {
+        suggestion:
+          'Ensure the directory exists and you have read permissions.',
+        path: resolvedPath,
+        operation: 'readDirectory',
+      });
     }
   }
 
@@ -666,7 +647,7 @@ export class FileSystemService implements IFileSystemService {
         () => {}
       );
 
-      throw this.enhanceError(
+      throw enhanceError(
         error,
         `Failed to create backup for paths: ${paths.join(', ')}`,
         {
@@ -709,15 +690,11 @@ export class FileSystemService implements IFileSystemService {
         }
       }
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to restore from backup: ${backupId}`,
-        {
-          suggestion:
-            'Ensure the backup exists and you have write permissions to restore locations.',
-          operation: 'restore',
-        }
-      );
+      throw enhanceError(error, `Failed to restore from backup: ${backupId}`, {
+        suggestion:
+          'Ensure the backup exists and you have write permissions to restore locations.',
+        operation: 'restore',
+      });
     }
   }
 
@@ -744,7 +721,7 @@ export class FileSystemService implements IFileSystemService {
 
       return backups.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     } catch (error) {
-      throw this.enhanceError(error, 'Failed to list backups', {
+      throw enhanceError(error, 'Failed to list backups', {
         suggestion:
           'Ensure you have read permissions for the backup directory.',
         operation: 'listBackups',
@@ -767,7 +744,7 @@ export class FileSystemService implements IFileSystemService {
 
       await this.deletePath(backupPath, { recursive: true });
     } catch (error) {
-      throw this.enhanceError(error, `Failed to delete backup: ${backupId}`, {
+      throw enhanceError(error, `Failed to delete backup: ${backupId}`, {
         suggestion: 'Ensure the backup exists and you have write permissions.',
         operation: 'deleteBackup',
       });
@@ -795,7 +772,7 @@ export class FileSystemService implements IFileSystemService {
     try {
       await fs.ensureDir(this.resolvePath(dirPath));
     } catch (error) {
-      throw this.enhanceError(error, `Failed to ensure directory: ${dirPath}`, {
+      throw enhanceError(error, `Failed to ensure directory: ${dirPath}`, {
         suggestion:
           'Ensure you have write permissions in the parent directory.',
         path: dirPath,
@@ -836,7 +813,7 @@ export class FileSystemService implements IFileSystemService {
         overwrite: options.overwrite,
       });
     } catch (error) {
-      throw this.enhanceError(
+      throw enhanceError(
         error,
         `Failed to move: ${resolvedSource} -> ${resolvedDest}`,
         {
@@ -872,34 +849,5 @@ export class FileSystemService implements IFileSystemService {
       await fs.remove(tempPath).catch(() => {});
       throw error;
     }
-  }
-
-  /**
-   * Enhance error with additional context and recovery suggestions
-   */
-  private enhanceError(
-    originalError: any,
-    message: string,
-    context: {
-      suggestion?: string;
-      path?: string;
-      operation?: string;
-    }
-  ): Error {
-    const error = new Error(`${message}\n${context.suggestion || ''}`);
-
-    // Add context as properties
-    Object.assign(error, {
-      operation: context.operation,
-      path: context.path,
-      originalError,
-    });
-
-    // Preserve original error details in stack trace
-    if (originalError && originalError.stack) {
-      error.stack = `${error.message}\nCaused by: ${originalError.stack}`;
-    }
-
-    return error;
   }
 }
