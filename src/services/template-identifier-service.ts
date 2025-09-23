@@ -15,17 +15,17 @@ import type { Template } from '../models';
 export class TemplateIdentifierService extends IdentifierService {
   private static instance: TemplateIdentifierService | null = null;
 
-  constructor() {
-    const aliasFilePath = path.join(os.homedir(), '.scaffold', 'templates', 'aliases.json');
-    super(aliasFilePath);
+  constructor(aliasFilePath?: string) {
+    const defaultPath = path.join(os.homedir(), '.scaffold', 'templates', 'aliases.json');
+    super(aliasFilePath ?? defaultPath);
   }
 
   /**
-   * Get singleton instance
+   * Get singleton instance with optional custom alias file path
    */
-  static getInstance(): TemplateIdentifierService {
-    if (!TemplateIdentifierService.instance) {
-      TemplateIdentifierService.instance = new TemplateIdentifierService();
+  static getInstance(aliasFilePath?: string): TemplateIdentifierService {
+    if (!TemplateIdentifierService.instance || aliasFilePath) {
+      TemplateIdentifierService.instance = new TemplateIdentifierService(aliasFilePath);
     }
     return TemplateIdentifierService.instance;
   }

@@ -22,9 +22,16 @@ export function createInstallCommand(): Command {
     .option('-s, --shell <shell>', 'Shell type (bash|zsh|fish)', validateShellType)
     .option('-f, --force', 'Force reinstall if already installed')
     .option('--verbose', 'Show detailed output')
-    .action(async (options: InstallCommandOptions) => {
+    .action(async (options: InstallCommandOptions, command: Command) => {
       try {
-        await handleInstallCommand(options);
+        // Check for global verbose flag from root command
+        let rootCommand = command;
+        while (rootCommand.parent) {
+          rootCommand = rootCommand.parent;
+        }
+        const rootOptions = rootCommand.opts() || {};
+        const verbose = options.verbose || rootOptions.verbose || false;
+        await handleInstallCommand({ ...options, verbose });
       } catch (error) {
         console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -37,6 +44,7 @@ export function createInstallCommand(): Command {
 async function handleInstallCommand(options: InstallCommandOptions): Promise<void> {
   const verbose = options.verbose || false;
   const force = options.force || false;
+
 
   const completionService = new CompletionService();
 

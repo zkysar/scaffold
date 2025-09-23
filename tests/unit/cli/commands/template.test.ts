@@ -71,7 +71,7 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
       (mockTemplateIdentifierService.getInstance as jest.Mock).mockReturnValue(mockIdentifierServiceInstance);
     }
 
-    await command.parseAsync(['node', 'test', ...args], { from: 'user' });
+    await command.parseAsync(args, { from: 'user' });
   } catch (error) {
     if (error instanceof Error && error.message !== 'Process exit called') {
       thrownError = error;
@@ -103,7 +103,7 @@ describe('scaffold template command unit tests', () => {
       expect(command.description()).toBe('Manage templates (create/list/delete/export/import/alias)');
 
       // Check arguments
-      const args = command.args;
+      const args = command.registeredArguments;
       expect(args).toHaveLength(3);
       // Check argument description - args[0] is string, metadata stored elsewhere
 
@@ -167,15 +167,21 @@ describe('scaffold template command unit tests', () => {
         } as TemplateLibrary),
       };
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      const mockIdentifierServiceInstance = {
+        registerAlias: jest.fn(),
+        getAliases: jest.fn(),
+      } as any;
 
-      const result = await executeCommand(['list']);
+      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      (mockTemplateIdentifierService.getInstance as jest.Mock).mockReturnValue(mockIdentifierServiceInstance);
+
+      const result = await executeCommand(['list'], false);
 
       expect(result.stdout).toContain('Available Templates:');
       expect(result.stdout).toContain('React App abc12345 (alias: "react", "react-app")');
       expect(result.stdout).toContain('Node Service def98765');
-      expect(result.stdout).toContain('Version: 1.0.0');
-      expect(result.stdout).toContain('Version: 2.1.0');
+      expect(result.stdout).toContain('  Version: 1.0.0');
+      expect(result.stdout).toContain('  Version: 2.1.0');
       expect(result.stdout).toContain('Total: 2 templates');
       expect(result.exitCode).toBe(0);
     });
@@ -201,14 +207,20 @@ describe('scaffold template command unit tests', () => {
         } as TemplateLibrary),
       };
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      const mockIdentifierServiceInstance = {
+        registerAlias: jest.fn(),
+        getAliases: jest.fn(),
+      } as any;
 
-      const result = await executeCommand(['list', '--verbose']);
+      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      (mockTemplateIdentifierService.getInstance as jest.Mock).mockReturnValue(mockIdentifierServiceInstance);
+
+      const result = await executeCommand(['list', '--verbose'], false);
 
       expect(result.stdout).toContain('React App abc123456789');
-      expect(result.stdout).toContain('Source: local');
-      expect(result.stdout).toContain('Installed: Yes');
-      expect(result.stdout).toContain('Last Updated: 2023-06-15T10:30:00.000Z');
+      expect(result.stdout).toContain('  Source: local');
+      expect(result.stdout).toContain('  Installed: Yes');
+      expect(result.stdout).toContain('  Last Updated: 2023-06-15T10:30:00.000Z');
       expect(result.exitCode).toBe(0);
     });
 
@@ -221,12 +233,18 @@ describe('scaffold template command unit tests', () => {
         } as TemplateLibrary),
       };
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      const mockIdentifierServiceInstance = {
+        registerAlias: jest.fn(),
+        getAliases: jest.fn(),
+      } as any;
 
-      const result = await executeCommand(['list']);
+      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      (mockTemplateIdentifierService.getInstance as jest.Mock).mockReturnValue(mockIdentifierServiceInstance);
+
+      const result = await executeCommand(['list'], false);
 
       expect(result.stdout).toContain('No templates found.');
-      expect(result.stdout).toContain('scaffold template create');
+      expect(result.stdout).toContain('Use "scaffold template create" to create your first template.');
       expect(result.exitCode).toBe(0);
     });
 
@@ -235,12 +253,18 @@ describe('scaffold template command unit tests', () => {
         loadTemplates: jest.fn().mockRejectedValue(new Error('No templates found')),
       };
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      const mockIdentifierServiceInstance = {
+        registerAlias: jest.fn(),
+        getAliases: jest.fn(),
+      } as any;
 
-      const result = await executeCommand(['list']);
+      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      (mockTemplateIdentifierService.getInstance as jest.Mock).mockReturnValue(mockIdentifierServiceInstance);
+
+      const result = await executeCommand(['list'], false);
 
       expect(result.stdout).toContain('No templates found.');
-      expect(result.stdout).toContain('scaffold template create');
+      expect(result.stdout).toContain('Use "scaffold template create" to create your first template.');
       expect(result.exitCode).toBe(0);
     });
   });

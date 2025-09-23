@@ -83,15 +83,25 @@ export interface ITemplateService {
   saveTemplate(template: Template): Promise<void>;
 }
 
+export interface TemplateServiceOptions {
+  templatesDir?: string;
+  cacheDir?: string;
+  identifierService?: TemplateIdentifierService;
+}
+
 export class TemplateService implements ITemplateService {
   private readonly templatesDir: string;
   private readonly cacheDir: string;
   private readonly identifierService: TemplateIdentifierService;
 
-  constructor() {
-    this.templatesDir = path.join(os.homedir(), '.scaffold', 'templates');
-    this.cacheDir = path.join(os.homedir(), '.scaffold', 'cache');
-    this.identifierService = TemplateIdentifierService.getInstance();
+  constructor(options?: TemplateServiceOptions) {
+    const homeDir = os.homedir();
+    this.templatesDir = options?.templatesDir ?? path.join(homeDir, '.scaffold', 'templates');
+    this.cacheDir = options?.cacheDir ?? path.join(homeDir, '.scaffold', 'cache');
+
+    // If a custom templatesDir is provided, use a custom aliasFilePath too
+    const aliasFilePath = options?.templatesDir ? path.join(options.templatesDir, 'aliases.json') : undefined;
+    this.identifierService = options?.identifierService ?? TemplateIdentifierService.getInstance(aliasFilePath);
   }
 
   async loadTemplates(): Promise<TemplateLibrary> {

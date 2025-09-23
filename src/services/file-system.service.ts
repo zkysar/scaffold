@@ -5,6 +5,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
+import { enhanceError } from '../lib';
 
 export interface BackupInfo {
   id: string;
@@ -219,15 +220,16 @@ export class FileSystemService implements IFileSystemService {
       return;
     }
 
+    // Check overwrite before try-catch to avoid enhanced error wrapping
+    if (!options.overwrite && (await this.exists(resolvedPath))) {
+      throw new Error(
+        `File already exists and overwrite is disabled: ${resolvedPath}`
+      );
+    }
+
     try {
       if (options.createParentDirs !== false) {
         await this.ensureDirectory(path.dirname(resolvedPath));
-      }
-
-      if (!options.overwrite && (await this.exists(resolvedPath))) {
-        throw new Error(
-          `File already exists and overwrite is disabled: ${resolvedPath}`
-        );
       }
 
       if (options.atomic) {
@@ -244,7 +246,7 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
-      throw this.enhanceError(error, `Failed to create file: ${resolvedPath}`, {
+      throw enhanceError(error, `Failed to create file: ${resolvedPath}`, {
         suggestion:
           'Ensure the parent directory exists and you have write permissions.',
         path: resolvedPath,
@@ -271,16 +273,12 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to create directory: ${resolvedPath}`,
-        {
-          suggestion:
-            'Ensure you have write permissions in the parent directory.',
-          path: resolvedPath,
-          operation: 'createDirectory',
-        }
-      );
+      throw enhanceError(error, `Failed to create directory: ${resolvedPath}`, {
+        suggestion:
+          'Ensure you have write permissions in the parent directory.',
+        path: resolvedPath,
+        operation: 'createDirectory',
+      });
     }
   }
 
@@ -297,11 +295,12 @@ export class FileSystemService implements IFileSystemService {
       return;
     }
 
-    try {
-      if (!(await this.exists(resolvedSource))) {
-        throw new Error(`Source path does not exist: ${resolvedSource}`);
-      }
+    // Check source exists before try-catch to avoid enhanced error wrapping
+    if (!(await this.exists(resolvedSource))) {
+      throw new Error(`Source path does not exist: ${resolvedSource}`);
+    }
 
+    try {
       if (options.createParentDirs !== false) {
         await this.ensureDirectory(path.dirname(resolvedDest));
       }
@@ -316,7 +315,7 @@ export class FileSystemService implements IFileSystemService {
 
       await fs.copy(resolvedSource, resolvedDest, copyOptions);
     } catch (error) {
-      throw this.enhanceError(
+      throw enhanceError(
         error,
         `Failed to copy: ${resolvedSource} -> ${resolvedDest}`,
         {
@@ -340,14 +339,15 @@ export class FileSystemService implements IFileSystemService {
       return;
     }
 
-    try {
-      if (!(await this.exists(resolvedPath))) {
-        if (!options.force) {
-          throw new Error(`Path does not exist: ${resolvedPath}`);
-        }
-        return;
+    // Check existence and force option before try-catch to avoid enhanced error wrapping
+    if (!(await this.exists(resolvedPath))) {
+      if (!options.force) {
+        throw new Error(`Path does not exist: ${resolvedPath}`);
       }
+      return;
+    }
 
+    try {
       const maxRetries = options.maxRetries || 3;
       let lastError: Error | null = null;
 
@@ -375,7 +375,7 @@ export class FileSystemService implements IFileSystemService {
 
       throw lastError;
     } catch (error) {
-      throw this.enhanceError(error, `Failed to delete: ${resolvedPath}`, {
+      throw enhanceError(error, `Failed to delete: ${resolvedPath}`, {
         suggestion: options.recursive
           ? 'Ensure you have write permissions and no files are in use.'
           : 'For directories, use recursive option or ensure directory is empty.',
@@ -406,22 +406,19 @@ export class FileSystemService implements IFileSystemService {
   async readJson<T = any>(filePath: string): Promise<T> {
     const resolvedPath = this.resolvePath(filePath);
 
-    try {
-      if (!(await this.exists(resolvedPath))) {
-        throw new Error(`JSON file does not exist: ${resolvedPath}`);
-      }
+    // Check file exists before try-catch to avoid enhanced error wrapping
+    if (!(await this.exists(resolvedPath))) {
+      throw new Error(`JSON file does not exist: ${resolvedPath}`);
+    }
 
+    try {
       return await fs.readJson(resolvedPath);
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to read JSON file: ${resolvedPath}`,
-        {
-          suggestion: 'Ensure the file exists and contains valid JSON.',
-          path: resolvedPath,
-          operation: 'readJson',
-        }
-      );
+      throw enhanceError(error, `Failed to read JSON file: ${resolvedPath}`, {
+        suggestion: 'Ensure the file exists and contains valid JSON.',
+        path: resolvedPath,
+        operation: 'readJson',
+      });
     }
   }
 
@@ -437,15 +434,16 @@ export class FileSystemService implements IFileSystemService {
       return;
     }
 
+    // Check overwrite before try-catch to avoid enhanced error wrapping
+    if (!options.overwrite && (await this.exists(resolvedPath))) {
+      throw new Error(
+        `JSON file already exists and overwrite is disabled: ${resolvedPath}`
+      );
+    }
+
     try {
       if (options.createParentDirs !== false) {
         await this.ensureDirectory(path.dirname(resolvedPath));
-      }
-
-      if (!options.overwrite && (await this.exists(resolvedPath))) {
-        throw new Error(
-          `JSON file already exists and overwrite is disabled: ${resolvedPath}`
-        );
       }
 
       const jsonOptions = {
@@ -470,16 +468,12 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to write JSON file: ${resolvedPath}`,
-        {
-          suggestion:
-            'Ensure the parent directory exists and you have write permissions.',
-          path: resolvedPath,
-          operation: 'writeJson',
-        }
-      );
+      throw enhanceError(error, `Failed to write JSON file: ${resolvedPath}`, {
+        suggestion:
+          'Ensure the parent directory exists and you have write permissions.',
+        path: resolvedPath,
+        operation: 'writeJson',
+      });
     }
   }
 
@@ -489,14 +483,15 @@ export class FileSystemService implements IFileSystemService {
   ): Promise<string> {
     const resolvedPath = this.resolvePath(filePath);
 
-    try {
-      if (!(await this.exists(resolvedPath))) {
-        throw new Error(`File does not exist: ${resolvedPath}`);
-      }
+    // Check file exists before try-catch to avoid enhanced error wrapping
+    if (!(await this.exists(resolvedPath))) {
+      throw new Error(`File does not exist: ${resolvedPath}`);
+    }
 
+    try {
       return await fs.readFile(resolvedPath, encoding);
     } catch (error) {
-      throw this.enhanceError(error, `Failed to read file: ${resolvedPath}`, {
+      throw enhanceError(error, `Failed to read file: ${resolvedPath}`, {
         suggestion: 'Ensure the file exists and you have read permissions.',
         path: resolvedPath,
         operation: 'readFile',
@@ -516,15 +511,16 @@ export class FileSystemService implements IFileSystemService {
       return;
     }
 
+    // Check overwrite before try-catch to avoid enhanced error wrapping
+    if (!options.overwrite && (await this.exists(resolvedPath))) {
+      throw new Error(
+        `File already exists and overwrite is disabled: ${resolvedPath}`
+      );
+    }
+
     try {
       if (options.createParentDirs !== false) {
         await this.ensureDirectory(path.dirname(resolvedPath));
-      }
-
-      if (!options.overwrite && (await this.exists(resolvedPath))) {
-        throw new Error(
-          `File already exists and overwrite is disabled: ${resolvedPath}`
-        );
       }
 
       if (options.atomic) {
@@ -541,7 +537,7 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
-      throw this.enhanceError(error, `Failed to write file: ${resolvedPath}`, {
+      throw enhanceError(error, `Failed to write file: ${resolvedPath}`, {
         suggestion:
           'Ensure the parent directory exists and you have write permissions.',
         path: resolvedPath,
@@ -556,15 +552,11 @@ export class FileSystemService implements IFileSystemService {
     try {
       return await fs.stat(resolvedPath);
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to get stats for: ${resolvedPath}`,
-        {
-          suggestion: 'Ensure the path exists and you have read permissions.',
-          path: resolvedPath,
-          operation: 'stat',
-        }
-      );
+      throw enhanceError(error, `Failed to get stats for: ${resolvedPath}`, {
+        suggestion: 'Ensure the path exists and you have read permissions.',
+        path: resolvedPath,
+        operation: 'stat',
+      });
     }
   }
 
@@ -598,27 +590,24 @@ export class FileSystemService implements IFileSystemService {
   async readDirectory(dirPath: string): Promise<string[]> {
     const resolvedPath = this.resolvePath(dirPath);
 
+    // Check directory exists and is directory before try-catch to avoid enhanced error wrapping
+    if (!(await this.exists(resolvedPath))) {
+      throw new Error(`Directory does not exist: ${resolvedPath}`);
+    }
+
+    if (!(await this.isDirectory(resolvedPath))) {
+      throw new Error(`Path is not a directory: ${resolvedPath}`);
+    }
+
     try {
-      if (!(await this.exists(resolvedPath))) {
-        throw new Error(`Directory does not exist: ${resolvedPath}`);
-      }
-
-      if (!(await this.isDirectory(resolvedPath))) {
-        throw new Error(`Path is not a directory: ${resolvedPath}`);
-      }
-
       return await fs.readdir(resolvedPath);
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to read directory: ${resolvedPath}`,
-        {
-          suggestion:
-            'Ensure the directory exists and you have read permissions.',
-          path: resolvedPath,
-          operation: 'readDirectory',
-        }
-      );
+      throw enhanceError(error, `Failed to read directory: ${resolvedPath}`, {
+        suggestion:
+          'Ensure the directory exists and you have read permissions.',
+        path: resolvedPath,
+        operation: 'readDirectory',
+      });
     }
   }
 
@@ -648,8 +637,12 @@ export class FileSystemService implements IFileSystemService {
       for (const sourcePath of paths) {
         const resolvedSource = this.resolvePath(sourcePath);
         if (await this.exists(resolvedSource)) {
-          const relativePath = path.relative(process.cwd(), resolvedSource);
-          const backupTarget = path.join(backupPath, 'data', relativePath);
+          // Create a safe relative path for backup storage
+          // Remove leading slash and make path safe for cross-platform storage
+          const safePath = path.isAbsolute(resolvedSource)
+            ? resolvedSource.substring(1).replace(/:/g, '_') // Remove leading slash and handle Windows drive letters
+            : resolvedSource;
+          const backupTarget = path.join(backupPath, 'data', safePath);
           await this.copyPath(resolvedSource, backupTarget, {
             overwrite: true,
           });
@@ -666,7 +659,7 @@ export class FileSystemService implements IFileSystemService {
         () => {}
       );
 
-      throw this.enhanceError(
+      throw enhanceError(
         error,
         `Failed to create backup for paths: ${paths.join(', ')}`,
         {
@@ -686,11 +679,12 @@ export class FileSystemService implements IFileSystemService {
       return;
     }
 
-    try {
-      if (!(await this.exists(backupPath))) {
-        throw new Error(`Backup does not exist: ${backupId}`);
-      }
+    // Check backup exists before try-catch to avoid enhanced error wrapping
+    if (!(await this.exists(backupPath))) {
+      throw new Error(`Backup does not exist: ${backupId}`);
+    }
 
+    try {
       const backupInfoPath = path.join(backupPath, 'info.json');
       if (!(await this.exists(backupInfoPath))) {
         throw new Error(`Backup metadata is missing: ${backupId}`);
@@ -701,23 +695,22 @@ export class FileSystemService implements IFileSystemService {
 
       // Restore each backed up path
       for (const originalPath of backupInfo.paths) {
-        const relativePath = path.relative(process.cwd(), originalPath);
-        const backupSource = path.join(dataPath, relativePath);
+        // Use the same safe path logic as backup
+        const safePath = path.isAbsolute(originalPath)
+          ? originalPath.substring(1).replace(/:/g, '_') // Remove leading slash and handle Windows drive letters
+          : originalPath;
+        const backupSource = path.join(dataPath, safePath);
 
         if (await this.exists(backupSource)) {
           await this.copyPath(backupSource, originalPath, { overwrite: true });
         }
       }
     } catch (error) {
-      throw this.enhanceError(
-        error,
-        `Failed to restore from backup: ${backupId}`,
-        {
-          suggestion:
-            'Ensure the backup exists and you have write permissions to restore locations.',
-          operation: 'restore',
-        }
-      );
+      throw enhanceError(error, `Failed to restore from backup: ${backupId}`, {
+        suggestion:
+          'Ensure the backup exists and you have write permissions to restore locations.',
+        operation: 'restore',
+      });
     }
   }
 
@@ -744,7 +737,7 @@ export class FileSystemService implements IFileSystemService {
 
       return backups.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     } catch (error) {
-      throw this.enhanceError(error, 'Failed to list backups', {
+      throw enhanceError(error, 'Failed to list backups', {
         suggestion:
           'Ensure you have read permissions for the backup directory.',
         operation: 'listBackups',
@@ -760,14 +753,15 @@ export class FileSystemService implements IFileSystemService {
       return;
     }
 
-    try {
-      if (!(await this.exists(backupPath))) {
-        throw new Error(`Backup does not exist: ${backupId}`);
-      }
+    // Check backup exists before try-catch to avoid enhanced error wrapping
+    if (!(await this.exists(backupPath))) {
+      throw new Error(`Backup does not exist: ${backupId}`);
+    }
 
+    try {
       await this.deletePath(backupPath, { recursive: true });
     } catch (error) {
-      throw this.enhanceError(error, `Failed to delete backup: ${backupId}`, {
+      throw enhanceError(error, `Failed to delete backup: ${backupId}`, {
         suggestion: 'Ensure the backup exists and you have write permissions.',
         operation: 'deleteBackup',
       });
@@ -795,7 +789,7 @@ export class FileSystemService implements IFileSystemService {
     try {
       await fs.ensureDir(this.resolvePath(dirPath));
     } catch (error) {
-      throw this.enhanceError(error, `Failed to ensure directory: ${dirPath}`, {
+      throw enhanceError(error, `Failed to ensure directory: ${dirPath}`, {
         suggestion:
           'Ensure you have write permissions in the parent directory.',
         path: dirPath,
@@ -817,26 +811,28 @@ export class FileSystemService implements IFileSystemService {
       return;
     }
 
-    try {
-      if (!(await this.exists(resolvedSource))) {
-        throw new Error(`Source path does not exist: ${resolvedSource}`);
-      }
+    // Check source existence before try-catch
+    if (!(await this.exists(resolvedSource))) {
+      throw new Error(`Source path does not exist: ${resolvedSource}`);
+    }
 
+    // Check overwrite before try-catch to avoid enhanced error wrapping
+    if (!options.overwrite && (await this.exists(resolvedDest))) {
+      throw new Error(
+        `Destination already exists and overwrite is disabled: ${resolvedDest}`
+      );
+    }
+
+    try {
       if (options.createParentDirs !== false) {
         await this.ensureDirectory(path.dirname(resolvedDest));
-      }
-
-      if (!options.overwrite && (await this.exists(resolvedDest))) {
-        throw new Error(
-          `Destination already exists and overwrite is disabled: ${resolvedDest}`
-        );
       }
 
       await fs.move(resolvedSource, resolvedDest, {
         overwrite: options.overwrite,
       });
     } catch (error) {
-      throw this.enhanceError(
+      throw enhanceError(
         error,
         `Failed to move: ${resolvedSource} -> ${resolvedDest}`,
         {
@@ -872,34 +868,5 @@ export class FileSystemService implements IFileSystemService {
       await fs.remove(tempPath).catch(() => {});
       throw error;
     }
-  }
-
-  /**
-   * Enhance error with additional context and recovery suggestions
-   */
-  private enhanceError(
-    originalError: any,
-    message: string,
-    context: {
-      suggestion?: string;
-      path?: string;
-      operation?: string;
-    }
-  ): Error {
-    const error = new Error(`${message}\n${context.suggestion || ''}`);
-
-    // Add context as properties
-    Object.assign(error, {
-      operation: context.operation,
-      path: context.path,
-      originalError,
-    });
-
-    // Preserve original error details in stack trace
-    if (originalError && originalError.stack) {
-      error.stack = `${error.message}\nCaused by: ${originalError.stack}`;
-    }
-
-    return error;
   }
 }

@@ -7,13 +7,15 @@ import { Command } from 'commander';
 import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
+import inquirer from 'inquirer';
 import {
   ProjectExtensionService,
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '../../services';
-import { ExitCode } from '../../constants/exit-codes';
+} from '@/services';
+import { ExitCode, exitWithCode } from '../../constants/exit-codes';
+import { selectTemplates } from '@/cli/utils/template-selector';
 
 interface ExtendCommandOptions {
   template?: string;
@@ -27,16 +29,16 @@ export function createExtendCommand(): Command {
   const command = new Command('extend');
 
   command
-    .description('Add templates to existing scaffold project')
+    .description('Add templates to existing project')
     .argument(
       '[project]',
       'Project directory path (defaults to current directory)'
     )
-    .option('-t, --template <template>', 'Template ID or name to add')
-    .option('-v, --variables <variables>', 'JSON string of template variables')
-    .option('--verbose', 'Show detailed output')
-    .option('--dry-run', 'Show what would be added without making changes')
-    .option('--force', 'Apply template without confirmation prompts')
+    .option('--template <name>', 'Template name or ID to add')
+    .option('--variables <json>', 'Variables as JSON string')
+    .option('--verbose', 'Show detailed extend output')
+    .option('--dry-run', 'Show what would be extended without making changes')
+    .option('--force', 'Add template without confirmation prompts')
     .action(async (projectPath: string, options: ExtendCommandOptions) => {
       try {
         await handleExtendCommand(projectPath, options);
@@ -75,6 +77,7 @@ async function handleExtendCommand(
 ): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
+  const force = options.force || false;
 
   // Determine target path
   const targetPath = projectPath
@@ -83,21 +86,9 @@ async function handleExtendCommand(
 
   if (verbose) {
     console.log(chalk.blue('Extending project:'), targetPath);
-    console.log(chalk.blue('Options:'), JSON.stringify(options, null, 2));
   }
 
-  // Check if template is specified - this is a user error
-  if (!options.template) {
-    console.error(chalk.red('Error:'), 'Template is required');
-    console.log(
-      chalk.gray(
-        'Usage: scaffold extend <project> --template <template-name>'
-      )
-    );
-    process.exit(ExitCode.USER_ERROR);
-  }
-
-  // Check if target directory exists - this is a user error
+  // Check if directory exists
   if (!existsSync(targetPath)) {
     console.error(
       chalk.red('Error:'),
@@ -132,6 +123,7 @@ async function handleExtendCommand(
     manifestService.findNearestManifest.bind(manifestService)
   );
 
+  let templateIds: string[] = [];
   let manifest: unknown = null;
 
   try {
@@ -153,7 +145,7 @@ async function handleExtendCommand(
 
     // For any other manifest loading error (corrupted JSON, etc.)
     console.error(chalk.red('Error:'), errorMessage);
-    process.exit(ExitCode.USER_ERROR);
+    exitWithCode(ExitCode.USER_ERROR);
   }
 
   if (!manifest) {
@@ -162,31 +154,146 @@ async function handleExtendCommand(
     console.log(
       chalk.gray('Use "scaffold new" to create a new project first.')
     );
-    process.exit(ExitCode.USER_ERROR);
+    exitWithCode(ExitCode.USER_ERROR);
+  }
+
+  // Handle template selection
+  if (options.template) {
+    templateIds = [options.template];
+    if (verbose) {
+      console.log(chalk.blue('Using template:'), options.template);
+    }
+  } else {
+    // Get already applied template SHAs to exclude them from selection
+    const excludeTemplateIds = manifest.templates
+      .filter((template) => template.status === 'active')
+      .map((template) => template.templateSha);
+
+    if (verbose && excludeTemplateIds.length > 0) {
+      console.log(
+        chalk.blue('Excluding already applied templates:'),
+        excludeTemplateIds
+      );
+    }
+
+    // Use shared template selection utility - single template only for extend
+    try {
+      templateIds = await selectTemplates(templateService, {
+        verbose,
+        excludeTemplateIds,
+        allowMultiple: false, // Extend command should use single template
+        required: false,
+      });
+
+      // Handle case where no templates are available or user cancels
+      if (templateIds.length === 0) {
+        console.log(chalk.yellow('No additional templates available to apply.'));
+        console.log(
+          chalk.gray(
+            'All available templates are already applied to this project.'
+          )
+        );
+        console.log(
+          chalk.gray(
+            'Or specify a specific template with: scaffold extend [project] --template <template-name>'
+          )
+        );
+        return;
+      }
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        (error.message.includes('Failed to load templates') ||
+         error.message.includes('No templates available'))
+      ) {
+        console.log(chalk.yellow('No templates found.'));
+        console.log(
+          chalk.gray(
+            'Use "scaffold template create" to create your first template.'
+          )
+        );
+        console.log(
+          chalk.gray(
+            'Or specify a template with: scaffold extend [project] --template <template-name>'
+          )
+        );
+        return;
+      }
+      throw error;
+    }
+  }
+
+  // Parse variables if provided
+  let variables: Record<string, string> = {};
+  if (options.variables) {
+    try {
+      variables = JSON.parse(options.variables);
+      if (verbose) {
+        console.log(chalk.blue('Variables:'), variables);
+      }
+    } catch (error) {
+      throw new Error(
+        `Invalid variables JSON: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   if (dryRun) {
-    console.log(chalk.yellow('DRY RUN'));
-    console.log('Would extend project with');
-    console.log(chalk.blue('Project:'), (manifest as Record<string, unknown>).projectName);
-    console.log(chalk.blue('Template:'), options.template);
+    console.log(chalk.yellow('DRY RUN - Would extend project with:'));
+    console.log(chalk.blue('Project:'), manifest.projectName);
+    console.log(chalk.blue('Templates:'), templateIds);
     console.log(chalk.blue('Variables:'), variables);
-    return; // Success - just return normally
+    console.log(chalk.blue('Target path:'), targetPath);
+    return;
+  }
+
+  // Confirmation prompt (unless force mode is enabled)
+  if (!force) {
+    try {
+      const templateId = templateIds[0]; // Since we're only using single template for extend
+      const template = await templateService.getTemplate(templateId);
+      const { proceed } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'proceed',
+          message: `Add template "${template.name}" to project "${manifest.projectName}"?`,
+          default: true,
+        },
+      ]);
+
+      if (!proceed) {
+        console.log(chalk.yellow('Operation cancelled.'));
+        return;
+      }
+    } catch (error) {
+      // If template can't be loaded, we'll let the extendProject method handle the error
+    }
+  }
+
+  if (verbose) {
+    console.log(chalk.blue('Extending project with template:'), templateIds[0]);
   }
 
   // Extend the project with the new template
   const updatedManifest = await extensionService.extendProject(
     targetPath,
-    [options.template],
+    templateIds,
     variables
   );
 
-  console.log(chalk.green('Command structure created'));
+  console.log(chalk.green('✓ Project extended successfully!'));
   console.log(chalk.blue('Project name:'), updatedManifest.projectName);
-  console.log(chalk.blue('Template added:'), options.template);
-  console.log(
-    chalk.blue('Total templates:'),
-    updatedManifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
-  );
-  // Success - just return normally, don't call exitWithCode for success
+  console.log(chalk.blue('Location:'), targetPath);
+
+  // Find the newly added template
+  const newTemplate = updatedManifest.templates[updatedManifest.templates.length - 1];
+  console.log(chalk.blue('Template added:'), `${newTemplate.name}@${newTemplate.version}`);
+
+  if (verbose) {
+    console.log(chalk.blue('Updated at:'), updatedManifest.updated);
+    console.log(
+      chalk.blue('Total templates:'),
+      updatedManifest.templates.filter(t => t.status === 'active').length
+    );
+  }
 }

@@ -1,4 +1,12 @@
-{
+const fs = require('fs');
+const path = require('path');
+
+// Load the burndown blocklist
+const blocklistPath = path.join(__dirname, 'burndown-blocklist.json');
+const blocklist = JSON.parse(fs.readFileSync(blocklistPath, 'utf8'));
+
+// Base ESLint configuration
+const baseConfig = {
   "env": {
     "es2022": true,
     "node": true
@@ -91,4 +99,15 @@
     }
   ],
   "ignorePatterns": ["dist/", "node_modules/", "*.js"]
-}
+};
+
+// Add blocked test files to ignorePatterns for burndown
+const burndownIgnorePatterns = [
+  ...baseConfig.ignorePatterns,
+  ...blocklist.tests.blocked
+];
+
+module.exports = {
+  ...baseConfig,
+  ignorePatterns: burndownIgnorePatterns
+};

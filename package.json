@@ -17,10 +17,19 @@
     "test:cli": "npm run build && docker compose --profile test-cli up --abort-on-container-exit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:coverage:check": "jest --coverage --coverageThreshold='{\"global\":{\"branches\":50,\"functions\":50,\"lines\":50,\"statements\":50}}'",
+    "test:coverage:diff": "jest --coverage --changedSince=origin/main --coverageThreshold='{\"global\":{\"branches\":50,\"functions\":50,\"lines\":50,\"statements\":50}}'",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage .scaffold-temp",
-    "prepare": "husky"
+    "prepare": "husky",
+    "burndown:status": "node scripts/burndown.js status",
+    "burndown:list": "node scripts/burndown.js list",
+    "burndown:scan": "node scripts/burndown.js scan",
+    "burndown:test": "node scripts/burndown.js test",
+    "burndown:lint": "node scripts/burndown.js lint",
+    "burndown:check": "node scripts/burndown.js check",
+    "burndown:remove": "node scripts/burndown.js remove"
   },
   "keywords": [
     "cli",
@@ -54,17 +63,20 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^8.54.0",
+    "eslint-import-resolver-typescript": "^2.7.1",
+    "eslint-plugin-import": "^2.32.0",
     "husky": "^9.1.7",
     "jest": "^29.7.0",
     "lint-staged": "^16.1.6",
     "mock-fs": "^5.2.0",
     "prettier": "^3.1.0",
     "ts-jest": "^29.1.1",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.2"
   },
   "lint-staged": {
     "*.ts": [
-      "eslint --fix",
+      "eslint --fix --max-warnings 0",
       "prettier --write"
     ]
   }

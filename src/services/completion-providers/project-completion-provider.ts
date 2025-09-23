@@ -4,8 +4,8 @@
 
 import * as path from 'path';
 import * as fs from 'fs-extra';
-import type { CompletionContext, CompletionItem, ProjectManifest } from '../../models';
-import type { IProjectManifestService } from '../project-manifest.service';
+import type { CompletionContext, CompletionItem, ProjectManifest } from '@/models';
+import type { IProjectManifestService } from '@/services/project-manifest.service';
 
 export interface IProjectCompletionProvider {
   /**

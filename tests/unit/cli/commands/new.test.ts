@@ -3,20 +3,20 @@
  * Tests option parsing, validation, flow control, and error handling
  */
 
-import { createNewCommand } from '../../../../src/cli/commands/new';
+import { createNewCommand } from '@/cli/commands/new.command';
 import {
   ProjectService,
   TemplateService,
   FileSystemService,
-} from '../../../../src/services';
+} from '@/services';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { existsSync } from 'fs';
 import mockFs from 'mock-fs';
-import type { ProjectManifest, TemplateLibrary, Template } from '../../../../src/models';
+import type { ProjectManifest, TemplateLibrary, Template } from '@/models';
 
 // Mock dependencies
-jest.mock('../../../../src/services');
+jest.mock('@/services');
 jest.mock('inquirer');
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
@@ -74,7 +74,7 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
       mockFileSystemService.mockImplementation(() => mockFileSystemServiceInstance);
     }
 
-    await command.parseAsync(['node', 'test', ...args], { from: 'user' });
+    await command.parseAsync(args, { from: 'user' });
   } catch (error) {
     if (error instanceof Error && error.message !== 'Process exit called') {
       thrownError = error;
@@ -108,7 +108,7 @@ describe('scaffold new command unit tests', () => {
       expect(command.description()).toBe('Create new project from template');
 
       // Check arguments
-      const args = command.args;
+      const args = command.registeredArguments;
       expect(args).toHaveLength(1);
       // Check argument metadata - args are strings in commander
 

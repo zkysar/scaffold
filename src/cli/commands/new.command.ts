@@ -13,8 +13,9 @@ import {
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '../../services';
+} from '@/services';
 import { ExitCode, exitWithCode } from '../../constants/exit-codes';
+import { selectTemplates } from '@/cli/utils/template-selector';
 
 interface NewCommandOptions {
   template?: string;
@@ -207,11 +208,42 @@ async function handleNewCommand(
     fileSystemService
   );
 
-  // At this point we know template is specified (either directly or default)
-  const templateIds: string[] = [templateToUse];
+  // Handle template selection
+  let templateIds: string[] = [];
 
-  if (verbose) {
-    console.log(chalk.blue('Using template:'), templateToUse);
+  if (options.template) {
+    templateIds = [options.template];
+    if (verbose) {
+      console.log(chalk.blue('Using template:'), options.template);
+    }
+  } else {
+    // Use the new template selector utility
+    try {
+      templateIds = await selectTemplates(templateService, { verbose });
+
+      if (verbose) {
+        console.log(chalk.blue('Selected templates:'), templateIds);
+      }
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes('Failed to load templates')
+      ) {
+        console.log(chalk.yellow('No template specified and no templates found in library.'));
+        console.log(
+          chalk.gray(
+            'Use "scaffold template create" to create your first template.'
+          )
+        );
+        console.log(
+          chalk.gray(
+            'Or specify a template with: scaffold new my-project --template <template-name>'
+          )
+        );
+        exitWithCode(ExitCode.USER_ERROR);
+      }
+      throw error;
+    }
   }
 
 

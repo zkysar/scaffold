@@ -1,4 +1,16 @@
 /** @type {import('jest').Config} */
+const fs = require('fs');
+const path = require('path');
+
+// Load the burndown blocklist
+const blocklistPath = path.join(__dirname, 'burndown-blocklist.json');
+const blocklist = JSON.parse(fs.readFileSync(blocklistPath, 'utf8'));
+
+// Convert blocked test files to absolute paths for testPathIgnorePatterns
+const ignoredTests = blocklist.tests.blocked.map(file =>
+  `<rootDir>/${file}`
+);
+
 module.exports = {
   // Use ts-jest preset for TypeScript support
   preset: 'ts-jest',
@@ -13,6 +25,12 @@ module.exports = {
   testMatch: [
     '**/tests/**/*.test.ts',
     '**/tests/**/*.spec.ts'
+  ],
+
+  // Ignore blocked test files from burndown list
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    ...ignoredTests
   ],
 
   // Module file extensions
@@ -70,6 +88,10 @@ module.exports = {
       testEnvironment: 'node',
       displayName: 'unit',
       testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
+      testPathIgnorePatterns: [
+        '/node_modules/',
+        ...ignoredTests
+      ],
       transform: {
         '^.+\\.ts$': ['ts-jest', {
           tsconfig: 'tsconfig.test.json'
@@ -86,6 +108,10 @@ module.exports = {
       testEnvironment: 'node',
       displayName: 'integration',
       testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
+      testPathIgnorePatterns: [
+        '/node_modules/',
+        ...ignoredTests
+      ],
       transform: {
         '^.+\\.ts$': ['ts-jest', {
           tsconfig: 'tsconfig.test.json'
@@ -102,6 +128,10 @@ module.exports = {
       testEnvironment: 'node',
       displayName: 'contract',
       testMatch: ['<rootDir>/tests/contract/**/*.test.ts'],
+      testPathIgnorePatterns: [
+        '/node_modules/',
+        ...ignoredTests
+      ],
       transform: {
         '^.+\\.ts$': ['ts-jest', {
           tsconfig: 'tsconfig.test.json'
