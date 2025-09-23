@@ -3,4 +3,5 @@
  */
 
 export * from './error-utils';
+export * from './logger';
 export * from './sha';
