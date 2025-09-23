@@ -97,19 +97,6 @@ async function handleExtendCommand(
     process.exit(ExitCode.USER_ERROR);
   }
 
-  // Parse variables if provided - JSON parsing errors are user errors
-  let variables: Record<string, string> = {};
-  if (options.variables) {
-    try {
-      variables = JSON.parse(options.variables);
-    } catch (error) {
-      console.error(
-        chalk.red('Error:'),
-        `Invalid variables JSON: ${error instanceof Error ? error.message : String(error)}`
-      );
-      process.exit(ExitCode.USER_ERROR);
-    }
-  }
 
   // Initialize services
   const fileSystemService = new FileSystemService();
@@ -124,7 +111,7 @@ async function handleExtendCommand(
   );
 
   let templateIds: string[] = [];
-  let manifest: unknown = null;
+  let manifest: any = null;
 
   try {
     // Check if this is a scaffold-managed project
@@ -166,8 +153,8 @@ async function handleExtendCommand(
   } else {
     // Get already applied template SHAs to exclude them from selection
     const excludeTemplateIds = manifest.templates
-      .filter((template) => template.status === 'active')
-      .map((template) => template.templateSha);
+      .filter((template: any) => template.status === 'active')
+      .map((template: any) => template.templateSha);
 
     if (verbose && excludeTemplateIds.length > 0) {
       console.log(
@@ -240,7 +227,7 @@ async function handleExtendCommand(
 
   if (dryRun) {
     console.log(chalk.yellow('DRY RUN - Would extend project with:'));
-    console.log(chalk.blue('Project:'), manifest.projectName);
+    console.log(chalk.blue('Project:'), (manifest as any).projectName);
     console.log(chalk.blue('Templates:'), templateIds);
     console.log(chalk.blue('Variables:'), variables);
     console.log(chalk.blue('Target path:'), targetPath);
@@ -256,7 +243,7 @@ async function handleExtendCommand(
         {
           type: 'confirm',
           name: 'proceed',
-          message: `Add template "${template.name}" to project "${manifest.projectName}"?`,
+          message: `Add template "${template.name}" to project "${(manifest as any).projectName}"?`,
           default: true,
         },
       ]);
