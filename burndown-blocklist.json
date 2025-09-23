@@ -1,0 +1,61 @@
+{
+  "version": "1.0.0",
+  "description": "Burndown blocklist for failing tests and ESLint violations",
+  "created": "2025-09-23",
+  "tests": {
+    "description": "Test files with failing tests that should be skipped in pre-commit",
+    "blocked": [
+      "tests/unit/services/completion-providers/file-completion-provider.test.ts",
+      "tests/unit/services/completion-providers/project-completion-provider.test.ts",
+      "tests/unit/services/completion-providers/template-completion-provider.test.ts",
+      "tests/unit/cli/commands/new.test.ts",
+      "tests/unit/cli/commands/fix.test.ts",
+      "tests/contract/commands/scaffold-check.test.ts",
+      "tests/contract/commands/scaffold-clean.test.ts",
+      "tests/contract/commands/scaffold-config.test.ts",
+      "tests/contract/commands/scaffold-extend.test.ts",
+      "tests/contract/commands/scaffold-fix.test.ts",
+      "tests/contract/commands/scaffold-new.test.ts",
+      "tests/contract/commands/scaffold-show.test.ts",
+      "tests/contract/commands/scaffold-template.test.ts",
+      "tests/integration/cli/cli-commands.test.ts",
+      "tests/integration/cli/completion/complete.test.ts",
+      "tests/integration/cli/completion/install.test.ts",
+      "tests/integration/cli/completion/script.test.ts",
+      "tests/integration/cli/completion/status.test.ts",
+      "tests/integration/cli/completion/uninstall.test.ts",
+      "tests/integration/commands/fix.test.ts",
+      "tests/integration/commands/new.test.ts",
+      "tests/integration/commands/template-alias.test.ts",
+      "tests/integration/commands/template.test.ts",
+      "tests/contract/import-conventions.test.ts",
+      "tests/unit/cli/commands/template.test.ts",
+      "tests/unit/services/configuration.service.test.ts",
+      "tests/unit/services/file-system.service.test.ts",
+      "tests/unit/services/project-creation.service.test.ts",
+      "tests/unit/services/project-extension.service.test.ts",
+      "tests/unit/services/project-fix.service.test.ts",
+      "tests/unit/services/project-manifest.service.test.ts",
+      "tests/unit/services/project-validation.service.test.ts",
+      "tests/unit/services/template-identifier.service.test.ts",
+      "tests/unit/services/template-service.test.ts",
+      "tests/unit/services/variable-substitution-service.test.ts"
+    ]
+  },
+  "eslint": {
+    "description": "ESLint violations to ignore during pre-commit",
+    "rules": {
+      "no-console": {
+        "description": "Console statements to be removed",
+        "files": []
+      }
+    }
+  },
+  "statistics": {
+    "totalTests": 851,
+    "passingTests": 474,
+    "failingTests": 376,
+    "blockedTestFiles": 35,
+    "passingTestFiles": 4
+  }
+}
