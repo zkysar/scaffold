@@ -48,6 +48,25 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'text-summary', 'lcov', 'html', 'json'],
 
+  // Reporters
+  reporters: [
+    'default',
+    ['jest-html-reporters', {
+      publicPath: './test-reports',
+      filename: 'test-report.html',
+      openReport: false,
+      expand: true,
+      hideIcon: false,
+      pageTitle: 'Scaffold CLI Test Report',
+      logoImgPath: undefined,
+      customInfos: [
+        {title: 'Project', value: 'Scaffold CLI'},
+        {title: 'Test Environment', value: 'Node.js'}
+      ]
+    }],
+    '<rootDir>/tests/helpers/link-reporter.js'
+  ],
+
   // Setup files
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
 
