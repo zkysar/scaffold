@@ -3,7 +3,7 @@
  * Tests MUST fail initially as no implementation exists yet (TDD)
  */
 
-import { createNewCommand } from '@/cli/commands/new';
+import { createNewCommand } from '@/cli/commands/new.command';
 import {
   createMockFileSystem,
   createMockConsole,
