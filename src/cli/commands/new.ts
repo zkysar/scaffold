@@ -285,17 +285,6 @@ async function handleNewCommand(
       console.log(chalk.blue('Created at:'), manifest.created);
     }
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
-      );
-      console.log(chalk.blue('Would create project:'), finalProjectName);
-      console.log(chalk.blue('Target path:'), targetPath);
-      console.log(chalk.blue('Templates:'), templateIds);
-      return;
-    }
     throw error;
   }
 }

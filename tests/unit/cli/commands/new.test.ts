@@ -617,7 +617,7 @@ describe('scaffold new command unit tests', () => {
       expect(result.exitCode).toBe(1);
     });
 
-    it('should handle "Not implemented" service errors gracefully', async () => {
+    it('should handle service errors by re-throwing them', async () => {
       mockInquirer.prompt.mockResolvedValueOnce({ useCurrentDir: true });
       mockExistsSync.mockReturnValue(false);
 
@@ -625,7 +625,7 @@ describe('scaffold new command unit tests', () => {
         loadTemplates: jest.fn(),
       };
       const mockProjectServiceInstance = {
-        createProject: jest.fn().mockRejectedValue(new Error('Not implemented')),
+        createProject: jest.fn().mockRejectedValue(new Error('Service error occurred')),
       };
 
       mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
@@ -633,8 +633,8 @@ describe('scaffold new command unit tests', () => {
 
       const result = await executeCommand(['test-project', '--template', 'my-template']);
 
-      expect(result.stdout).toContain('Command structure created (service implementation pending)');
-      expect(result.stdout).toContain('Would create project: test-project');
+      expect(result.stderr).toContain('Project creation failed');
+      expect(result.exitCode).toBe(1);
     });
 
     it('should catch and handle unexpected errors', async () => {

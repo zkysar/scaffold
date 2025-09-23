@@ -99,18 +99,6 @@ async function handleCleanCommand(options: CleanCommandOptions): Promise<void> {
       console.log(chalk.yellow('No files found to clean.'));
     }
   } catch (error) {
-    if (error instanceof Error && error.message === 'Not implemented') {
-      console.log(
-        chalk.yellow(
-          '✓ Command structure created (service implementation pending)'
-        )
-      );
-      console.log(chalk.blue('Would clean:'));
-      cleanTargets.forEach(target => {
-        console.log(chalk.gray('  •'), target);
-      });
-      return;
-    }
     throw error;
   }
 }
