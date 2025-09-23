@@ -18,7 +18,6 @@
       "tests/contract/commands/scaffold-new.test.ts",
       "tests/contract/commands/scaffold-show.test.ts",
       "tests/contract/commands/scaffold-template.test.ts",
-      "tests/integration/cli/cli-commands.test.ts",
       "tests/integration/cli/completion/complete.test.ts",
       "tests/integration/cli/completion/install.test.ts",
       "tests/integration/cli/completion/script.test.ts",
@@ -38,7 +37,6 @@
       "tests/unit/services/project-manifest.service.test.ts",
       "tests/unit/services/project-validation.service.test.ts",
       "tests/unit/services/template-identifier.service.test.ts",
-      "tests/unit/services/template-service.test.ts",
       "tests/unit/services/variable-substitution-service.test.ts"
     ]
   },
@@ -53,9 +51,9 @@
   },
   "statistics": {
     "totalTests": 851,
-    "passingTests": 474,
-    "failingTests": 376,
+    "passingTests": 496,
+    "failingTests": 354,
     "blockedTestFiles": 35,
-    "passingTestFiles": 4
+    "passingTestFiles": 6
   }
 }
