@@ -429,10 +429,10 @@ Expected: Exports, deletes, and re-imports template
 
 1. **Very long project names**: Create project with 255+ character name
 2. **Special characters**: Use unicode and special chars in project names
-3. **Nested projects**: Create scaffold project inside another scaffold project
+3. **Nested projects**: Create scaffold project inside another scaffold project (Note: Currently not supported)
 4. **Simultaneous operations**: Run multiple scaffold commands in parallel
 5. **Large templates**: Test with templates containing 1000+ files
-6. **Deep nesting**: Create templates with very deep folder structures
+6. **Template structure limitations**: Verify that deep folder nesting is prohibited (templates must have flat structure)
 
 ### Performance Testing
 
