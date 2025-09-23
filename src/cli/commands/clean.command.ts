@@ -5,6 +5,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { DependencyContainer } from 'tsyringe';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -18,7 +19,7 @@ interface CleanCommandOptions {
   temp?: boolean;
 }
 
-export function createCleanCommand(): Command {
+export function createCleanCommand(container: DependencyContainer): Command {
   const command = new Command('clean');
 
   command
@@ -30,7 +31,7 @@ export function createCleanCommand(): Command {
     .option('--temp', 'Clean temporary files only')
     .action(async (options: CleanCommandOptions) => {
       try {
-        await handleCleanCommand(options);
+        await handleCleanCommand(options, container);
       } catch (error) {
         console.error(
           chalk.red('Error:'),
@@ -43,7 +44,10 @@ export function createCleanCommand(): Command {
   return command;
 }
 
-async function handleCleanCommand(options: CleanCommandOptions): Promise<void> {
+async function handleCleanCommand(
+  options: CleanCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 

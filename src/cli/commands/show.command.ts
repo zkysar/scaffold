@@ -5,19 +5,21 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-// Using direct fs calls for mock compatibility
+import { DependencyContainer } from 'tsyringe';
+import {
+  ProjectManifestService,
+  TemplateService,
+  ConfigurationService,
+  FileSystemService,
+} from '../../services';
 import { ExitCode } from '../../constants/exit-codes';
-import type { ProjectManifest } from '../../models';
 
 interface ShowCommandOptions {
   verbose?: boolean;
   format?: 'table' | 'json' | 'summary';
 }
 
-export function createShowCommand(): Command {
+export function createShowCommand(container: DependencyContainer): Command {
   const command = new Command('show');
 
   command
@@ -44,7 +46,7 @@ Examples:
     )
     .action(async (item: string, options: ShowCommandOptions) => {
       try {
-        await handleShowCommand(item, options);
+        await handleShowCommand(item, options, container);
       } catch (error) {
         console.error(
           chalk.red('Error:'),
@@ -59,7 +61,8 @@ Examples:
 
 async function handleShowCommand(
   item: string,
-  options: ShowCommandOptions
+  options: ShowCommandOptions,
+  container: DependencyContainer
 ): Promise<void> {
   const verbose = options.verbose || false;
   const format = options.format || 'table';
@@ -72,18 +75,18 @@ async function handleShowCommand(
   try {
     switch (item.toLowerCase()) {
       case 'project':
-        await showProjectInfo(options);
+        await showProjectInfo(options, container);
         break;
       case 'template':
       case 'templates':
-        await showTemplateInfo(options);
+        await showTemplateInfo(options, container);
         break;
       case 'config':
       case 'configuration':
-        await showConfigurationInfo(options);
+        await showConfigurationInfo(options, container);
         break;
       case 'all':
-        await showAllInfo(options);
+        await showAllInfo(options, container);
         break;
       default:
         console.error(chalk.red('Error:'), `Unknown item: ${item}`);
@@ -97,7 +100,10 @@ async function handleShowCommand(
   }
 }
 
-async function showProjectInfo(options: ShowCommandOptions): Promise<void> {
+async function showProjectInfo(
+  options: ShowCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   const verbose = options.verbose || false;
   const format = options.format || 'table';
 
@@ -105,34 +111,36 @@ async function showProjectInfo(options: ShowCommandOptions): Promise<void> {
   console.log('');
 
   try {
-    // Try to load manifest directly for better compatibility with test mocks
-    const manifestPath = path.join(process.cwd(), '.scaffold', 'manifest.json');
-    let manifest: ProjectManifest | null = null;
+    const fileSystemService = container.resolve(FileSystemService);
+    const manifestService = container.resolve(ProjectManifestService);
 
+    let manifest = null;
     try {
-      if (fs.existsSync(manifestPath)) {
-        const manifestContent = fs.readFileSync(manifestPath, 'utf8');
-        manifest = JSON.parse(manifestContent);
+      manifest = await manifestService.loadProjectManifest(process.cwd());
+    } catch (error) {
+      // Handle manifest loading errors
+      if (error instanceof Error) {
+        if (error.message.includes('No manifest found') ||
+            error.message.includes('does not exist')) {
+          console.log(
+            chalk.yellow('This directory is not a scaffold-managed project.')
+          );
+          console.log(
+            chalk.gray(
+              'Use "scaffold new" to create a new project or "scaffold check" to validate.'
+            )
+          );
+          return;
+        } else if (error.message.includes('Failed to read JSON file') ||
+                   error.message.includes('JSON')) {
+          console.error(chalk.red('Error:'), 'Malformed project manifest file.');
+          console.log(
+            chalk.gray('The .scaffold/manifest.json file contains invalid JSON.')
+          );
+          process.exit(ExitCode.USER_ERROR);
+        }
       }
-    } catch (parseError) {
-      // Handle JSON parsing errors
-      console.error(chalk.red('Error:'), 'Malformed project manifest file.');
-      console.log(
-        chalk.gray('The .scaffold/manifest.json file contains invalid JSON.')
-      );
-      process.exit(ExitCode.USER_ERROR);
-    }
-
-    if (!manifest) {
-      console.log(
-        chalk.yellow('This directory is not a scaffold-managed project.')
-      );
-      console.log(
-        chalk.gray(
-          'Use "scaffold new" to create a new project or "scaffold check" to validate.'
-        )
-      );
-      return;
+      throw error;
     }
 
     if (format === 'json') {
@@ -191,50 +199,19 @@ async function showProjectInfo(options: ShowCommandOptions): Promise<void> {
   }
 }
 
-async function showTemplateInfo(options: ShowCommandOptions): Promise<void> {
+async function showTemplateInfo(
+  options: ShowCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   const format = options.format || 'table';
 
   console.log(chalk.green('Template Information:'));
   console.log('');
 
   try {
-    // Look for templates in the expected location
-    // Try both user home directory and test path for compatibility
-    const possiblePaths = [
-      path.join(os.homedir(), '.scaffold', 'templates'),
-      '/home/.scaffold/templates' // For test compatibility
-    ];
-
-    const templates: any[] = [];
-    let templatesPath = '';
-
-    // Find the first existing path
-    for (const testPath of possiblePaths) {
-      if (fs.existsSync(testPath)) {
-        templatesPath = testPath;
-        break;
-      }
-    }
-
-    // Read templates from the found path
-    if (templatesPath) {
-      try {
-        const templateFiles = fs.readdirSync(templatesPath);
-        for (const file of templateFiles) {
-          if (file.endsWith('.json')) {
-            try {
-              const templateContent = fs.readFileSync(path.join(templatesPath, file), 'utf8');
-              const template = JSON.parse(templateContent);
-              templates.push(template);
-            } catch {
-              // Skip invalid template files
-            }
-          }
-        }
-      } catch {
-        // Templates directory can't be read
-      }
-    }
+    const templateService = container.resolve(TemplateService);
+    const library = await templateService.loadTemplates();
+    const templates = library.templates;
 
     if (format === 'json') {
       console.log(JSON.stringify(templates, null, 2));
@@ -270,7 +247,8 @@ async function showTemplateInfo(options: ShowCommandOptions): Promise<void> {
 }
 
 async function showConfigurationInfo(
-  options: ShowCommandOptions
+  options: ShowCommandOptions,
+  container: DependencyContainer
 ): Promise<void> {
   const format = options.format || 'table';
 
@@ -278,44 +256,9 @@ async function showConfigurationInfo(
   console.log('');
 
   try {
-    // Try to load configuration from different possible locations
-    const possibleConfigPaths = [
-      path.join(os.homedir(), '.scaffold', 'config.json'),
-      '/home/.scaffold/config.json' // For test compatibility
-    ];
-
-    let config: any = null;
-
-    // Find and load configuration
-    for (const configPath of possibleConfigPaths) {
-      try {
-        if (fs.existsSync(configPath)) {
-          const configContent = fs.readFileSync(configPath, 'utf8');
-          config = JSON.parse(configContent);
-          break;
-        }
-      } catch {
-        // Continue to next path
-      }
-    }
-
-    // If no config file found, use defaults
-    if (!config) {
-      config = {
-        paths: {
-          templatesDir: path.join(os.homedir(), '.scaffold', 'templates'),
-          cacheDir: path.join(os.homedir(), '.scaffold', 'cache'),
-          backupDir: path.join(os.homedir(), '.scaffold', 'backups'),
-        },
-        preferences: {
-          strictModeDefault: false,
-          colorOutput: true,
-          verboseOutput: false,
-          confirmDestructive: true,
-          backupBeforeSync: true,
-        },
-      };
-    }
+    const configService = container.resolve(ConfigurationService);
+    await configService.loadConfiguration();
+    const config = configService.getEffectiveConfiguration();
 
     if (format === 'json') {
       console.log(JSON.stringify(config, null, 2));
@@ -367,15 +310,18 @@ async function showConfigurationInfo(
   }
 }
 
-async function showAllInfo(options: ShowCommandOptions): Promise<void> {
+async function showAllInfo(
+  options: ShowCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   console.log(chalk.green('=== Scaffold Information ==='));
   console.log('');
 
-  await showProjectInfo(options);
+  await showProjectInfo(options, container);
   console.log('');
 
-  await showTemplateInfo(options);
+  await showTemplateInfo(options, container);
   console.log('');
 
-  await showConfigurationInfo(options);
+  await showConfigurationInfo(options, container);
 }

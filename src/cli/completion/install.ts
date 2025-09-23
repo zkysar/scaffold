@@ -5,6 +5,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import { DependencyContainer } from 'tsyringe';
 import { CompletionService } from '../../services';
 import { ShellType } from '../../models';
 
@@ -14,7 +15,7 @@ interface InstallCommandOptions {
   verbose?: boolean;
 }
 
-export function createInstallCommand(): Command {
+export function createInstallCommand(container: DependencyContainer): Command {
   const command = new Command('install');
 
   command
@@ -31,7 +32,7 @@ export function createInstallCommand(): Command {
         }
         const rootOptions = rootCommand.opts() || {};
         const verbose = options.verbose || rootOptions.verbose || false;
-        await handleInstallCommand({ ...options, verbose });
+        await handleInstallCommand({ ...options, verbose }, container);
       } catch (error) {
         console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
         process.exit(1);
@@ -41,12 +42,14 @@ export function createInstallCommand(): Command {
   return command;
 }
 
-async function handleInstallCommand(options: InstallCommandOptions): Promise<void> {
+async function handleInstallCommand(
+  options: InstallCommandOptions,
+  container: DependencyContainer
+): Promise<void> {
   const verbose = options.verbose || false;
   const force = options.force || false;
 
-
-  const completionService = new CompletionService();
+  const completionService = container.resolve(CompletionService);
 
   // Determine shell type
   let shellType = options.shell;

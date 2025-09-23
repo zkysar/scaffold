@@ -6,6 +6,7 @@
 import { Command } from 'commander';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
+import { DependencyContainer } from 'tsyringe';
 
 // Import command handlers
 import { createNewCommand } from './commands/new.command';
@@ -18,7 +19,7 @@ import { createConfigCommand } from './commands/config.command';
 import { createCleanCommand } from './commands/clean.command';
 import { createCompletionCommand } from './completion';
 
-export function createProgram(): Command {
+export function createProgram(container: DependencyContainer): Command {
   // Get package.json for version info
   const packagePath = join(dirname(dirname(__dirname)), 'package.json');
   const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
@@ -39,15 +40,15 @@ export function createProgram(): Command {
     });
 
   // Register commands
-  program.addCommand(createNewCommand());
-  program.addCommand(createTemplateCommand());
-  program.addCommand(createCheckCommand());
-  program.addCommand(createFixCommand());
-  program.addCommand(createExtendCommand());
-  program.addCommand(createShowCommand());
-  program.addCommand(createConfigCommand());
-  program.addCommand(createCleanCommand());
-  program.addCommand(createCompletionCommand());
+  program.addCommand(createNewCommand(container));
+  program.addCommand(createTemplateCommand(container));
+  program.addCommand(createCheckCommand(container));
+  program.addCommand(createFixCommand(container));
+  program.addCommand(createExtendCommand(container));
+  program.addCommand(createShowCommand(container));
+  program.addCommand(createConfigCommand(container));
+  program.addCommand(createCleanCommand(container));
+  program.addCommand(createCompletionCommand(container));
 
   return program;
 }

@@ -5,6 +5,7 @@
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs-extra';
+import { injectable, inject } from 'tsyringe';
 import type {
   CompletionConfig,
   CompletionContext,
@@ -58,15 +59,16 @@ export interface ICompletionService {
   getCompletionScript(shellType: ShellType): Promise<ShellCompletionScript>;
 }
 
+@injectable()
 export class CompletionService implements ICompletionService {
   private readonly configDir: string;
   private readonly cacheDir: string;
-  private readonly templateService: TemplateService;
 
-  constructor() {
+  constructor(
+    @inject(TemplateService) private readonly templateService: TemplateService
+  ) {
     this.configDir = path.join(os.homedir(), '.scaffold');
     this.cacheDir = path.join(this.configDir, 'completion-cache');
-    this.templateService = new TemplateService();
   }
 
   async detectShell(): Promise<ShellType> {

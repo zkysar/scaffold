@@ -4,13 +4,14 @@
  */
 
 import { Command } from 'commander';
+import { DependencyContainer } from 'tsyringe';
 import { createInstallCommand } from './install';
 import { createUninstallCommand } from './uninstall';
 import { createStatusCommand } from './status';
 import { createScriptCommand } from './script';
 import { createCompleteCommand } from './complete';
 
-export function createCompletionCommand(): Command {
+export function createCompletionCommand(container: DependencyContainer): Command {
   const command = new Command('completion');
 
   command
@@ -21,13 +22,13 @@ export function createCompletionCommand(): Command {
     });
 
   // Add subcommands
-  command.addCommand(createInstallCommand());
-  command.addCommand(createUninstallCommand());
-  command.addCommand(createStatusCommand());
-  command.addCommand(createScriptCommand());
+  command.addCommand(createInstallCommand(container));
+  command.addCommand(createUninstallCommand(container));
+  command.addCommand(createStatusCommand(container));
+  command.addCommand(createScriptCommand(container));
 
   // Add hidden command for dynamic completion
-  command.addCommand(createCompleteCommand());
+  command.addCommand(createCompleteCommand(container));
 
   // Add help text
   command.on('--help', () => {

@@ -8,11 +8,13 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
+import { DependencyContainer } from 'tsyringe';
 import {
   ProjectCreationService,
   ProjectManifestService,
   TemplateService,
   FileSystemService,
+  ProjectValidationService,
 } from '@/services';
 import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 import { selectTemplates } from '@/cli/utils/template-selector';
@@ -25,7 +27,7 @@ interface NewCommandOptions {
   dryRun?: boolean;
 }
 
-export function createNewCommand(): Command {
+export function createNewCommand(container: DependencyContainer): Command {
   const command = new Command('new');
 
   command
@@ -42,7 +44,7 @@ export function createNewCommand(): Command {
     .action(
       async (projectName: string | undefined, options: NewCommandOptions) => {
         try {
-          await handleNewCommand(projectName, options);
+          await handleNewCommand(projectName, options, container);
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -66,14 +68,18 @@ export function createNewCommand(): Command {
 
 async function handleNewCommand(
   projectName: string | undefined,
-  options: NewCommandOptions
+  options: NewCommandOptions,
+  container: DependencyContainer
 ): Promise<void> {
   const verbose = options.verbose || false;
   const dryRun = options.dryRun || false;
 
-  // Initialize services to check for templates
-  const fileSystemService = new FileSystemService();
-  const templateService = new TemplateService();
+  // Resolve services from DI container
+  const fileSystemService = container.resolve(FileSystemService);
+  const templateService = container.resolve(TemplateService);
+  const manifestService = container.resolve(ProjectManifestService);
+  const projectCreationService = container.resolve(ProjectCreationService);
+  const validationService = container.resolve(ProjectValidationService);
 
   let templateToUse = options.template;
 
@@ -99,13 +105,9 @@ async function handleNewCommand(
 
   // Second check: Validate project name if provided as argument
   if (projectName !== undefined) {
-    if (!projectName || projectName.trim().length === 0) {
-      console.log('Project name cannot be empty');
-      process.exit(ExitCode.USER_ERROR);
-    }
-    // Validate project name (no special characters except dash and underscore)
-    if (!/^[a-zA-Z0-9_-]+$/.test(projectName.trim())) {
-      console.log('Project name can only contain letters, numbers, dashes, and underscores');
+    const validation = validationService.validateProjectName(projectName);
+    if (!validation.isValid) {
+      console.log(validation.error);
       process.exit(ExitCode.USER_ERROR);
     }
   }
@@ -122,14 +124,8 @@ async function handleNewCommand(
         name: 'name',
         message: 'Enter project name:',
         validate: (input: string): string | boolean => {
-          if (!input || input.trim().length === 0) {
-            return 'Project name is required';
-          }
-          // Validate project name (no special characters except dash and underscore)
-          if (!/^[a-zA-Z0-9_-]+$/.test(input.trim())) {
-            return 'Project name can only contain letters, numbers, dashes, and underscores';
-          }
-          return true;
+          const validation = validationService.validateProjectName(input);
+          return validation.isValid ? true : validation.error!;
         },
       },
     ]);
@@ -200,13 +196,6 @@ async function handleNewCommand(
       exitWithCode(ExitCode.SUCCESS, 'Operation cancelled.');
     }
   }
-
-  // Initialize remaining services (file system and template service already initialized above)
-  const manifestService = new ProjectManifestService(fileSystemService);
-  const projectCreationService = new ProjectCreationService(
-    templateService,
-    fileSystemService
-  );
 
   // Handle template selection
   let templateIds: string[] = [];

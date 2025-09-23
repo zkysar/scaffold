@@ -4,6 +4,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs-extra';
+import { injectable } from 'tsyringe';
 import type { CompletionContext, CompletionItem } from '../../models';
 
 export interface IFileCompletionProvider {
@@ -28,6 +29,7 @@ export interface IFileCompletionProvider {
   getRelativePathCompletions(context: CompletionContext): Promise<CompletionItem[]>;
 }
 
+@injectable()
 export class FileCompletionProvider implements IFileCompletionProvider {
   private cacheExpiry: number = 30 * 1000; // 30 seconds
   private cache: Map<string, { data: CompletionItem[]; timestamp: number }> = new Map();

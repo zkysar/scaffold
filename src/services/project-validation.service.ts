@@ -4,6 +4,7 @@
 
 import * as path from 'path';
 import { randomUUID } from 'crypto';
+import { injectable, inject } from 'tsyringe';
 import type {
   ValidationReport,
   ValidationError,
@@ -12,8 +13,13 @@ import type {
   ProjectManifest,
 } from '../models';
 import type { ITemplateService } from './template-service';
+import { TemplateService } from './template-service';
 import type { IFileSystemService } from './file-system.service';
+import { FileSystemService } from './file-system.service';
+import type { IVariableSubstitutionService } from './variable-substitution.service';
 import { VariableSubstitutionService } from './variable-substitution.service';
+import type { IProjectManifestService } from './project-manifest.service';
+import { ProjectManifestService } from './project-manifest.service';
 import { shortSHA } from '../lib/sha';
 
 export interface IProjectValidationService {
@@ -28,20 +34,21 @@ export interface IProjectValidationService {
   findNearestManifest(
     startPath: string
   ): Promise<{ manifestPath: string; projectPath: string } | null>;
+
+  /**
+   * Validate project name format
+   */
+  validateProjectName(projectName: string): { isValid: boolean; error?: string };
 }
 
+@injectable()
 export class ProjectValidationService implements IProjectValidationService {
-  private readonly variableService: VariableSubstitutionService;
-
   constructor(
-    private readonly templateService: ITemplateService,
-    private readonly fileService: IFileSystemService,
-    private readonly getProjectManifest: (
-      projectPath: string
-    ) => Promise<ProjectManifest | null>
-  ) {
-    this.variableService = new VariableSubstitutionService(this.fileService);
-  }
+    @inject(TemplateService) private readonly templateService: ITemplateService,
+    @inject(FileSystemService) private readonly fileService: IFileSystemService,
+    @inject(VariableSubstitutionService) private readonly variableService: IVariableSubstitutionService,
+    @inject(ProjectManifestService) private readonly manifestService: IProjectManifestService
+  ) {}
 
   async validateProject(projectPath: string): Promise<ValidationReport> {
     if (!projectPath || typeof projectPath !== 'string') {
@@ -54,7 +61,7 @@ export class ProjectValidationService implements IProjectValidationService {
 
     try {
       // Load project manifest and find the actual project root
-      const manifest = await this.getProjectManifest(projectPath);
+      const manifest = await this.manifestService.getProjectManifest(projectPath);
       if (!manifest) {
         throw new Error(
           `No project manifest found at '${projectPath}'. This directory is not a scaffold-managed project.`
@@ -389,5 +396,27 @@ export class ProjectValidationService implements IProjectValidationService {
     }
 
     return null;
+  }
+
+  validateProjectName(projectName: string): { isValid: boolean; error?: string } {
+    if (!projectName || typeof projectName !== 'string') {
+      return { isValid: false, error: 'Project name must be a non-empty string' };
+    }
+
+    const trimmedName = projectName.trim();
+
+    if (trimmedName.length === 0) {
+      return { isValid: false, error: 'Project name cannot be empty' };
+    }
+
+    // Validate project name (no special characters except dash and underscore)
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedName)) {
+      return {
+        isValid: false,
+        error: 'Project name can only contain letters, numbers, dashes, and underscores'
+      };
+    }
+
+    return { isValid: true };
   }
 }

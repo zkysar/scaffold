@@ -50,10 +50,10 @@
     }
   },
   "statistics": {
-    "totalTests": 851,
-    "passingTests": 496,
-    "failingTests": 354,
-    "blockedTestFiles": 35,
+    "totalTests": 892,
+    "passingTests": 533,
+    "failingTests": 358,
+    "blockedTestFiles": 34,
     "passingTestFiles": 6
   }
 }
