@@ -17,6 +17,8 @@
     "test:cli": "npm run build && docker compose --profile test-cli up --abort-on-container-exit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:coverage:check": "jest --coverage --coverageThreshold='{\"global\":{\"branches\":50,\"functions\":50,\"lines\":50,\"statements\":50}}'",
+    "test:coverage:diff": "jest --coverage --changedSince=origin/main --coverageThreshold='{\"global\":{\"branches\":50,\"functions\":50,\"lines\":50,\"statements\":50}}'",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage .scaffold-temp",

@@ -1,8 +1,1 @@
-#!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
-
-# Run lint-staged
-npx lint-staged
-
-# Run quick unit tests
-npm run test:unit -- --maxWorkers=2
+npm test
