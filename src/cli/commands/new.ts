@@ -208,7 +208,7 @@ async function handleNewCommand(
   );
 
   // At this point we know template is specified (either directly or default)
-  let templateIds: string[] = [templateToUse];
+  const templateIds: string[] = [templateToUse];
 
   if (verbose) {
     console.log(chalk.blue('Using template:'), templateToUse);
@@ -239,33 +239,29 @@ async function handleNewCommand(
     exitWithCode(ExitCode.SUCCESS);
   }
 
-  try {
-    // Create the project
-    const manifest = await projectCreationService.createProject(
-      finalProjectName,
-      templateIds,
-      targetPath,
-      variables
-    );
+  // Create the project
+  const manifest = await projectCreationService.createProject(
+    finalProjectName,
+    templateIds,
+    targetPath,
+    variables
+  );
 
-    // Save the manifest using the manifest service
-    await manifestService.updateProjectManifest(targetPath, manifest);
+  // Save the manifest using the manifest service
+  await manifestService.updateProjectManifest(targetPath, manifest);
 
-    console.log(chalk.green('✓ Project created successfully!'));
-    console.log(chalk.blue('Project name:'), manifest.projectName);
-    console.log(chalk.blue('Location:'), targetPath);
-    console.log(
-      chalk.blue('Templates applied:'),
-      manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
-    );
+  console.log(chalk.green('✓ Project created successfully!'));
+  console.log(chalk.blue('Project name:'), manifest.projectName);
+  console.log(chalk.blue('Location:'), targetPath);
+  console.log(
+    chalk.blue('Templates applied:'),
+    manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+  );
 
-    if (verbose) {
-      console.log(chalk.blue('Manifest ID:'), manifest.id);
-      console.log(chalk.blue('Created at:'), manifest.created);
-    }
-
-    exitWithCode(ExitCode.SUCCESS);
-  } catch (error) {
-    throw error;
+  if (verbose) {
+    console.log(chalk.blue('Manifest ID:'), manifest.id);
+    console.log(chalk.blue('Created at:'), manifest.created);
   }
+
+  exitWithCode(ExitCode.SUCCESS);
 }

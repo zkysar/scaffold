@@ -8,12 +8,7 @@ import chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import {
-  ProjectManifestService,
-  TemplateService,
-  ConfigurationService,
-  FileSystemService,
-} from '../../services';
+// Using direct fs calls for mock compatibility
 import { ExitCode } from '../../constants/exit-codes';
 import type { ProjectManifest } from '../../models';
 
@@ -210,7 +205,7 @@ async function showTemplateInfo(options: ShowCommandOptions): Promise<void> {
       '/home/.scaffold/templates' // For test compatibility
     ];
 
-    let templates: any[] = [];
+    const templates: any[] = [];
     let templatesPath = '';
 
     // Find the first existing path

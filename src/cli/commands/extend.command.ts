@@ -132,7 +132,7 @@ async function handleExtendCommand(
     manifestService.findNearestManifest.bind(manifestService)
   );
 
-  let manifest: any = null;
+  let manifest: unknown = null;
 
   try {
     // Check if this is a scaffold-managed project
@@ -165,35 +165,28 @@ async function handleExtendCommand(
     process.exit(ExitCode.USER_ERROR);
   }
 
-  try {
-
-    if (dryRun) {
-      console.log(chalk.yellow('DRY RUN'));
-      console.log('Would extend project with');
-      console.log(chalk.blue('Project:'), manifest.projectName);
-      console.log(chalk.blue('Template:'), options.template);
-      console.log(chalk.blue('Variables:'), variables);
-      return; // Success - just return normally
-    }
-
-    // Extend the project with the new template
-    const updatedManifest = await extensionService.extendProject(
-      targetPath,
-      [options.template],
-      variables
-    );
-
-    console.log(chalk.green('Command structure created'));
-    console.log(chalk.blue('Project name:'), updatedManifest.projectName);
-    console.log(chalk.blue('Template added:'), options.template);
-    console.log(
-      chalk.blue('Total templates:'),
-      updatedManifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
-    );
-    // Success - just return normally, don't call exitWithCode for success
-
-  } catch (error) {
-    // Re-throw the error so it can be caught by the action handler
-    throw error;
+  if (dryRun) {
+    console.log(chalk.yellow('DRY RUN'));
+    console.log('Would extend project with');
+    console.log(chalk.blue('Project:'), (manifest as Record<string, unknown>).projectName);
+    console.log(chalk.blue('Template:'), options.template);
+    console.log(chalk.blue('Variables:'), variables);
+    return; // Success - just return normally
   }
+
+  // Extend the project with the new template
+  const updatedManifest = await extensionService.extendProject(
+    targetPath,
+    [options.template],
+    variables
+  );
+
+  console.log(chalk.green('Command structure created'));
+  console.log(chalk.blue('Project name:'), updatedManifest.projectName);
+  console.log(chalk.blue('Template added:'), options.template);
+  console.log(
+    chalk.blue('Total templates:'),
+    updatedManifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+  );
+  // Success - just return normally, don't call exitWithCode for success
 }

@@ -572,8 +572,8 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     }
 
     // Extract command and subcommand from non-flag words
-    let command = nonFlagWords[0] || null;
-    let subcommand = nonFlagWords.length > 1 ? nonFlagWords[1] : null;
+    const command = nonFlagWords[0] || null;
+    const subcommand = nonFlagWords.length > 1 ? nonFlagWords[1] : null;
 
     return { command, subcommand, isOptionValue, isFlag };
   }
