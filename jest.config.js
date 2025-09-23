@@ -91,7 +91,7 @@ module.exports = {
           tsconfig: 'tsconfig.test.json'
         }]
       },
-      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+      setupFilesAfterEnv: ['<rootDir>/tests/setup.ts', '<rootDir>/tests/integration-setup.ts'],
       moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^@tests/(.*)$': '<rootDir>/tests/$1'

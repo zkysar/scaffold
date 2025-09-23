@@ -57,8 +57,8 @@ describe('scaffold template alias command (integration)', () => {
     };
 
     // Create the template and get its SHA
-    const createdTemplate = await templateService.createTemplate(testTemplate);
-    testTemplateSHA = createdTemplate.id;
+    await templateService.createTemplate(testTemplate);
+    testTemplateSHA = identifierService.computeTemplateSHA(testTemplate);
   });
 
   afterEach(async () => {
@@ -102,8 +102,14 @@ describe('scaffold template alias command (integration)', () => {
       expect(output).toContain(aliasName);
 
       // Verify alias was registered
-      const aliases = await identifierService.getAllAliases();
-      expect(aliases[aliasName]).toBe(testTemplateSHA);
+      const mappings = await identifierService.getAllMappings();
+      const reverseMapping: Record<string, string> = {};
+      for (const [sha, aliases] of mappings) {
+        for (const alias of aliases) {
+          reverseMapping[alias] = sha;
+        }
+      }
+      expect(reverseMapping[aliasName]).toBe(testTemplateSHA);
     });
 
     it('should create an alias using short SHA', async () => {
@@ -119,8 +125,14 @@ describe('scaffold template alias command (integration)', () => {
       expect(output).toContain(aliasName);
 
       // Verify alias points to full SHA
-      const aliases = await identifierService.getAllAliases();
-      expect(aliases[aliasName]).toBe(testTemplateSHA);
+      const mappings = await identifierService.getAllMappings();
+      const reverseMapping: Record<string, string> = {};
+      for (const [sha, aliases] of mappings) {
+        for (const alias of aliases) {
+          reverseMapping[alias] = sha;
+        }
+      }
+      expect(reverseMapping[aliasName]).toBe(testTemplateSHA);
     });
 
     it('should create multiple aliases for same template', async () => {
@@ -140,9 +152,15 @@ describe('scaffold template alias command (integration)', () => {
       expect(output2).toContain('Alias registered successfully');
 
       // Verify both aliases exist
-      const aliases = await identifierService.getAllAliases();
-      expect(aliases[alias1]).toBe(testTemplateSHA);
-      expect(aliases[alias2]).toBe(testTemplateSHA);
+      const mappings = await identifierService.getAllMappings();
+      const reverseMapping: Record<string, string> = {};
+      for (const [sha, aliases] of mappings) {
+        for (const alias of aliases) {
+          reverseMapping[alias] = sha;
+        }
+      }
+      expect(reverseMapping[alias1]).toBe(testTemplateSHA);
+      expect(reverseMapping[alias2]).toBe(testTemplateSHA);
     });
 
     it('should update an existing alias to point to same template (idempotent)', async () => {
@@ -163,8 +181,14 @@ describe('scaffold template alias command (integration)', () => {
       expect(output).toContain('Alias registered successfully');
 
       // Verify alias still exists
-      const aliases = await identifierService.getAllAliases();
-      expect(aliases[aliasName]).toBe(testTemplateSHA);
+      const mappings = await identifierService.getAllMappings();
+      const reverseMapping: Record<string, string> = {};
+      for (const [sha, aliases] of mappings) {
+        for (const alias of aliases) {
+          reverseMapping[alias] = sha;
+        }
+      }
+      expect(reverseMapping[aliasName]).toBe(testTemplateSHA);
     });
 
     it('should use alias to create a new project', async () => {
@@ -224,7 +248,8 @@ describe('scaffold template alias command (integration)', () => {
         updated: new Date().toISOString()
       };
 
-      const anotherCreated = await templateService.createTemplate(anotherTemplate);
+      await templateService.createTemplate(anotherTemplate);
+      const anotherCreatedSHA = identifierService.computeTemplateSHA(anotherTemplate);
 
       // Register alias for first template
       await identifierService.registerAlias(testTemplateSHA, aliasName);
@@ -232,7 +257,7 @@ describe('scaffold template alias command (integration)', () => {
       // Try to register same alias for second template
       expect(() => {
         execSync(
-          `node ${path.join(__dirname, '../../../dist/cli/index.js')} template alias ${anotherCreated.id} ${aliasName}`,
+          `node ${path.join(__dirname, '../../../dist/cli/index.js')} template alias ${anotherCreatedSHA} ${aliasName}`,
           { encoding: 'utf8' }
         );
       }).toThrow(/already registered/);
