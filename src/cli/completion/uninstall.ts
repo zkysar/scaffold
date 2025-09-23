@@ -5,7 +5,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { CompletionService } from '@/services';
+import { CompletionService } from '../../services';
 
 interface UninstallCommandOptions {
   verbose?: boolean;
@@ -17,9 +17,16 @@ export function createUninstallCommand(): Command {
   command
     .description('Remove shell completion for scaffold CLI')
     .option('--verbose', 'Show detailed output')
-    .action(async (options: UninstallCommandOptions) => {
+    .action(async (options: UninstallCommandOptions, command: Command) => {
       try {
-        await handleUninstallCommand(options);
+        // Check for global verbose flag from root command
+        let rootCommand = command;
+        while (rootCommand.parent) {
+          rootCommand = rootCommand.parent;
+        }
+        const rootOptions = rootCommand.opts() || {};
+        const verbose = options.verbose || rootOptions.verbose || false;
+        await handleUninstallCommand({ ...options, verbose });
       } catch (error) {
         console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
         process.exit(1);

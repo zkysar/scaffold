@@ -11,9 +11,9 @@ import type {
   CompletionResult,
   CompletionItem,
   ShellCompletionScript,
-} from '@/models';
-import { ShellType } from '@/models';
-import { CommandRegistry } from '@/cli/completion/command-registry';
+} from '../models';
+import { ShellType } from '../models';
+import { CommandRegistry } from '../cli/completion/command-registry';
 import { TemplateService } from './template-service';
 
 export interface ICompletionService {
@@ -174,9 +174,14 @@ export class CompletionService implements ICompletionService {
       if (await fs.pathExists(configPath)) {
         const config = await fs.readJson(configPath) as CompletionConfig;
 
-        // Verify installation is still valid
-        if (config.installPath && await fs.pathExists(config.installPath)) {
+        // Check if script file still exists
+        const scriptExists = config.installPath && await fs.pathExists(config.installPath);
+
+        if (scriptExists) {
           return { ...config, isInstalled: true };
+        } else if (config.installPath) {
+          // Config exists but script file is missing - still return config info
+          return { ...config, isInstalled: false };
         }
       }
     } catch (error) {

@@ -69,7 +69,7 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
       mockFileSystemService.mockImplementation(() => mockFileSystemServiceInstance);
     }
 
-    await command.parseAsync(['node', 'test', ...args], { from: 'user' });
+    await command.parseAsync(args, { from: 'user' });
   } catch (error) {
     if (error instanceof Error && error.message !== 'Process exit called') {
       thrownError = error;
@@ -101,7 +101,7 @@ describe('scaffold fix command unit tests', () => {
       expect(command.description()).toBe('Fix project structure issues automatically');
 
       // Check arguments
-      const args = command.args;
+      const args = command.registeredArguments;
       expect(args).toHaveLength(1);
       // Check argument description by looking at the argument object
       // args[0] is a string but commander stores metadata elsewhere

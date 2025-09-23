@@ -11,7 +11,7 @@ import {
   ProjectService,
   TemplateService,
   FileSystemService,
-} from '@/services';
+} from '../../services';
 
 interface ExtendCommandOptions {
   template?: string;

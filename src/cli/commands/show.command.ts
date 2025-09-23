@@ -10,7 +10,7 @@ import {
   TemplateService,
   ConfigurationService,
   FileSystemService,
-} from '@/services';
+} from '../../services';
 
 interface ShowCommandOptions {
   verbose?: boolean;
