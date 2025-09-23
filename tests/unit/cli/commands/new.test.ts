@@ -3,20 +3,20 @@
  * Tests option parsing, validation, flow control, and error handling
  */
 
-import { createNewCommand } from '../../../../src/cli/commands/new.command';
+import { createNewCommand } from '@/cli/commands/new.command';
 import {
   ProjectService,
   TemplateService,
   FileSystemService,
-} from '../../../../src/services';
+} from '@/services';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { existsSync } from 'fs';
 import mockFs from 'mock-fs';
-import type { ProjectManifest, TemplateLibrary, Template } from '../../../../src/models';
+import type { ProjectManifest, TemplateLibrary, Template } from '@/models';
 
 // Mock dependencies
-jest.mock('../../../../src/services');
+jest.mock('@/services');
 jest.mock('inquirer');
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
