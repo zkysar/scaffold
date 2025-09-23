@@ -13,6 +13,7 @@ import {
   TemplateService,
   FileSystemService,
 } from '../../services';
+import { selectTemplates } from '../utils/template-selector';
 
 interface NewCommandOptions {
   template?: string;
@@ -162,56 +163,47 @@ async function handleNewCommand(
       console.log(chalk.blue('Using template:'), options.template);
     }
   } else {
-    // Load available templates and prompt user to select
+    // Use shared template selection utility
     try {
-      const library = await templateService.loadTemplates();
+      templateIds = await selectTemplates(templateService, {
+        verbose,
+        allowMultiple: true,
+        required: false, // We handle the case when no templates are available
+      });
 
-      if (library.templates.length === 0) {
-        throw new Error('No template specified and no templates found in library');
-      }
-
-      if (verbose) {
+      // Handle case where no templates are available or user cancels
+      if (templateIds.length === 0) {
+        console.log(chalk.yellow('No templates found.'));
         console.log(
-          chalk.blue('Found'),
-          library.templates.length,
-          'available templates'
+          chalk.gray(
+            'Use "scaffold template create" to create your first template.'
+          )
         );
-      }
-
-      // Create choices for inquirer
-      const templateChoices = library.templates.map(template => ({
-        name: `${template.name} - ${template.description}`,
-        value: template.id,
-        short: template.name,
-      }));
-
-      const { selectedTemplates } = await inquirer.prompt([
-        {
-          type: 'checkbox',
-          name: 'selectedTemplates',
-          message:
-            'Select templates to apply (use spacebar to select, enter to confirm):',
-          choices: templateChoices,
-          validate: (input: string[]): string | boolean => {
-            if (input.length === 0) {
-              return 'You must select at least one template';
-            }
-            return true;
-          },
-        },
-      ]);
-
-      templateIds = selectedTemplates;
-
-      if (verbose) {
-        console.log(chalk.blue('Selected templates:'), templateIds);
+        console.log(
+          chalk.gray(
+            'Or specify a template with: scaffold new my-project --template <template-name>'
+          )
+        );
+        return;
       }
     } catch (error) {
       if (
         error instanceof Error &&
-        error.message.includes('Failed to load templates')
+        (error.message.includes('Failed to load templates') ||
+         error.message.includes('No templates available'))
       ) {
-        throw new Error('No template specified and no templates found in library');
+        console.log(chalk.yellow('No templates found.'));
+        console.log(
+          chalk.gray(
+            'Use "scaffold template create" to create your first template.'
+          )
+        );
+        console.log(
+          chalk.gray(
+            'Or specify a template with: scaffold new my-project --template <template-name>'
+          )
+        );
+        return;
       }
       throw error;
     }
@@ -255,7 +247,7 @@ async function handleNewCommand(
     console.log(chalk.blue('Location:'), targetPath);
     console.log(
       chalk.blue('Templates applied:'),
-      manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+      manifest.templates.map((t) => `${t.name}@${t.version}`).join(', ')
     );
 
     if (verbose) {

@@ -12,7 +12,8 @@ import {
   ProjectService,
   TemplateService,
   FileSystemService,
-} from '@/services';
+} from '../../services';
+import { selectTemplates } from '../utils/template-selector';
 
 interface ExtendCommandOptions {
   template?: string;
@@ -82,6 +83,8 @@ async function handleExtendCommand(
   const templateService = new TemplateService();
   const projectService = new ProjectService(templateService, fileSystemService, undefined);
 
+  let templateIds: string[] = [];
+
   try {
     // Check if this is a scaffold-managed project
     const manifest = await projectService.loadProjectManifest(targetPath);
@@ -95,82 +98,69 @@ async function handleExtendCommand(
       process.exit(1);
     }
 
-    // Handle template selection
-    let templateId = options.template;
-    if (!templateId) {
-      // Load available templates and prompt user to select
-      try {
-        const library = await templateService.loadTemplates();
+    if (options.template) {
+      templateIds = [options.template];
+      if (verbose) {
+        console.log(chalk.blue('Using template:'), options.template);
+      }
+    } else {
+      // Get already applied template SHAs to exclude them from selection
+      const excludeTemplateIds = manifest.templates
+        .filter((template) => template.status === 'active')
+        .map((template) => template.templateSha);
 
-        if (library.templates.length === 0) {
-          throw new Error('No templates available in library');
-        }
-
-        if (verbose) {
-          console.log(
-            chalk.blue('Found'),
-            library.templates.length,
-            'available templates'
-          );
-        }
-
-        // Filter out templates already applied to this project
-        const appliedTemplateIds = manifest.templates
-          .filter(t => t.status === 'active')
-          .map(t => t.templateSha);
-
-        const availableTemplates = library.templates.filter(
-          template => !appliedTemplateIds.includes(template.id)
+      if (verbose && excludeTemplateIds.length > 0) {
+        console.log(
+          chalk.blue('Excluding already applied templates:'),
+          excludeTemplateIds
         );
+      }
 
-        if (availableTemplates.length === 0) {
-          console.log(chalk.yellow('No new templates available to add.'));
+      // Use shared template selection utility - single template only for extend
+      try {
+        templateIds = await selectTemplates(templateService, {
+          verbose,
+          excludeTemplateIds,
+          allowMultiple: false, // Extend command should use single template
+          required: false,
+        });
+
+        // Handle case where no templates are available or user cancels
+        if (templateIds.length === 0) {
+          console.log(chalk.yellow('No additional templates available to apply.'));
           console.log(
-            chalk.gray('All available templates are already applied to this project.')
+            chalk.gray(
+              'All available templates are already applied to this project.'
+            )
+          );
+          console.log(
+            chalk.gray(
+              'Or specify a specific template with: scaffold extend [project] --template <template-name>'
+            )
           );
           return;
-        }
-
-        // Create choices for inquirer
-        const templateChoices = availableTemplates.map(template => ({
-          name: `${template.name} - ${template.description}`,
-          value: template.id,
-          short: template.name,
-        }));
-
-        const { selectedTemplate } = await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'selectedTemplate',
-            message: 'Select template to add:',
-            choices: templateChoices,
-          },
-        ]);
-
-        templateId = selectedTemplate;
-
-        if (verbose) {
-          console.log(chalk.blue('Selected template:'), templateId);
         }
       } catch (error) {
         if (
           error instanceof Error &&
-          error.message.includes('Failed to load templates')
+          (error.message.includes('Failed to load templates') ||
+           error.message.includes('No templates available'))
         ) {
-          throw new Error('Template is required and no templates found in library');
+          console.log(chalk.yellow('No templates found.'));
+          console.log(
+            chalk.gray(
+              'Use "scaffold template create" to create your first template.'
+            )
+          );
+          console.log(
+            chalk.gray(
+              'Or specify a template with: scaffold extend [project] --template <template-name>'
+            )
+          );
+          return;
         }
         throw error;
       }
-    }
-
-    if (!templateId) {
-      console.error(chalk.red('Error:'), 'Template is required');
-      console.log(
-        chalk.gray(
-          'Usage: scaffold extend [project] --template <template-name>'
-        )
-      );
-      process.exit(1);
     }
 
     // Parse variables if provided
@@ -191,7 +181,7 @@ async function handleExtendCommand(
     if (dryRun) {
       console.log(chalk.yellow('DRY RUN - Would extend project with:'));
       console.log(chalk.blue('Project:'), manifest.projectName);
-      console.log(chalk.blue('Template:'), templateId);
+      console.log(chalk.blue('Templates:'), templateIds);
       console.log(chalk.blue('Variables:'), variables);
       console.log(chalk.blue('Target path:'), targetPath);
       return;
@@ -200,6 +190,7 @@ async function handleExtendCommand(
     // Confirmation prompt (unless force mode is enabled)
     if (!force) {
       try {
+        const templateId = templateIds[0]; // Since we're only using single template for extend
         const template = await templateService.getTemplate(templateId);
         const { proceed } = await inquirer.prompt([
           {
@@ -223,7 +214,7 @@ async function handleExtendCommand(
       // Extend the project with the new template
       const updatedManifest = await projectService.extendProject(
         targetPath,
-        [templateId],
+        templateIds,
         variables
       );
 
@@ -241,7 +232,7 @@ async function handleExtendCommand(
         console.log(chalk.blue('Updated at:'), updatedManifest.updated);
         console.log(
           chalk.blue('Total templates:'),
-          updatedManifest.templates.filter(t => t.status === 'active').length
+          updatedManifest.templates.filter((t) => t.status === 'active').length
         );
       }
     } catch (error) {
@@ -252,7 +243,7 @@ async function handleExtendCommand(
           )
         );
         console.log(chalk.blue('Would extend project:'), targetPath);
-        console.log(chalk.blue('With template:'), templateId);
+        console.log(chalk.blue('With templates:'), templateIds);
         return;
       }
       throw error;
