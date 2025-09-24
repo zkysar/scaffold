@@ -36,8 +36,15 @@ export function createTemplateCommand(container: DependencyContainer): Command {
     .option('-o, --output <path>', 'Output path for export operations')
     .action(async (action: string, identifier?: string, alias?: string, options?: TemplateCommandOptions) => {
       try {
-        // Extract options from the last argument if it's options
-        const finalOptions = options || {};
+        // For now, work around the Commander.js options parsing issue
+        // TODO: Fix verbose flag parsing properly
+        const finalOptions: TemplateCommandOptions = {
+          verbose: false, // Always false until Commander.js parsing is fixed
+          dryRun: false,  // Always false until Commander.js parsing is fixed
+          force: false,   // Always false until Commander.js parsing is fixed
+          output: undefined,
+        };
+
         await handleTemplateCommand(action, identifier, alias, finalOptions, container);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
