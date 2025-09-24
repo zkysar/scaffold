@@ -3,15 +3,15 @@
  */
 
 import mockFs from 'mock-fs';
-import { ProjectFixService } from '../../../src/services/project-fix.service';
-import type { ITemplateService } from '../../../src/services/template-service';
-import type { IFileSystemService } from '../../../src/services/file-system.service';
-import type { IProjectValidationService } from '../../../src/services/project-validation.service';
+import { ProjectFixService } from '@/services/project-fix.service';
+import type { ITemplateService } from '@/services/template-service';
+import type { IFileSystemService } from '@/services/file-system.service';
+import type { IProjectValidationService } from '@/services/project-validation.service';
 import type {
   Template,
   ProjectManifest,
   ValidationReport,
-} from '../../../src/models';
+} from '@/models';
 import {
   createMockImplementation,
   assertDefined,
