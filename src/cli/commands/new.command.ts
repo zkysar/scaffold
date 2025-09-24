@@ -3,18 +3,21 @@
  * Create new project from template
  */
 
-import { Command } from 'commander';
-import { resolve } from 'path';
 import { existsSync } from 'fs';
+import { resolve } from 'path';
+
 import chalk from 'chalk';
+import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
+
 import {
   ProjectCreationService,
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '../../services';
+} from '@/services';
+import { logger } from '@/lib/logger';
 import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 import { selectTemplates } from '../utils/template-selector';
 
@@ -140,8 +143,8 @@ async function handleNewCommand(
   }
 
   if (verbose) {
-    console.log(chalk.blue('Creating new project:'), finalProjectName);
-    console.log(chalk.blue('Options:'), JSON.stringify(options, null, 2));
+    logger.info(chalk.blue('Creating new project:'), finalProjectName);
+    logger.info(chalk.blue('Options:'), JSON.stringify(options, null, 2));
   }
 
   // Prompt for path if not provided
@@ -183,7 +186,7 @@ async function handleNewCommand(
   const targetPath = resolve(basePath, finalProjectName);
 
   if (verbose) {
-    console.log(chalk.blue('Target path:'), targetPath);
+    logger.info(chalk.blue('Target path:'), targetPath);
   }
 
   // Check if target directory already exists
@@ -204,7 +207,6 @@ async function handleNewCommand(
 
   // Resolve services from DI container
   const fileSystemService = container.resolve(FileSystemService);
-  const templateService = container.resolve(TemplateService);
   const manifestService = container.resolve(ProjectManifestService);
   const projectCreationService = container.resolve(ProjectCreationService);
 
@@ -214,7 +216,7 @@ async function handleNewCommand(
   if (options.template) {
     templateIds = [options.template];
     if (verbose) {
-      console.log(chalk.blue('Using template:'), options.template);
+      logger.info(chalk.blue('Using template:'), options.template);
     }
   } else {
     // Use the new template selector utility
@@ -222,20 +224,20 @@ async function handleNewCommand(
       templateIds = await selectTemplates(templateService, { verbose });
 
       if (verbose) {
-        console.log(chalk.blue('Selected templates:'), templateIds);
+        logger.info(chalk.blue('Selected templates:'), templateIds);
       }
     } catch (error) {
       if (
         error instanceof Error &&
         error.message.includes('Failed to load templates')
       ) {
-        console.log(chalk.yellow('No template specified and no templates found in library.'));
-        console.log(
+        logger.info(chalk.yellow('No template specified and no templates found in library.'));
+        logger.info(
           chalk.gray(
             'Use "scaffold template create" to create your first template.'
           )
         );
-        console.log(
+        logger.info(
           chalk.gray(
             'Or specify a template with: scaffold new my-project --template <template-name>'
           )
@@ -246,14 +248,13 @@ async function handleNewCommand(
     }
   }
 
-
   // Parse variables if provided
   let variables: Record<string, string> = {};
   if (options.variables) {
     try {
       variables = JSON.parse(options.variables);
       if (verbose) {
-        console.log(chalk.blue('Variables:'), variables);
+        logger.info(chalk.blue('Variables:'), variables);
       }
     } catch (error) {
       throw new Error(
@@ -263,36 +264,49 @@ async function handleNewCommand(
   }
 
   if (dryRun) {
-    console.log(chalk.yellow('DRY RUN - No files will be created'));
-    console.log(chalk.blue('Would create project:'), finalProjectName);
-    console.log(chalk.blue('Target path:'), targetPath);
-    console.log(chalk.blue('Templates:'), templateIds);
-    console.log(chalk.blue('Variables:'), variables);
-    exitWithCode(ExitCode.SUCCESS);
+    logger.info(chalk.yellow('DRY RUN - Showing what would be created'));
+    logger.info(chalk.blue('Project name:'), finalProjectName);
+    logger.info(chalk.blue('Target path:'), targetPath);
+    logger.info(chalk.blue('Templates:'), templateIds);
+    logger.info(chalk.blue('Variables:'), variables);
+    logger.info('');
   }
 
-  // Create the project
-  const manifest = await projectCreationService.createProject(
-    finalProjectName,
-    templateIds,
-    targetPath,
-    variables
-  );
+  try {
+    // Create the project
+    const manifest = await projectCreationService.createProject(
+      finalProjectName,
+      templateIds,
+      targetPath,
+      variables,
+      dryRun
+    );
 
-  // Save the manifest using the manifest service
-  await manifestService.updateProjectManifest(targetPath, manifest);
+    // Save the manifest using the manifest service (skip in dry-run mode)
+    if (!dryRun) {
+      await manifestService.updateProjectManifest(targetPath, manifest);
+    }
 
-  console.log(chalk.green('✓ Project created successfully!'));
-  console.log(chalk.blue('Project name:'), manifest.projectName);
-  console.log(chalk.blue('Location:'), targetPath);
-  console.log(
-    chalk.blue('Templates applied:'),
-    manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
-  );
+    if (dryRun) {
+      logger.info(chalk.green('✓ Dry run completed successfully!'));
+      logger.info(chalk.gray('No files were actually created.'));
+    } else {
+      logger.info(chalk.green('✓ Project created successfully!'));
+    }
 
-  if (verbose) {
-    console.log(chalk.blue('Manifest ID:'), manifest.id);
-    console.log(chalk.blue('Created at:'), manifest.created);
+    logger.info(chalk.blue('Project name:'), manifest.projectName);
+    logger.info(chalk.blue('Location:'), targetPath);
+    logger.info(
+      chalk.blue('Templates applied:'),
+      manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+    );
+
+    if (verbose) {
+      logger.info(chalk.blue('Manifest ID:'), manifest.id);
+      logger.info(chalk.blue('Created at:'), manifest.created);
+    }
+  } catch (error) {
+    throw error;
   }
 
   exitWithCode(ExitCode.SUCCESS);
