@@ -10,7 +10,7 @@ import {
   setupTestEnvironment,
   expectCLIResult,
   createShellEnv,
-} from './cli-test-helpers';
+} from '@tests/integration/cli/completion/cli-test-helpers';
 
 describe('scaffold completion status (integration)', () => {
   let tempDir: string;

@@ -16,7 +16,7 @@ import {
   TemplateService,
   FileSystemService,
 } from '@/services';
-import { ExitCode, exitWithCode } from '../../constants/exit-codes';
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
 
 interface FixCommandOptions {
   verbose?: boolean;

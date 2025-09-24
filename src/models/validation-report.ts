@@ -2,7 +2,7 @@
  * Validation report data models and interfaces
  */
 
-import { RuleFix } from './template';
+import { RuleFix } from '@/models/template';
 
 export interface ValidationError {
   id: string;                    // Unique error identifier (UUID v4)

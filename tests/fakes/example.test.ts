@@ -10,7 +10,7 @@ import {
   FakeFileSystemService,
   createAllFakes,
   resetAllFakes,
-} from './index';
+} from '@tests/fakes/index';
 
 describe('Fake Services Usage Examples', () => {
   describe('FakeTemplateService', () => {

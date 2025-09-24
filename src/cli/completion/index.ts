@@ -5,11 +5,11 @@
 
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
-import { createInstallCommand } from './install';
-import { createUninstallCommand } from './uninstall';
-import { createStatusCommand } from './status';
-import { createScriptCommand } from './script';
-import { createCompleteCommand } from './complete';
+import { createInstallCommand } from '@/cli/completion/install';
+import { createUninstallCommand } from '@/cli/completion/uninstall';
+import { createStatusCommand } from '@/cli/completion/status';
+import { createScriptCommand } from '@/cli/completion/script';
+import { createCompleteCommand } from '@/cli/completion/complete';
 
 export function createCompletionCommand(container: DependencyContainer): Command {
   const command = new Command('completion');

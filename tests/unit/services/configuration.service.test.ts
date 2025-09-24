@@ -4,14 +4,14 @@
 
 import * as path from 'path';
 import * as os from 'os';
-import { FakeConfigurationService, FakeFileSystemService } from '../../fakes';
-import { ConfigLevel } from '../../../src/models';
+import { FakeConfigurationService, FakeFileSystemService } from '@tests/fakes';
+import { ConfigLevel } from '@/models';
 import type {
   ScaffoldConfig,
   UserPreferences,
   PathConfiguration,
   DefaultSettings,
-} from '../../../src/models';
+} from '@/models';
 
 // Mock os module
 jest.mock('os', () => ({

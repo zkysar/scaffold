@@ -6,9 +6,9 @@
 import * as path from 'path';
 import * as os from 'os';
 import { injectable } from 'tsyringe';
-import { IdentifierService } from './identifier-service';
-import { generateSHAFromObject } from '../lib/sha';
-import type { Template } from '../models';
+import { IdentifierService } from '@/services/identifier-service';
+import { generateSHAFromObject } from '@/lib/sha';
+import type { Template } from '@/models';
 
 /**
  * Service for managing template identifiers (SHAs and aliases)

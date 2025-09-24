@@ -2,11 +2,11 @@
  * Unit tests for ProjectValidationService
  */
 
-import { ProjectValidationService } from '../../../src/services/project-validation.service';
-import type { Template, ProjectManifest } from '../../../src/models';
-import { FakeFileSystemService } from '../../fakes/file-system.fake';
-import { FakeTemplateService } from '../../fakes/template-service.fake';
-import { FakeProjectManifestService } from '../../fakes/project-manifest.fake';
+import { ProjectValidationService } from '@/services/project-validation.service';
+import type { Template, ProjectManifest } from '@/models';
+import { FakeFileSystemService } from '@tests/fakes/file-system.fake';
+import { FakeTemplateService } from '@tests/fakes/template-service.fake';
+import { FakeProjectManifestService } from '@tests/fakes/project-manifest.fake';
 
 describe('ProjectValidationService', () => {
   let validationService: ProjectValidationService;

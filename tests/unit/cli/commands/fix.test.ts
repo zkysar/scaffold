@@ -3,17 +3,17 @@
  * Tests option parsing, validation, flow control, and error handling
  */
 
-import { createFixCommand } from '../../../../src/cli/commands/fix.command';
+import { createFixCommand } from '@/cli/commands/fix.command';
 import {
   ProjectFixService,
   ProjectValidationService,
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '../../../../src/services';
+} from '@/services';
 import { Command } from 'commander';
 import { existsSync } from 'fs';
-import type { ProjectManifest, ValidationReport } from '../../../../src/models';
+import type { ProjectManifest, ValidationReport } from '@/models';
 
 // Mock dependencies
 jest.mock('../../../../src/services');
