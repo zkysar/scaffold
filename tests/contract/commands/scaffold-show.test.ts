@@ -12,36 +12,75 @@ import {
 } from '../../helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
+import { FileSystemService } from '@/services';
+import { FakeFileSystemService } from '../../fakes';
+import { homedir } from 'os';
+import { logger } from '@/lib/logger';
 
 // Helper function to execute command and capture result
 async function executeCommand(
   command: Command,
   args: string[]
 ): Promise<CommandResult> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const originalExit = process.exit;
     let exitCode = 0;
+    let hasExited = false;
 
     // Mock process.exit to capture exit codes
     process.exit = jest.fn((code?: number) => {
-      exitCode = code || 0;
-      resolve({ code: exitCode, message: '', data: null });
+      if (!hasExited) {
+        hasExited = true;
+        exitCode = code || 0;
+        resolve({ code: exitCode, message: '', data: null });
+      }
       return undefined as never;
     }) as any;
 
     try {
-      // Parse arguments with the command
-      command.parse(args, { from: 'user' });
-      // If we get here, command succeeded
-      resolve({ code: 0, message: '', data: null });
+      // Parse arguments with the command - this may be async
+      const parsePromise = command.parseAsync(args, { from: 'user' });
+
+      if (parsePromise && typeof parsePromise.then === 'function') {
+        // Handle async commands
+        parsePromise
+          .then(() => {
+            if (!hasExited) {
+              hasExited = true;
+              resolve({ code: 0, message: '', data: null });
+            }
+          })
+          .catch((error) => {
+            if (!hasExited) {
+              hasExited = true;
+              resolve({
+                code: 1,
+                message: error instanceof Error ? error.message : String(error),
+                data: null,
+              });
+            }
+          });
+      } else {
+        // Synchronous command
+        if (!hasExited) {
+          hasExited = true;
+          resolve({ code: 0, message: '', data: null });
+        }
+      }
     } catch (error) {
-      resolve({
-        code: 1,
-        message: error instanceof Error ? error.message : String(error),
-        data: null,
-      });
+      if (!hasExited) {
+        hasExited = true;
+        resolve({
+          code: 1,
+          message: error instanceof Error ? error.message : String(error),
+          data: null,
+        });
+      }
     } finally {
-      process.exit = originalExit;
+      // Restore original process.exit after a small delay
+      setTimeout(() => {
+        process.exit = originalExit;
+      }, 10);
     }
   });
 }
@@ -53,11 +92,15 @@ describe('scaffold show command contract', () => {
     mockConsole = createMockConsole();
     // Replace global console with our mock
     Object.assign(console, mockConsole.mockConsole);
+    // Configure logger to not use colors in tests
+    logger.setOptions({ noColor: true });
   });
 
   afterEach(() => {
     mockFs.restore();
     jest.restoreAllMocks();
+    // Reset logger options
+    logger.setOptions({});
   });
 
   describe('show project information', () => {

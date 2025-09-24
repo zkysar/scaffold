@@ -12,6 +12,10 @@ import {
 } from '../../helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
+import { FileSystemService } from '@/services';
+import { FakeFileSystemService } from '../../fakes';
+import { homedir } from 'os';
+import { logger } from '@/lib/logger';
 
 // Helper function to execute command and capture result
 async function executeCommand(
@@ -86,11 +90,15 @@ describe('scaffold new command contract', () => {
     mockConsole = createMockConsole();
     // Replace global console with our mock
     Object.assign(console, mockConsole.mockConsole);
+    // Configure logger to not use colors in tests
+    logger.setOptions({ noColor: true });
   });
 
   afterEach(() => {
     mockFs.restore();
     jest.restoreAllMocks();
+    // Reset logger options
+    logger.setOptions({});
   });
 
   describe('successful project creation', () => {

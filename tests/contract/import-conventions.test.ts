@@ -6,9 +6,20 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
+import { logger } from '@/lib/logger';
 
 describe('Import Conventions', () => {
   const srcDir = path.resolve(__dirname, '../../src');
+
+  beforeEach(() => {
+    // Configure logger to not use colors in tests
+    logger.setOptions({ noColor: true });
+  });
+
+  afterEach(() => {
+    // Reset logger options
+    logger.setOptions({});
+  });
 
   it('should not use relative parent imports in source files', async () => {
     const files = await glob('**/*.ts', {
