@@ -5,11 +5,13 @@
 
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
-import { createInstallCommand } from '@/cli/completion/install';
-import { createUninstallCommand } from '@/cli/completion/uninstall';
-import { createStatusCommand } from '@/cli/completion/status';
-import { createScriptCommand } from '@/cli/completion/script';
+
 import { createCompleteCommand } from '@/cli/completion/complete';
+import { createInstallCommand } from '@/cli/completion/install';
+import { createScriptCommand } from '@/cli/completion/script';
+import { createStatusCommand } from '@/cli/completion/status';
+import { createUninstallCommand } from '@/cli/completion/uninstall';
+import { logger } from '@/lib/logger';
 
 export function createCompletionCommand(container: DependencyContainer): Command {
   const command = new Command('completion');
@@ -32,21 +34,21 @@ export function createCompletionCommand(container: DependencyContainer): Command
 
   // Add help text
   command.on('--help', () => {
-    console.log('');
-    console.log('Examples:');
-    console.log('  $ scaffold completion install              # Auto-detect shell and install');
-    console.log('  $ scaffold completion install --shell zsh # Install for specific shell');
-    console.log('  $ scaffold completion status              # Check installation status');
-    console.log('  $ scaffold completion script --shell bash # Output completion script');
-    console.log('  $ scaffold completion uninstall           # Remove completion');
-    console.log('');
-    console.log('Supported shells:');
-    console.log('  bash, zsh, fish');
-    console.log('');
-    console.log('Notes:');
-    console.log('  • Shell completion provides command, option, and argument suggestions');
-    console.log('  • Auto-detection works by examining the SHELL environment variable');
-    console.log('  • Manual setup may be required depending on your shell configuration');
+    logger.info('');
+    logger.info('Examples:');
+    logger.info('  $ scaffold completion install              # Auto-detect shell and install');
+    logger.info('  $ scaffold completion install --shell zsh # Install for specific shell');
+    logger.info('  $ scaffold completion status              # Check installation status');
+    logger.info('  $ scaffold completion script --shell bash # Output completion script');
+    logger.info('  $ scaffold completion uninstall           # Remove completion');
+    logger.info('');
+    logger.info('Supported shells:');
+    logger.info('  bash, zsh, fish');
+    logger.info('');
+    logger.info('Notes:');
+    logger.info('  • Shell completion provides command, option, and argument suggestions');
+    logger.info('  • Auto-detection works by examining the SHELL environment variable');
+    logger.info('  • Manual setup may be required depending on your shell configuration');
   });
 
   return command;

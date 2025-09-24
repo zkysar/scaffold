@@ -8,6 +8,8 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 
+
+import { logger } from '@/lib/logger';
 describe('scaffold extend command integration tests', () => {
   let testWorkspace: string;
   let cliPath: string;

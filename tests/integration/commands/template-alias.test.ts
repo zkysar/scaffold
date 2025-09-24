@@ -7,6 +7,8 @@ import * as fs from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
 
+
+import { logger } from '@/lib/logger';
 describe('scaffold template alias command (integration)', () => {
   let tempDir: string;
   let originalCwd: string;

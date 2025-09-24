@@ -7,13 +7,15 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 import { execSync } from 'child_process';
 
+
+import { logger } from '@/lib/logger';
 // Global integration test setup
 beforeAll(async () => {
   const cliPath = path.join(__dirname, '../dist/cli/index.js');
 
   // Check if CLI exists
   if (!(await fs.pathExists(cliPath))) {
-    console.log('CLI not found, building project...');
+    logger.info('CLI not found, building project...');
     try {
       execSync('npm run build', {
         stdio: 'inherit',
@@ -29,7 +31,7 @@ beforeAll(async () => {
     throw new Error(`CLI not found at ${cliPath} after build`);
   }
 
-  console.log(`CLI found at: ${cliPath}`);
+  logger.info(`CLI found at: ${cliPath}`);
 });
 
 // Increase timeout for integration tests

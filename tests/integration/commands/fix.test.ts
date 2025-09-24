@@ -8,6 +8,8 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 
+
+import { logger } from '@/lib/logger';
 describe('scaffold fix command integration tests', () => {
   let testWorkspace: string;
   let cliPath: string;
@@ -395,7 +397,7 @@ describe('scaffold fix command integration tests', () => {
         await fs.chmod(projectPath, 0o755);
       } catch (error) {
         // Skip test if chmod not supported
-        console.log('Skipping permission test due to filesystem limitations');
+        logger.info('Skipping permission test due to filesystem limitations');
       }
     });
 

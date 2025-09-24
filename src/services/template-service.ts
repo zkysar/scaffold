@@ -2,11 +2,15 @@
  * Template service for CRUD operations on templates
  */
 
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
+
 import * as fs from 'fs-extra';
 import * as semver from 'semver';
 import { injectable, inject } from 'tsyringe';
+
+
+import { logger } from '@/lib/logger';
 
 import type {
   Template,
@@ -126,7 +130,7 @@ export class TemplateService implements ITemplateService {
             aliases: aliases,
           });
         } catch (error) {
-          console.warn(`Failed to load template from ${templateDir}:`, error);
+          logger.warn(`Failed to load template from ${templateDir}:`, error);
         }
       }
 
@@ -584,7 +588,7 @@ export class TemplateService implements ITemplateService {
         // Migrate from old UUID to SHA (in-memory only for imports)
         // No backup needed as we're not modifying existing files
         template = this.identifierService.migrateTemplateToSHA(template);
-        console.log(`Imported template migrated to SHA-based ID: ${shortSHA(template.id)}`);
+        logger.info(`Imported template migrated to SHA-based ID: ${shortSHA(template.id)}`);
       }
 
       const existingTemplatePath = await this.findTemplateBySHA(template.id);
@@ -648,7 +652,7 @@ export class TemplateService implements ITemplateService {
           // Atomic rename
           await fs.rename(tempPath, templateJsonPath);
 
-          console.log(`Template migrated to SHA-based ID. Backup saved at: ${backupPath}`);
+          logger.info(`Template migrated to SHA-based ID. Backup saved at: ${backupPath}`);
         } catch (migrationError) {
           // If migration fails, restore from backup if it exists
           if (await fs.pathExists(backupPath)) {

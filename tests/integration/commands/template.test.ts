@@ -8,6 +8,8 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 
+
+import { logger } from '@/lib/logger';
 describe('scaffold template command integration tests', () => {
   let testWorkspace: string;
   let cliPath: string;
@@ -531,7 +533,7 @@ describe('scaffold template command integration tests', () => {
         await fs.chmod(templatesDir, 0o755);
       } catch (error) {
         // Skip test if chmod not supported
-        console.log('Skipping read-only test due to filesystem limitations');
+        logger.info('Skipping read-only test due to filesystem limitations');
       }
     });
 

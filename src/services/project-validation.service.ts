@@ -2,9 +2,11 @@
  * Project validation service - handles project structure validation
  */
 
-import * as path from 'path';
 import { randomUUID } from 'crypto';
+import * as path from 'path';
+
 import { injectable, inject } from 'tsyringe';
+
 import type {
   ValidationReport,
   ValidationError,
@@ -12,15 +14,13 @@ import type {
   ValidationStats,
   ProjectManifest,
 } from '@/models';
+import { shortSHA } from '@/lib/sha';
+import type { IProjectManifestService } from '@/services/project-manifest.service';
+import { ProjectManifestService } from '@/services/project-manifest.service';
 import type { ITemplateService } from '@/services/template-service';
 import { TemplateService } from '@/services/template-service';
 import type { IFileSystemService } from '@/services/file-system.service';
 import { FileSystemService } from '@/services/file-system.service';
-import type { IVariableSubstitutionService } from '@/services/variable-substitution.service';
-import { VariableSubstitutionService } from '@/services/variable-substitution.service';
-import type { IProjectManifestService } from '@/services/project-manifest.service';
-import { ProjectManifestService } from '@/services/project-manifest.service';
-import { shortSHA } from '@/lib/sha';
 
 export interface IProjectValidationService {
   /**
