@@ -8,6 +8,8 @@ import { FakeTemplateService } from '../../fakes/template-service.fake';
 import { FakeFileSystemService } from '../../fakes/file-system.fake';
 import { FakeProjectManifestService } from '../../fakes/project-manifest.fake';
 
+
+import { logger } from '@/lib/logger';
 describe('ProjectExtensionService', () => {
   let extensionService: ProjectExtensionService;
   let fakeTemplateService: FakeTemplateService;
@@ -35,7 +37,7 @@ describe('ProjectExtensionService', () => {
     files: [
       {
         path: 'server.js',
-        content: 'console.log("{{PROJECT_NAME}} server");',
+        content: 'logger.info("{{PROJECT_NAME}} server");',
         permissions: '644',
         variables: true,
       },
@@ -106,7 +108,7 @@ describe('ProjectExtensionService', () => {
     fakeFileService.setFile('/test-project/frontend/index.html', '<html></html>');
     fakeFileService.setFile(
       '/home/user/.scaffold/templates/test-template-123/files/server.js.template',
-      'console.log("{{PROJECT_NAME}} server");'
+      'logger.info("{{PROJECT_NAME}} server");'
     );
     fakeFileService.setDirectory('/test-project');
     fakeFileService.setDirectory('/test-project/.scaffold');

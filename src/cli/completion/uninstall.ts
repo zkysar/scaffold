@@ -3,11 +3,13 @@
  * Remove shell completion for the scaffold CLI
  */
 
-import { Command } from 'commander';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
-import { CompletionService } from '../../services';
+
 import { logger } from '@/lib/logger';
+
+import { CompletionService } from '../../services';
 
 interface UninstallCommandOptions {
   verbose?: boolean;

@@ -3,20 +3,23 @@
  * Add templates to existing project
  */
 
-import { Command } from 'commander';
-import { resolve } from 'path';
 import { existsSync } from 'fs';
+import { resolve } from 'path';
+
 import chalk from 'chalk';
+import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
+
+import { selectTemplates } from '@/cli/utils/template-selector';
+import { logger } from '@/lib/logger';
 import {
   ProjectExtensionService,
   ProjectManifestService,
   TemplateService,
   FileSystemService,
 } from '@/services';
-import { selectTemplates } from '@/cli/utils/template-selector';
-import { logger } from '@/lib/logger';
+
 import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 
 interface ExtendCommandOptions {

@@ -12,6 +12,7 @@ import type {
   AppliedTemplate,
   HistoryEntry,
 } from '@/models';
+
 import type { IFileSystemService } from './file-system.service';
 import { FileSystemService } from './file-system.service';
 import type { ITemplateService } from './template-service';

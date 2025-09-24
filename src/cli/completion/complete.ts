@@ -5,8 +5,12 @@
 
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
-import { CompletionService } from '../../services';
+
+import { logger } from '@/lib/logger';
+
 import type { CompletionContext } from '../../models';
+import { CompletionService } from '../../services';
+
 
 interface CompleteCommandOptions {
   line?: string;
@@ -57,7 +61,7 @@ async function handleCompleteCommand(
     if (result.completions.length > 0) {
       // Output as JSON lines for parsing by shell scripts
       result.completions.forEach(completion => {
-        console.log(JSON.stringify({ value: completion.value }));
+        logger.info(JSON.stringify({ value: completion.value }));
       });
     }
 

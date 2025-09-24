@@ -3,9 +3,14 @@
  */
 
 import * as path from 'path';
+
 import * as fs from 'fs-extra';
 import { injectable } from 'tsyringe';
+
+import { logger } from '@/lib/logger';
+
 import type { CompletionContext, CompletionItem } from '../../models';
+
 
 export interface IFileCompletionProvider {
   /**
@@ -66,7 +71,7 @@ export class FileCompletionProvider implements IFileCompletionProvider {
 
       return completions;
     } catch (error) {
-      console.error('Failed to get file completions:', error);
+      logger.error('Failed to get file completions:', error);
       return [];
     }
   }
@@ -101,7 +106,7 @@ export class FileCompletionProvider implements IFileCompletionProvider {
 
       return completions;
     } catch (error) {
-      console.error('Failed to get directory completions:', error);
+      logger.error('Failed to get directory completions:', error);
       return [];
     }
   }
@@ -246,7 +251,7 @@ export class FileCompletionProvider implements IFileCompletionProvider {
         return a.value.localeCompare(b.value);
       });
     } catch (error) {
-      console.error(`Error scanning directory ${directory}:`, error);
+      logger.error(`Error scanning directory ${directory}:`, error);
       return [];
     }
   }

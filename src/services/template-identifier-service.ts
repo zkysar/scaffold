@@ -3,9 +3,11 @@
  * Manages SHA-based identification and aliasing for templates
  */
 
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
+
 import { injectable } from 'tsyringe';
+
 import { IdentifierService } from './identifier-service';
 import { generateSHAFromObject } from '../lib/sha';
 import type { Template } from '../models';

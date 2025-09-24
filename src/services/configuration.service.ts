@@ -2,10 +2,12 @@
  * Configuration service for managing scaffold configuration across scopes
  */
 
-import * as fs from 'fs-extra';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
+
+import * as fs from 'fs-extra';
 import { injectable } from 'tsyringe';
+
 import type {
   ScaffoldConfig,
   UserPreferences,

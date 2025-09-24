@@ -7,6 +7,8 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import { glob } from 'glob';
 
+
+import { logger } from '@/lib/logger';
 describe('Import Conventions', () => {
   const srcDir = path.resolve(__dirname, '../../src');
 
@@ -128,7 +130,7 @@ describe('Import Conventions', () => {
 
     // Warnings don't fail the test but are reported
     if (warnings.length > 0) {
-      console.warn('Import ordering suggestions:\n' + warnings.join('\n'));
+      logger.warn('Import ordering suggestions:\n' + warnings.join('\n'));
     }
   });
 });

@@ -4,6 +4,8 @@
  */
 
 import { createExtendCommand } from '../../../src/cli/commands/extend.command';
+
+import { logger } from '@/lib/logger';
 import {
   createMockFileSystem,
   createMockConsole,
@@ -359,7 +361,7 @@ describe('scaffold extend command contract', () => {
         '/regular-project': {
           'package.json': '{"name": "regular-project"}',
           src: {
-            'index.js': 'console.log("hello");',
+            'index.js': 'logger.info("hello");',
           },
         },
       });

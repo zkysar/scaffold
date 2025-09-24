@@ -3,8 +3,12 @@
  */
 
 import { injectable, inject } from 'tsyringe';
+
+import { logger } from '@/lib/logger';
+
 import type { CompletionContext, CompletionItem } from '../../models';
 import { TemplateService } from '../template-service';
+
 
 export interface ITemplateCompletionProvider {
   /**
@@ -56,7 +60,7 @@ export class TemplateCompletionProvider implements ITemplateCompletionProvider {
 
       return this.filterCompletions(completions, context.currentWord);
     } catch (error) {
-      console.error('Failed to load templates for completion:', error);
+      logger.error('Failed to load templates for completion:', error);
       return [];
     }
   }
@@ -68,7 +72,7 @@ export class TemplateCompletionProvider implements ITemplateCompletionProvider {
 
       return this.filterStringCompletions(templateIds, context.currentWord);
     } catch (error) {
-      console.error('Failed to load template IDs for completion:', error);
+      logger.error('Failed to load template IDs for completion:', error);
       return [];
     }
   }
@@ -97,7 +101,7 @@ export class TemplateCompletionProvider implements ITemplateCompletionProvider {
 
       return this.filterCompletions(completions, context.currentWord);
     } catch (error) {
-      console.error('Failed to load template details for completion:', error);
+      logger.error('Failed to load template details for completion:', error);
       return [];
     }
   }

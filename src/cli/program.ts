@@ -3,20 +3,21 @@
  * Separated from index.ts to avoid circular dependencies
  */
 
-import { Command } from 'commander';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
+
+import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
 
 // Import command handlers
-import { createNewCommand } from './commands/new.command';
-import { createTemplateCommand } from './commands/template.command';
 import { createCheckCommand } from './commands/check.command';
-import { createFixCommand } from './commands/fix.command';
-import { createExtendCommand } from './commands/extend.command';
-import { createShowCommand } from './commands/show.command';
-import { createConfigCommand } from './commands/config.command';
 import { createCleanCommand } from './commands/clean.command';
+import { createConfigCommand } from './commands/config.command';
+import { createExtendCommand } from './commands/extend.command';
+import { createFixCommand } from './commands/fix.command';
+import { createNewCommand } from './commands/new.command';
+import { createShowCommand } from './commands/show.command';
+import { createTemplateCommand } from './commands/template.command';
 import { createCompletionCommand } from './completion';
 
 export function createProgram(container: DependencyContainer): Command {

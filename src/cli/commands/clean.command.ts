@@ -8,10 +8,12 @@ import { resolve } from 'path';
 
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
+
+import { logger } from '@/lib/logger';
+import { FileSystemService } from '@/services';
+
 import { ExitCode } from '../../constants/exit-codes';
 
-import { FileSystemService } from '@/services';
-import { logger } from '@/lib/logger';
 
 interface CleanCommandOptions {
   verbose?: boolean;
