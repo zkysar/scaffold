@@ -29,7 +29,6 @@
       "tests/integration/commands/new.test.ts",
       "tests/integration/commands/template-alias.test.ts",
       "tests/integration/commands/template.test.ts",
-      "tests/contract/import-conventions.test.ts",
       "tests/unit/cli/commands/template.test.ts",
       "tests/unit/services/file-system.service.test.ts",
       "tests/unit/services/project-creation.service.test.ts",
@@ -51,10 +50,10 @@
     }
   },
   "statistics": {
-    "totalTests": 354,
-    "passingTests": 194,
-    "failingTests": 160,
+    "totalTests": 310,
+    "passingTests": 136,
+    "failingTests": 174,
     "blockedTestFiles": 34,
-    "passingTestFiles": 7
+    "passingTestFiles": 8
   }
 }

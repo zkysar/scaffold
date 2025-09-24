@@ -7,20 +7,19 @@ import * as path from 'path';
 
 import { injectable, inject } from 'tsyringe';
 
+import { shortSHA } from '@/lib/sha';
 import type {
   ValidationReport,
   ValidationError,
   ValidationWarning,
   ValidationStats,
-  ProjectManifest,
 } from '@/models';
-import { shortSHA } from '@/lib/sha';
+import type { IFileSystemService } from '@/services/file-system.service';
+import { FileSystemService } from '@/services/file-system.service';
 import type { IProjectManifestService } from '@/services/project-manifest.service';
 import { ProjectManifestService } from '@/services/project-manifest.service';
 import type { ITemplateService } from '@/services/template-service';
 import { TemplateService } from '@/services/template-service';
-import type { IFileSystemService } from '@/services/file-system.service';
-import { FileSystemService } from '@/services/file-system.service';
 
 export interface IProjectValidationService {
   /**
@@ -41,8 +40,10 @@ export class ProjectValidationService implements IProjectValidationService {
   constructor(
     @inject(TemplateService) private readonly templateService: ITemplateService,
     @inject(FileSystemService) private readonly fileService: IFileSystemService,
-    @inject(VariableSubstitutionService) private readonly variableService: IVariableSubstitutionService,
-    @inject(ProjectManifestService) private readonly manifestService: IProjectManifestService
+    @inject(VariableSubstitutionService)
+    private readonly variableService: IVariableSubstitutionService,
+    @inject(ProjectManifestService)
+    private readonly manifestService: IProjectManifestService
   ) {}
 
   async validateProject(projectPath: string): Promise<ValidationReport> {
@@ -56,7 +57,8 @@ export class ProjectValidationService implements IProjectValidationService {
 
     try {
       // Load project manifest and find the actual project root
-      const manifest = await this.manifestService.getProjectManifest(projectPath);
+      const manifest =
+        await this.manifestService.getProjectManifest(projectPath);
       if (!manifest) {
         throw new Error(
           `No project manifest found at '${projectPath}'. This directory is not a scaffold-managed project.`

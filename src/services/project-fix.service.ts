@@ -13,7 +13,6 @@ import type {
   ValidationStats,
   HistoryEntry,
 } from '@/models';
-
 import type { IFileSystemService } from '@/services/file-system.service';
 import { FileSystemService } from '@/services/file-system.service';
 import type { IProjectManifestService } from '@/services/project-manifest.service';
@@ -37,9 +36,12 @@ export class ProjectFixService implements IProjectFixService {
   constructor(
     @inject(TemplateService) private readonly templateService: ITemplateService,
     @inject(FileSystemService) private readonly fileService: IFileSystemService,
-    @inject(ProjectValidationService) private readonly validationService: IProjectValidationService,
-    @inject(VariableSubstitutionService) private readonly variableService: IVariableSubstitutionService,
-    @inject(ProjectManifestService) private readonly manifestService: IProjectManifestService
+    @inject(ProjectValidationService)
+    private readonly validationService: IProjectValidationService,
+    @inject(VariableSubstitutionService)
+    private readonly variableService: IVariableSubstitutionService,
+    @inject(ProjectManifestService)
+    private readonly manifestService: IProjectManifestService
   ) {}
 
   async fixProject(
@@ -71,7 +73,8 @@ export class ProjectFixService implements IProjectFixService {
           return validationReport;
         }
 
-        const manifest = await this.manifestService.getProjectManifest(projectPath);
+        const manifest =
+          await this.manifestService.getProjectManifest(projectPath);
         if (!manifest) {
           throw new Error(`No project manifest found at '${projectPath}'`);
         }
@@ -215,7 +218,10 @@ export class ProjectFixService implements IProjectFixService {
 
             manifest.history.push(historyEntry);
             manifest.updated = new Date().toISOString();
-            await this.manifestService.updateProjectManifest(actualProjectPath, manifest);
+            await this.manifestService.updateProjectManifest(
+              actualProjectPath,
+              manifest
+            );
           } catch (manifestError) {
             // If manifest update fails, add it as a warning but don't fail the entire fix operation
             warnings.push({

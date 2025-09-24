@@ -12,12 +12,16 @@ import type {
   AppliedTemplate,
   HistoryEntry,
 } from '@/models';
+import type { IFileSystemService } from '@/services/file-system.service';
+import { FileSystemService } from '@/services/file-system.service';
 import type { IProjectManifestService } from '@/services/project-manifest.service';
 import { ProjectManifestService } from '@/services/project-manifest.service';
+import type { IProjectValidationService } from '@/services/project-validation.service';
+import { ProjectValidationService } from '@/services/project-validation.service';
 import type { ITemplateService } from '@/services/template-service';
 import { TemplateService } from '@/services/template-service';
-import type { IProjectCreationService } from '@/services/project-creation.service';
-import { ProjectCreationService } from '@/services/project-creation.service';
+import type { IVariableSubstitutionService } from '@/services/variable-substitution.service';
+import { VariableSubstitutionService } from '@/services/variable-substitution.service';
 
 export interface IProjectExtensionService {
   /**
@@ -35,9 +39,12 @@ export class ProjectExtensionService implements IProjectExtensionService {
   constructor(
     @inject(TemplateService) private readonly templateService: ITemplateService,
     @inject(FileSystemService) private readonly fileService: IFileSystemService,
-    @inject(VariableSubstitutionService) private readonly variableService: IVariableSubstitutionService,
-    @inject(ProjectManifestService) private readonly manifestService: IProjectManifestService,
-    @inject(ProjectValidationService) private readonly validationService: IProjectValidationService
+    @inject(VariableSubstitutionService)
+    private readonly variableService: IVariableSubstitutionService,
+    @inject(ProjectManifestService)
+    private readonly manifestService: IProjectManifestService,
+    @inject(ProjectValidationService)
+    private readonly validationService: IProjectValidationService
   ) {}
 
   async extendProject(
@@ -55,7 +62,8 @@ export class ProjectExtensionService implements IProjectExtensionService {
 
     try {
       // Load existing project manifest
-      const manifest = await this.manifestService.getProjectManifest(projectPath);
+      const manifest =
+        await this.manifestService.getProjectManifest(projectPath);
       if (!manifest) {
         throw new Error(
           `No project manifest found at '${projectPath}'. This directory is not a scaffold-managed project.`
@@ -63,7 +71,8 @@ export class ProjectExtensionService implements IProjectExtensionService {
       }
 
       // Find the actual project root where the manifest is located
-      const nearestManifest = await this.validationService.findNearestManifest(projectPath);
+      const nearestManifest =
+        await this.validationService.findNearestManifest(projectPath);
       const actualProjectPath = nearestManifest?.projectPath || projectPath;
 
       // Merge variables with existing ones
@@ -177,7 +186,10 @@ export class ProjectExtensionService implements IProjectExtensionService {
       manifest.updated = new Date().toISOString();
 
       // Save manifest
-      await this.manifestService.updateProjectManifest(actualProjectPath, manifest);
+      await this.manifestService.updateProjectManifest(
+        actualProjectPath,
+        manifest
+      );
 
       return manifest;
     } catch (error) {
