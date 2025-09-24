@@ -5,9 +5,6 @@
   "tests": {
     "description": "Test files with failing tests that should be skipped in pre-commit",
     "blocked": [
-      "tests/unit/services/completion-providers/file-completion-provider.test.ts",
-      "tests/unit/services/completion-providers/project-completion-provider.test.ts",
-      "tests/unit/services/completion-providers/template-completion-provider.test.ts",
       "tests/unit/cli/commands/new.test.ts",
       "tests/unit/cli/commands/fix.test.ts",
       "tests/contract/commands/scaffold-check.test.ts",
@@ -50,9 +47,9 @@
   },
   "statistics": {
     "totalTests": 354,
-    "passingTests": 195,
-    "failingTests": 159,
+    "passingTests": 210,
+    "failingTests": 144,
     "blockedTestFiles": 34,
-    "passingTestFiles": 9
+    "passingTestFiles": 12
   }
 }
