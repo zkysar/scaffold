@@ -6,7 +6,7 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
 import { injectable } from 'tsyringe';
-import { enhanceError } from '../lib';
+import { enhanceError } from '@/lib/error-utils';
 
 export interface BackupInfo {
   id: string;
@@ -454,7 +454,7 @@ export class FileSystemService implements IFileSystemService {
       };
 
       if (options.atomic) {
-        const tempPath = `${resolvedPath}.tmp.${Date.now()}`;
+        const tempPath = `${resolvedPath}.tmp.${Date.now()}.${Math.random().toString(36).substr(2, 9)}`;
         try {
           await fs.writeJson(tempPath, data, jsonOptions);
           await fs.move(tempPath, resolvedPath);
@@ -470,9 +470,23 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
+      // Provide more specific error messages based on error type
+      let suggestion = 'Ensure the parent directory exists and you have write permissions.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('ENOENT')) {
+          suggestion = 'Parent directory does not exist. Try creating the directory structure first.';
+        } else if (error.message.includes('EACCES') || error.message.includes('EPERM')) {
+          suggestion = 'Permission denied. Check file/directory permissions and ownership.';
+        } else if (error.message.includes('ENOSPC')) {
+          suggestion = 'No space left on device. Free up disk space and try again.';
+        } else if (error.message.includes('EISDIR')) {
+          suggestion = 'Target path is a directory, not a file. Check the path is correct.';
+        }
+      }
+
       throw enhanceError(error, `Failed to write JSON file: ${resolvedPath}`, {
-        suggestion:
-          'Ensure the parent directory exists and you have write permissions.',
+        suggestion,
         path: resolvedPath,
         operation: 'writeJson',
       });

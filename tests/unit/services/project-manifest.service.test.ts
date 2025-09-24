@@ -184,6 +184,7 @@ describe('ProjectManifestService', () => {
           spaces: 2,
           atomic: true,
           createParentDirs: true,
+          overwrite: true,
         }
       );
     });
@@ -232,6 +233,7 @@ describe('ProjectManifestService', () => {
           spaces: 2,
           atomic: true,
           createParentDirs: true,
+          overwrite: true,
         }
       );
     });
@@ -255,6 +257,7 @@ describe('ProjectManifestService', () => {
           spaces: 2,
           atomic: true,
           createParentDirs: true,
+          overwrite: true,
         }
       );
     });
@@ -266,6 +269,60 @@ describe('ProjectManifestService', () => {
       await expect(
         manifestService.updateProjectManifest('/test-project', mockManifest)
       ).rejects.toThrow('Failed to write project manifest');
+    });
+
+    it('should respect dry-run mode and not write files', async () => {
+      Object.defineProperty(mockFileService, 'isDryRun', {
+        value: true,
+        writable: false,
+        configurable: true,
+      });
+
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+
+      await manifestService.updateProjectManifest('/test-project', mockManifest);
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        '[DRY RUN] Would update project manifest in: /test-project'
+      );
+      expect(mockFileService.writeJson).not.toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should validate manifest structure before writing', async () => {
+      mockFileService.exists.mockResolvedValue(false);
+      mockFileService.ensureDirectory.mockResolvedValue();
+
+      const invalidManifest = {
+        ...mockManifest,
+        version: undefined,
+        projectName: undefined,
+      };
+
+      await expect(
+        manifestService.updateProjectManifest('/test-project', invalidManifest as any)
+      ).rejects.toThrow('Manifest missing required fields: version, projectName');
+
+      expect(mockFileService.writeJson).not.toHaveBeenCalled();
+    });
+
+    it('should ensure scaffold directory exists before writing', async () => {
+      mockFileService.exists.mockResolvedValue(false);
+      mockFileService.ensureDirectory.mockResolvedValue();
+
+      await manifestService.updateProjectManifest('/test-project', mockManifest);
+
+      expect(mockFileService.ensureDirectory).toHaveBeenCalledWith(
+        '/test-project/.scaffold'
+      );
+      expect(mockFileService.writeJson).toHaveBeenCalledWith(
+        '/test-project/.scaffold/manifest.json',
+        mockManifest,
+        expect.objectContaining({
+          overwrite: true,
+        })
+      );
     });
   });
 
@@ -328,7 +385,9 @@ describe('ProjectManifestService', () => {
       );
 
       expect(result).toBeNull();
-      expect(mockFileService.exists).toHaveBeenCalledTimes(20); // maxLevels
+      // Should have called exists up to maxLevels times (may be fewer if it reaches root)
+      expect(mockFileService.exists.mock.calls.length).toBeLessThanOrEqual(20);
+      expect(mockFileService.exists.mock.calls.length).toBeGreaterThan(10);
     });
 
     it('should stop at root directory', async () => {

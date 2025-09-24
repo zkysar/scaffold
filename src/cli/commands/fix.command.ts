@@ -8,14 +8,11 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import { DependencyContainer } from 'tsyringe';
-import { logger } from '../../lib/logger';
+import { logger } from '@/lib/logger';
 import {
   ProjectFixService,
-  ProjectValidationService,
   ProjectManifestService,
-  TemplateService,
-  FileSystemService,
-} from '../../services';
+} from '@/services';
 
 interface FixCommandOptions {
   verbose?: boolean;
@@ -75,11 +72,8 @@ async function handleFixCommand(
   }
 
   // Resolve services from DI container
-  const fileSystemService = container.resolve(FileSystemService);
-  const templateService = container.resolve(TemplateService);
-  const manifestService = container.resolve(ProjectManifestService);
-  const validationService = container.resolve(ProjectValidationService);
   const fixService = container.resolve(ProjectFixService);
+  const manifestService = container.resolve(ProjectManifestService);
 
   // Check if this is a scaffold-managed project
   const manifest = await manifestService.loadProjectManifest(targetPath);
@@ -101,7 +95,21 @@ async function handleFixCommand(
   }
 
   // Fix the project
-  const report = await fixService.fixProject(targetPath, dryRun);
+  let report;
+  try {
+    report = await fixService.fixProject(targetPath, dryRun);
+
+    // Additional validation for the report
+    if (!report) {
+      throw new Error('Fix service returned invalid report');
+    }
+  } catch (fixError) {
+    logger.error('Failed to fix project');
+    if (fixError instanceof Error) {
+      logger.error(fixError.message);
+    }
+    process.exit(1);
+  }
 
   // Display results
   logger.bold('Project Fix Report');

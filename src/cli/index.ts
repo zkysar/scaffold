@@ -4,6 +4,7 @@
  * CLI entry point for the Scaffold CLI tool
  */
 
+import 'module-alias/register';
 import 'reflect-metadata';
 import chalk from 'chalk';
 import { createProgram } from './program';
