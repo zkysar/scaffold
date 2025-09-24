@@ -19,7 +19,6 @@
       "tests/contract/commands/scaffold-show.test.ts",
       "tests/contract/commands/scaffold-template.test.ts",
       "tests/integration/cli/cli-commands.test.ts",
-      "tests/integration/cli/completion/script.test.ts",
       "tests/integration/cli/completion/status.test.ts",
       "tests/integration/cli/completion/uninstall.test.ts",
       "tests/integration/commands/extend.test.ts",
@@ -51,9 +50,9 @@
   },
   "statistics": {
     "totalTests": 354,
-    "passingTests": 190,
-    "failingTests": 164,
+    "passingTests": 195,
+    "failingTests": 159,
     "blockedTestFiles": 34,
-    "passingTestFiles": 8
+    "passingTestFiles": 9
   }
 }

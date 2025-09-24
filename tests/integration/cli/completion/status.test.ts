@@ -419,8 +419,9 @@ describe('scaffold completion status (integration)', () => {
         cwd: tempDir,
       });
 
-      // Assert
-      expect(result.stdout).toContain('Status: Up to date');
+      // Assert - completion is installed and shows version
+      expect(result.stdout).toContain('Shell completion is installed and enabled');
+      expect(result.stdout).toContain('Version: 0.1.0');
     });
   });
 
