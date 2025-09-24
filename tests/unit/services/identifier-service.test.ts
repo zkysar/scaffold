@@ -8,6 +8,8 @@ import { generateSHAFromObject, isValidSHA, findSHAByPrefix } from '@/lib/sha';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
+
+import { logger } from '@/lib/logger';
 // Mock fs-extra
 jest.mock('fs-extra');
 
@@ -111,7 +113,7 @@ describe('IdentifierService', () => {
         description: 'Test template',
         rootFolder: 'test-project',
         folders: [{ path: 'src', description: 'Source' }],
-        files: [{ path: 'index.js', content: 'console.log("test");' }],
+        files: [{ path: 'index.js', content: 'logger.info("test");' }],
         variables: [],
         rules: {
           strictMode: false,

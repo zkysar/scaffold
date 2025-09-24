@@ -256,26 +256,65 @@ const commands = {
   },
 
   // Update cached statistics with actual test results
-  refresh: () => {
-    console.log('\n🔄 Refreshing statistics from test results...\n');
+  refresh: (options = {}) => {
+    const silent = options.silent || process.env.BURNDOWN_SILENT === 'true';
+
+    if (!silent) {
+      console.log('\n🔄 Refreshing statistics from test results...\n');
+    }
 
     const actualStats = getActualTestStats();
     if (!actualStats) {
-      console.error('❌ Failed to get actual test statistics');
+      if (!silent) {
+        console.error('❌ Failed to get actual test statistics');
+      }
       process.exit(1);
     }
 
     const blocklist = loadBlocklist();
+
+    // Update statistics
     blocklist.statistics.totalTests = actualStats.totalTests;
     blocklist.statistics.passingTests = actualStats.passingTests;
     blocklist.statistics.failingTests = actualStats.failingTests;
 
+    // Auto-remove passing tests when in silent mode (pre-commit)
+    if (silent && blocklist.tests.blocked.length > 0) {
+      const passingTests = [];
+      const stillFailing = [];
+
+      // Check each blocked test
+      blocklist.tests.blocked.forEach(file => {
+        if (testFile(file)) {
+          passingTests.push(file);
+        } else {
+          stillFailing.push(file);
+        }
+      });
+
+      // Update the blocklist with only still-failing tests
+      if (passingTests.length > 0) {
+        blocklist.tests.blocked = stillFailing;
+        blocklist.statistics.passingTestFiles += passingTests.length;
+
+        // Log to a file for debugging if needed
+        const logMessage = `[${new Date().toISOString()}] Auto-removed ${passingTests.length} passing tests from burndown list\n`;
+        try {
+          fs.appendFileSync(path.join(__dirname, '..', '.burndown-auto-update.log'), logMessage);
+        } catch (e) {
+          // Ignore logging errors
+        }
+      }
+    }
+
     saveBlocklist(blocklist);
 
-    console.log('✅ Statistics updated successfully:');
-    console.log(`   Total Tests: ${actualStats.totalTests}`);
-    console.log(`   Passing Tests: ${actualStats.passingTests}`);
-    console.log(`   Failing Tests: ${actualStats.failingTests}`);
+    if (!silent) {
+      console.log('✅ Statistics updated successfully:');
+      console.log(`   Total Tests: ${actualStats.totalTests}`);
+      console.log(`   Passing Tests: ${actualStats.passingTests}`);
+      console.log(`   Failing Tests: ${actualStats.failingTests}`);
+    }
   }
 };
 
@@ -312,7 +351,12 @@ const args = process.argv.slice(3);
 if (!command || command === 'help' || command === '--help') {
   showHelp();
 } else if (commands[command]) {
-  commands[command](...args);
+  // Special handling for refresh command with --silent flag
+  if (command === 'refresh' && args.includes('--silent')) {
+    commands[command]({ silent: true });
+  } else {
+    commands[command](...args);
+  }
 } else {
   console.error(`Unknown command: ${command}`);
   showHelp();
