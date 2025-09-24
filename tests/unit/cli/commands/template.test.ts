@@ -70,8 +70,8 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
         getAliases: jest.fn(),
       } as any;
 
-      mockContainer.register(TemplateService, { useValue: mockTemplateServiceInstance });
-      mockContainer.register(TemplateIdentifierService, { useValue: mockIdentifierServiceInstance });
+      mockContainer.registerInstance(TemplateService, mockTemplateServiceInstance as any);
+      mockContainer.registerInstance(TemplateIdentifierService, mockIdentifierServiceInstance as any);
     }
 
     const command = createTemplateCommand(mockContainer);

@@ -93,11 +93,11 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
     if (mockServices) {
       setupServiceMocks();
       // Register mock services in container
-      mockContainer.register(TemplateService, { useValue: mockTemplateServiceInstance });
-      mockContainer.register(FileSystemService, { useValue: mockFileSystemServiceInstance });
-      mockContainer.register(ProjectManifestService, { useValue: mockProjectManifestServiceInstance });
-      mockContainer.register(ProjectValidationService, { useValue: mockProjectValidationServiceInstance });
-      mockContainer.register(ProjectFixService, { useValue: mockProjectFixServiceInstance });
+      mockContainer.registerInstance(TemplateService, mockTemplateServiceInstance as any);
+      mockContainer.registerInstance(FileSystemService, mockFileSystemServiceInstance as any);
+      mockContainer.registerInstance(ProjectManifestService, mockProjectManifestServiceInstance as any);
+      mockContainer.registerInstance(ProjectValidationService, mockProjectValidationServiceInstance as any);
+      mockContainer.registerInstance(ProjectFixService, mockProjectFixServiceInstance as any);
     }
 
     const command = createFixCommand(mockContainer);
@@ -182,7 +182,7 @@ describe('scaffold fix command unit tests', () => {
 
       const result = await executeCommand([]);
 
-      expect(result.stdout).toContain('Not a scaffold-managed project');
+      expect(result.stdout).toContain('Not a scaffold-managed project.');
       cwdSpy.mockRestore();
     });
 
@@ -238,7 +238,7 @@ describe('scaffold fix command unit tests', () => {
 
       const result = await executeCommand(['/existing/path']);
 
-      expect(result.stdout).toContain('Not a scaffold-managed project');
+      expect(result.stdout).toContain('Not a scaffold-managed project.');
       expect(result.exitCode).toBe(0);
     });
   });
@@ -257,8 +257,8 @@ describe('scaffold fix command unit tests', () => {
 
       expect(result.stdout).toContain('Not a scaffold-managed project.');
       expect(result.stdout).toContain('No .scaffold/manifest.json file found.');
-      expect(result.stdout).toContain('Use "scaffold new"');
-      expect(result.stdout).toContain('Use "scaffold extend"');
+      expect(result.stdout).toContain('Use "scaffold new" to create');
+      expect(result.stdout).toContain('Use "scaffold new" to create a new project or "scaffold extend" to add templates.');
       expect(result.exitCode).toBe(0);
     });
 
