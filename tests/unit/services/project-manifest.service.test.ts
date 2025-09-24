@@ -173,11 +173,16 @@ describe('ProjectManifestService', () => {
     });
 
     it('should handle file service errors', async () => {
-      fakeFileService.setError('Write error');
+      // Set up directories first to allow ensureDirectory to succeed
+      fakeFileService.setDirectory('/test-project');
+      fakeFileService.setDirectory('/test-project/.scaffold');
+
+      // Set error specifically for writeJson method
+      fakeFileService.setMethodError('writeJson', 'Write error');
 
       await expect(
         manifestService.updateProjectManifest('/test-project', mockManifest)
-      ).rejects.toThrow('Failed to write project manifest');
+      ).rejects.toThrow('Failed to write project manifest to');
     });
   });
 

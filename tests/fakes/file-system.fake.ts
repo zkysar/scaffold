@@ -8,16 +8,22 @@ export class FakeFileSystemService implements IFileSystemService {
   private shouldThrowError: string | null = null;
   private nextReturnValue: any = null;
   private _isDryRun = false;
+  private methodErrors: Map<string, string> = new Map();
 
   reset(): void {
     this.files.clear();
     this.directories.clear();
     this.shouldThrowError = null;
     this.nextReturnValue = null;
+    this.methodErrors.clear();
   }
 
   setError(message: string): void {
     this.shouldThrowError = message;
+  }
+
+  setMethodError(method: string, message: string): void {
+    this.methodErrors.set(method, message);
   }
 
   setReturnValue(value: any): void {
@@ -269,6 +275,14 @@ export class FakeFileSystemService implements IFileSystemService {
 
   async writeJson(filePath: string, data: any, options?: any): Promise<void> {
     this.checkError();
+
+    // Check for method-specific error
+    const methodError = this.methodErrors.get('writeJson');
+    if (methodError) {
+      this.methodErrors.delete('writeJson');
+      throw new Error(methodError);
+    }
+
     if (!this.isDryRun) {
       this.setFile(filePath, JSON.stringify(data, null, 2));
     }

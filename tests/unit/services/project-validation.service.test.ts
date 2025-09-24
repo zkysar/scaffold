@@ -7,12 +7,14 @@ import type { Template, ProjectManifest } from '../../../src/models';
 import { FakeFileSystemService } from '../../fakes/file-system.fake';
 import { FakeTemplateService } from '../../fakes/template-service.fake';
 import { FakeProjectManifestService } from '../../fakes/project-manifest.fake';
+import { FakeVariableSubstitutionService } from '../../fakes/variable-substitution.fake';
 
 describe('ProjectValidationService', () => {
   let validationService: ProjectValidationService;
   let fakeTemplateService: FakeTemplateService;
   let fakeFileService: FakeFileSystemService;
   let fakeProjectManifestService: FakeProjectManifestService;
+  let fakeVariableService: FakeVariableSubstitutionService;
 
   const mockTemplate: Template = {
     id: 'test-template-123',
@@ -104,6 +106,7 @@ describe('ProjectValidationService', () => {
     fakeTemplateService = new FakeTemplateService();
     fakeFileService = new FakeFileSystemService();
     fakeProjectManifestService = new FakeProjectManifestService();
+    fakeVariableService = new FakeVariableSubstitutionService();
 
     // Setup default data BEFORE creating the service
     fakeProjectManifestService.setManifest('/test-project', mockManifest);
@@ -117,7 +120,8 @@ describe('ProjectValidationService', () => {
     validationService = new ProjectValidationService(
       fakeTemplateService,
       fakeFileService,
-      getProjectManifestFn
+      fakeVariableService,
+      fakeProjectManifestService
     );
 
     // Setup fake file system

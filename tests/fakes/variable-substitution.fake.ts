@@ -63,14 +63,18 @@ export class FakeVariableSubstitutionService implements IVariableSubstitutionSer
 
     // Use custom substitution rules if set
     for (const [variable, value] of this.substitutionRules) {
-      const pattern = new RegExp(`\\$\\{${variable}\\}`, 'g');
-      result = result.replace(pattern, value);
+      const dollarPattern = new RegExp(`\\$\\{${variable}\\}`, 'g');
+      const bracePattern = new RegExp(`\\{\\{${variable}\\}\\}`, 'g');
+      result = result.replace(dollarPattern, value);
+      result = result.replace(bracePattern, value);
     }
 
     // Use provided variables
     for (const [key, value] of Object.entries(variables)) {
-      const pattern = new RegExp(`\\$\\{${key}\\}`, 'g');
-      result = result.replace(pattern, value);
+      const dollarPattern = new RegExp(`\\$\\{${key}\\}`, 'g');
+      const bracePattern = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      result = result.replace(dollarPattern, String(value));
+      result = result.replace(bracePattern, String(value));
     }
 
     return result;
@@ -108,8 +112,10 @@ export class FakeVariableSubstitutionService implements IVariableSubstitutionSer
     // Use provided variables
     let result = path;
     for (const [key, value] of Object.entries(variables)) {
-      const pattern = new RegExp(`\\$\\{${key}\\}`, 'g');
-      result = result.replace(pattern, String(value));
+      const dollarPattern = new RegExp(`\\$\\{${key}\\}`, 'g');
+      const bracePattern = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      result = result.replace(dollarPattern, String(value));
+      result = result.replace(bracePattern, String(value));
     }
 
     return result;
@@ -131,7 +137,31 @@ export class FakeVariableSubstitutionService implements IVariableSubstitutionSer
       return value;
     }
 
-    return []; // Simplified implementation
+    const results: any[] = [];
+
+    // Check required variables in template
+    if (template.variables && Array.isArray(template.variables)) {
+      for (const variable of template.variables) {
+        if (variable.required) {
+          const isProvided = provided[variable.name] !== undefined && provided[variable.name] !== '';
+          results.push({
+            variable: variable.name,
+            valid: isProvided,
+            severity: isProvided ? 'info' : 'error',
+            message: isProvided ? `Variable ${variable.name} is valid` : `Required variable ${variable.name} is missing`
+          });
+        } else {
+          results.push({
+            variable: variable.name,
+            valid: true,
+            severity: 'info',
+            message: `Optional variable ${variable.name} is valid`
+          });
+        }
+      }
+    }
+
+    return results;
   }
 
   extractVariables(content: string): string[] {

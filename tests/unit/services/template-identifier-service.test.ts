@@ -13,7 +13,7 @@ jest.mock('os');
 describe('TemplateIdentifierService', () => {
   let service: TemplateIdentifierService;
   const mockHomeDir = '/home/user';
-  const aliasFilePath = '/home/user/.scaffold/template-aliases.json';
+  const aliasFilePath = '/home/user/.scaffold/templates/aliases.json';
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -339,21 +339,21 @@ describe('TemplateIdentifierService', () => {
 
   describe('isValidAlias', () => {
     it('should accept valid aliases', () => {
-      expect(service['isValidAlias']('my-template')).toBe(true);
-      expect(service['isValidAlias']('template_v2')).toBe(true);
-      expect(service['isValidAlias']('Template123')).toBe(true);
-      expect(service['isValidAlias']('a')).toBe(true);
-      expect(service['isValidAlias']('test.template')).toBe(true);
+      expect((service as any)['isValidAlias']('my-template')).toBe(true);
+      expect((service as any)['isValidAlias']('template_v2')).toBe(true);
+      expect((service as any)['isValidAlias']('Template123')).toBe(true);
+      expect((service as any)['isValidAlias']('a')).toBe(true);
+      expect((service as any)['isValidAlias']('test.template')).toBe(true);
     });
 
     it('should reject invalid aliases', () => {
-      expect(service['isValidAlias']('')).toBe(false);
-      expect(service['isValidAlias']('../etc/passwd')).toBe(false);
-      expect(service['isValidAlias']('alias/with/slash')).toBe(false);
-      expect(service['isValidAlias']('alias\\with\\backslash')).toBe(false);
-      expect(service['isValidAlias']('alias with spaces')).toBe(false);
-      expect(service['isValidAlias']('alias\ttab')).toBe(false);
-      expect(service['isValidAlias']('alias\nnewline')).toBe(false);
+      expect((service as any)['isValidAlias']('')).toBe(false);
+      expect((service as any)['isValidAlias']('../etc/passwd')).toBe(false);
+      expect((service as any)['isValidAlias']('alias/with/slash')).toBe(false);
+      expect((service as any)['isValidAlias']('alias\\with\\backslash')).toBe(false);
+      expect((service as any)['isValidAlias']('alias with spaces')).toBe(false);
+      expect((service as any)['isValidAlias']('alias\ttab')).toBe(false);
+      expect((service as any)['isValidAlias']('alias\nnewline')).toBe(false);
     });
   });
 });

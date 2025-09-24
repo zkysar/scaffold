@@ -33,11 +33,6 @@
       "tests/unit/cli/commands/template.test.ts",
       "tests/unit/services/configuration.service.test.ts",
       "tests/unit/services/file-system.service.test.ts",
-      "tests/unit/services/project-creation.service.test.ts",
-      "tests/unit/services/project-extension.service.test.ts",
-      "tests/unit/services/project-fix.service.test.ts",
-      "tests/unit/services/project-manifest.service.test.ts",
-      "tests/unit/services/project-validation.service.test.ts",
       "tests/unit/services/template-identifier.service.test.ts",
       "tests/unit/services/variable-substitution-service.test.ts"
     ]
@@ -53,9 +48,9 @@
   },
   "statistics": {
     "totalTests": 354,
-    "passingTests": 180,
-    "failingTests": 174,
+    "passingTests": 205,
+    "failingTests": 149,
     "blockedTestFiles": 34,
-    "passingTestFiles": 6
+    "passingTestFiles": 11
   }
 }
