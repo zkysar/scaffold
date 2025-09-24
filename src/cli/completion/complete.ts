@@ -5,8 +5,9 @@
 
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
-import { CompletionService } from '../../services';
-import type { CompletionContext } from '../../models';
+
+import type { CompletionContext } from '@/models';
+import { CompletionService } from '@/services';
 
 interface CompleteCommandOptions {
   line?: string;
@@ -31,6 +32,10 @@ export function createCompleteCommand(container: DependencyContainer): Command {
     .configureHelp({
       visibleCommands: () => [], // Hide command from help
     });
+
+  // Mark as hidden so it doesn't appear in completions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (command as any).hidden = true;
 
   return command;
 }
@@ -57,6 +62,7 @@ async function handleCompleteCommand(
     if (result.completions.length > 0) {
       // Output as JSON lines for parsing by shell scripts
       result.completions.forEach(completion => {
+        // eslint-disable-next-line no-console
         console.log(JSON.stringify({ value: completion.value }));
       });
     }
@@ -68,7 +74,9 @@ async function handleCompleteCommand(
   }
 }
 
-function parseCompletionContext(options: CompleteCommandOptions): CompletionContext | null {
+function parseCompletionContext(
+  options: CompleteCommandOptions
+): CompletionContext | null {
   const { line, point } = options;
 
   if (!line || !point) {
@@ -84,7 +92,10 @@ function parseCompletionContext(options: CompleteCommandOptions): CompletionCont
   const commandLine = parseCommandLine(line);
 
   // Extract current word being completed and previous word
-  const { currentWord, previousWord } = extractCurrentAndPreviousWords(line, cursorPosition);
+  const { currentWord, previousWord } = extractCurrentAndPreviousWords(
+    line,
+    cursorPosition
+  );
 
   // Get environment variables
   const environmentVars = new Map<string, string>();
@@ -140,7 +151,10 @@ function parseCommandLine(line: string): string[] {
   return words;
 }
 
-function extractCurrentAndPreviousWords(line: string, cursorPosition: number): {
+function extractCurrentAndPreviousWords(
+  line: string,
+  cursorPosition: number
+): {
   currentWord: string;
   previousWord: string | null;
 } {
@@ -151,8 +165,11 @@ function extractCurrentAndPreviousWords(line: string, cursorPosition: number): {
   const words = parseCommandLine(lineUpToCursor);
 
   // Check if cursor is at end of a word or in the middle of whitespace
-  const isAtWordEnd = cursorPosition < line.length && line[cursorPosition] !== ' ';
-  const isAfterSpace = cursorPosition > 0 && line[cursorPosition - 1] === ' ';
+  const isAtWordEnd =
+    cursorPosition < line.length && line[cursorPosition] !== ' ';
+  const isAfterSpace =
+    (cursorPosition > 0 && line[cursorPosition - 1] === ' ') || // Standard case: cursor right after space
+    (cursorPosition < line.length && line[cursorPosition] === ' '); // Cursor ON a space character
 
   let currentWord = '';
   let previousWord: string | null = null;

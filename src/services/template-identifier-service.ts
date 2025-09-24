@@ -3,12 +3,15 @@
  * Manages SHA-based identification and aliasing for templates
  */
 
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
+
 import { injectable } from 'tsyringe';
+
+import { generateSHAFromObject } from '@/lib/sha';
+import type { Template } from '@/models';
+
 import { IdentifierService } from './identifier-service';
-import { generateSHAFromObject } from '../lib/sha';
-import type { Template } from '../models';
 
 /**
  * Service for managing template identifiers (SHAs and aliases)
@@ -17,17 +20,22 @@ import type { Template } from '../models';
 export class TemplateIdentifierService extends IdentifierService {
   private static instance: TemplateIdentifierService | null = null;
 
-  constructor(aliasFilePath?: string) {
-    const defaultPath = path.join(os.homedir(), '.scaffold', 'templates', 'aliases.json');
-    super(aliasFilePath ?? defaultPath);
+  constructor() {
+    const defaultPath = path.join(
+      os.homedir(),
+      '.scaffold',
+      'templates',
+      'aliases.json'
+    );
+    super(defaultPath);
   }
 
   /**
    * Get singleton instance with optional custom alias file path
    */
-  static getInstance(aliasFilePath?: string): TemplateIdentifierService {
-    if (!TemplateIdentifierService.instance || aliasFilePath) {
-      TemplateIdentifierService.instance = new TemplateIdentifierService(aliasFilePath);
+  static getInstance(): TemplateIdentifierService {
+    if (!TemplateIdentifierService.instance) {
+      TemplateIdentifierService.instance = new TemplateIdentifierService();
     }
     return TemplateIdentifierService.instance;
   }
@@ -50,7 +58,7 @@ export class TemplateIdentifierService extends IdentifierService {
       files: template.files,
       variables: template.variables,
       rules: template.rules,
-      dependencies: template.dependencies
+      dependencies: template.dependencies,
     };
 
     // Generate SHA from the content
@@ -71,7 +79,8 @@ export class TemplateIdentifierService extends IdentifierService {
       ...template,
       id: sha,
       // Remove aliases from the template itself (managed separately)
-      aliases: undefined as any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      aliases: undefined as any,
     };
 
     return migratedTemplate;
@@ -92,7 +101,10 @@ export class TemplateIdentifierService extends IdentifierService {
    * @param template - The template
    * @param options - Display options
    */
-  formatTemplateForDisplay(template: Template, options: { verbose?: boolean } = {}): string {
+  formatTemplateForDisplay(
+    template: Template,
+    options: { verbose?: boolean } = {}
+  ): string {
     return this.formatForDisplay(template.id, options);
   }
 
