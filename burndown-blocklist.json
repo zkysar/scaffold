@@ -23,7 +23,6 @@
       "tests/integration/cli/completion/script.test.ts",
       "tests/integration/cli/completion/status.test.ts",
       "tests/integration/cli/completion/uninstall.test.ts",
-      "tests/integration/commands/template-alias.test.ts",
       "tests/contract/import-conventions.test.ts",
       "tests/unit/cli/commands/template.test.ts",
       "tests/unit/services/configuration.service.test.ts",
@@ -48,9 +47,9 @@
   },
   "statistics": {
     "totalTests": 354,
-    "passingTests": 205,
-    "failingTests": 149,
+    "passingTests": 210,
+    "failingTests": 144,
     "blockedTestFiles": 34,
-    "passingTestFiles": 11
+    "passingTestFiles": 12
   }
 }
