@@ -3,14 +3,14 @@
  * Tests option parsing, validation, flow control, and error handling
  */
 
-import { createTemplateCommand } from '../../../../src/cli/commands/template.command';
+import { createTemplateCommand } from '@/cli/commands/template.command';
 import {
   TemplateService,
-} from '../../../../src/services';
-import { TemplateIdentifierService } from '../../../../src/services/template-identifier-service';
+} from '@/services';
+import { TemplateIdentifierService } from '@/services/template-identifier-service';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
-import type { Template, TemplateLibrary, TemplateSummary } from '../../../../src/models';
+import type { Template, TemplateLibrary, TemplateSummary } from '@/models';
 
 // Mock dependencies
 jest.mock('../../../../src/services');

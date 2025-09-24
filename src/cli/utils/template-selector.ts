@@ -5,8 +5,8 @@
 
 import chalk from 'chalk';
 import inquirer from 'inquirer';
-import { TemplateService } from '../../services';
-import type { TemplateSummary } from '../../models';
+import { TemplateService } from '@/services';
+import type { TemplateSummary } from '@/models';
 import { logger } from '@/lib/logger';
 
 export interface TemplateSelectionOptions {

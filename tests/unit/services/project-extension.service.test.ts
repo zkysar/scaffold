@@ -2,11 +2,11 @@
  * Unit tests for ProjectExtensionService
  */
 
-import { ProjectExtensionService } from '../../../src/services/project-extension.service';
-import type { Template, ProjectManifest } from '../../../src/models';
-import { FakeTemplateService } from '../../fakes/template-service.fake';
-import { FakeFileSystemService } from '../../fakes/file-system.fake';
-import { FakeProjectManifestService } from '../../fakes/project-manifest.fake';
+import { ProjectExtensionService } from '@/services/project-extension.service';
+import type { Template, ProjectManifest } from '@/models';
+import { FakeTemplateService } from '@tests/fakes/template-service.fake';
+import { FakeFileSystemService } from '@tests/fakes/file-system.fake';
+import { FakeProjectManifestService } from '@tests/fakes/project-manifest.fake';
 
 describe('ProjectExtensionService', () => {
   let extensionService: ProjectExtensionService;

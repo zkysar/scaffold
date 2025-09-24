@@ -8,7 +8,7 @@ import { resolve } from 'path';
 
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
-import { ExitCode } from '../../constants/exit-codes';
+import { ExitCode } from '@/constants/exit-codes';
 
 import { FileSystemService } from '@/services';
 import { logger } from '@/lib/logger';

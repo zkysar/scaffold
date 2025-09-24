@@ -9,7 +9,7 @@ import {
   createMockFileSystem,
   createMockConsole,
   CommandResult,
-} from '../../helpers/cli-helpers';
+} from '@tests/helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
 import { ProjectManifestService } from '@/services/project-manifest.service';

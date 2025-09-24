@@ -7,9 +7,9 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { existsSync, statSync } from 'fs';
 import { DependencyContainer } from 'tsyringe';
-import { CompletionService } from '../../services';
-import { createLogger, logger } from '../../lib/logger';
-import type { CompletionConfig } from '../../models';
+import { CompletionService } from '@/services';
+import { createLogger, logger } from '@/lib/logger';
+import type { CompletionConfig } from '@/models';
 
 interface StatusCommandOptions {
   verbose?: boolean;

@@ -6,7 +6,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { DependencyContainer } from 'tsyringe';
-import { CompletionService } from '../../services';
+import { CompletionService } from '@/services';
 import { logger } from '@/lib/logger';
 
 interface UninstallCommandOptions {
