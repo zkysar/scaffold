@@ -5,7 +5,7 @@
 import {
   VariableSubstitutionService,
   type VariableSubstitutionOptions,
-} from '../../../src/services/variable-substitution.service';
+} from '@/services/variable-substitution.service';
 
 describe('VariableSubstitutionService', () => {
   let service: VariableSubstitutionService;

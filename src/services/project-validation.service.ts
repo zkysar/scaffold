@@ -11,16 +11,16 @@ import type {
   ValidationWarning,
   ValidationStats,
   ProjectManifest,
-} from '../models';
-import type { ITemplateService } from './template-service';
-import { TemplateService } from './template-service';
-import type { IFileSystemService } from './file-system.service';
-import { FileSystemService } from './file-system.service';
-import type { IVariableSubstitutionService } from './variable-substitution.service';
-import { VariableSubstitutionService } from './variable-substitution.service';
-import type { IProjectManifestService } from './project-manifest.service';
-import { ProjectManifestService } from './project-manifest.service';
-import { shortSHA } from '../lib/sha';
+} from '@/models';
+import type { ITemplateService } from '@/services/template-service';
+import { TemplateService } from '@/services/template-service';
+import type { IFileSystemService } from '@/services/file-system.service';
+import { FileSystemService } from '@/services/file-system.service';
+import type { IVariableSubstitutionService } from '@/services/variable-substitution.service';
+import { VariableSubstitutionService } from '@/services/variable-substitution.service';
+import type { IProjectManifestService } from '@/services/project-manifest.service';
+import { ProjectManifestService } from '@/services/project-manifest.service';
+import { shortSHA } from '@/lib/sha';
 
 export interface IProjectValidationService {
   /**

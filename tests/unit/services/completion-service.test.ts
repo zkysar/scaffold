@@ -4,7 +4,7 @@
  */
 
 import * as path from 'path';
-import { FakeFileSystemService } from '../../fakes/file-system.fake';
+import { FakeFileSystemService } from '@tests/fakes/file-system.fake';
 
 // Mock fs-extra module with fake service
 const fakeFileSystemService = new FakeFileSystemService();
@@ -34,12 +34,12 @@ jest.mock('os', () => ({
   homedir: jest.fn().mockReturnValue('/mock/home'),
 }));
 
-import { CompletionService } from '../../../src/services/completion-service';
+import { CompletionService } from '@/services/completion-service';
 import {
   ShellType,
   CompletionConfig,
   CompletionContext,
-} from '../../../src/models';
+} from '@/models';
 
 describe('CompletionService', () => {
   let service: CompletionService;
