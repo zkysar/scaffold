@@ -8,10 +8,6 @@ import * as path from 'path';
 
 import { injectable } from 'tsyringe';
 
-import { IdentifierService } from './identifier-service';
-import { generateSHAFromObject } from '../lib/sha';
-import type { Template } from '../models';
-
 /**
  * Service for managing template identifiers (SHAs and aliases)
  */

@@ -3,14 +3,13 @@
  * Tests MUST fail initially as no implementation exists yet (TDD)
  */
 
-import { createFixCommand } from '../../../src/cli/commands/fix.command';
-
+import { createFixCommand } from '@/cli/commands/fix.command';
 import { logger } from '@/lib/logger';
 import {
   createMockFileSystem,
   createMockConsole,
   CommandResult,
-} from '../../helpers/cli-helpers';
+} from '@tests/helpers/cli-helpers';
 import mockFs from 'mock-fs';
 import { Command } from 'commander';
 

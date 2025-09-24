@@ -10,15 +10,15 @@ import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
 
 // Import command handlers
-import { createCheckCommand } from './commands/check.command';
-import { createCleanCommand } from './commands/clean.command';
-import { createConfigCommand } from './commands/config.command';
-import { createExtendCommand } from './commands/extend.command';
-import { createFixCommand } from './commands/fix.command';
-import { createNewCommand } from './commands/new.command';
-import { createShowCommand } from './commands/show.command';
-import { createTemplateCommand } from './commands/template.command';
-import { createCompletionCommand } from './completion';
+import { createCheckCommand } from '@/cli/commands/check.command';
+import { createCleanCommand } from '@/cli/commands/clean.command';
+import { createConfigCommand } from '@/cli/commands/config.command';
+import { createExtendCommand } from '@/cli/commands/extend.command';
+import { createFixCommand } from '@/cli/commands/fix.command';
+import { createNewCommand } from '@/cli/commands/new.command';
+import { createShowCommand } from '@/cli/commands/show.command';
+import { createTemplateCommand } from '@/cli/commands/template.command';
+import { createCompletionCommand } from '@/cli/completion';
 
 export function createProgram(container: DependencyContainer): Command {
   // Get package.json for version info

@@ -11,17 +11,13 @@ import type {
   Template,
   AppliedTemplate,
   HistoryEntry,
-} from '../models';
-import type { IFileSystemService } from './file-system.service';
-import { FileSystemService } from './file-system.service';
-import type { IProjectManifestService } from './project-manifest.service';
-import { ProjectManifestService } from './project-manifest.service';
-import type { IProjectValidationService } from './project-validation.service';
-import { ProjectValidationService } from './project-validation.service';
-import { TemplateService } from './template-service';
-import type { ITemplateService } from './template-service';
-import { VariableSubstitutionService } from './variable-substitution.service';
-import type { IVariableSubstitutionService } from './variable-substitution.service';
+} from '@/models';
+import type { IProjectManifestService } from '@/services/project-manifest.service';
+import { ProjectManifestService } from '@/services/project-manifest.service';
+import type { ITemplateService } from '@/services/template-service';
+import { TemplateService } from '@/services/template-service';
+import type { IProjectCreationService } from '@/services/project-creation.service';
+import { ProjectCreationService } from '@/services/project-creation.service';
 
 export interface IProjectExtensionService {
   /**

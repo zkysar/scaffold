@@ -9,9 +9,9 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
 
-import { createLogger, logger } from '../../lib/logger';
-import type { CompletionConfig } from '../../models';
-import { CompletionService } from '../../services';
+import { createLogger, logger } from '@/lib/logger';
+import type { CompletionConfig } from '@/models';
+import { CompletionService } from '@/services';
 
 interface StatusCommandOptions {
   verbose?: boolean;

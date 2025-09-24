@@ -8,15 +8,12 @@ import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
 
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
 import { logger } from '@/lib/logger';
-
-import { ExitCode, exitWithCode } from '../../constants/exit-codes';
-import { shortSHA } from '../../lib/sha';
-import type { Template } from '../../models';
-import { TemplateService } from '../../services';
-import { TemplateIdentifierService } from '../../services/template-identifier-service';
-
-
+import { shortSHA } from '@/lib/sha';
+import type { Template } from '@/models';
+import { TemplateService } from '@/services';
+import { TemplateIdentifierService } from '@/services/template-identifier-service';
 
 interface TemplateCommandOptions {
   verbose?: boolean;

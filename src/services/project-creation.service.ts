@@ -12,13 +12,12 @@ import type {
   AppliedTemplate,
   HistoryEntry,
 } from '@/models';
-
-import type { IFileSystemService } from './file-system.service';
-import { FileSystemService } from './file-system.service';
-import type { ITemplateService } from './template-service';
-import { TemplateService } from './template-service';
-import type { IVariableSubstitutionService } from './variable-substitution.service';
-import { VariableSubstitutionService } from './variable-substitution.service';
+import type { IFileSystemService } from '@/services/file-system.service';
+import { FileSystemService } from '@/services/file-system.service';
+import type { ITemplateService } from '@/services/template-service';
+import { TemplateService } from '@/services/template-service';
+import type { IVariableSubstitutionService } from '@/services/variable-substitution.service';
+import { VariableSubstitutionService } from '@/services/variable-substitution.service';
 
 export interface IProjectCreationService {
   /**

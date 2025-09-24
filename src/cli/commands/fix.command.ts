@@ -10,6 +10,7 @@ import chalk from 'chalk';
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
 
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
 import { logger } from '@/lib/logger';
 import {
   ProjectFixService,
@@ -18,8 +19,6 @@ import {
   TemplateService,
   FileSystemService,
 } from '@/services';
-
-import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 
 interface FixCommandOptions {
   verbose?: boolean;

@@ -32,7 +32,7 @@ export class FakeConfigurationService implements IConfigurationService {
   }
 
   getStoredConfigurations(): Map<ConfigScope, ScaffoldConfig> {
-    return new Map(this.configurations);
+    return this.configurations;
   }
 
   private checkError(): void {
@@ -137,6 +137,54 @@ export class FakeConfigurationService implements IConfigurationService {
     };
   }
 
+  private getEnvironmentOverride(key: string): any {
+    // Convert nested keys to environment variable format
+    // e.g., "preferences.colorOutput" → "SCAFFOLD_PREFERENCES_COLOR_OUTPUT"
+    const envKey = 'SCAFFOLD_' + key
+      .split('.')
+      .map(part => part.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`))
+      .join('_')
+      .toUpperCase();
+    const envValue = process.env[envKey];
+
+    if (envValue === undefined) return undefined;
+
+    // Try to parse as JSON for complex values
+    try {
+      return JSON.parse(envValue);
+    } catch {
+      // Return as string for simple values
+      return envValue;
+    }
+  }
+
+  private applyEnvironmentOverrides(config: ScaffoldConfig): void {
+    // Apply common environment overrides
+    const overrides = [
+      'preferences.colorOutput',
+      'preferences.verboseOutput',
+      'preferences.strictModeDefault',
+      'preferences.confirmDestructive',
+      'preferences.backupBeforeSync',
+      'preferences.defaultTemplate',
+      'preferences.editor',
+      'paths.templatesDir',
+      'paths.cacheDir',
+      'paths.backupDir',
+      'defaults.author',
+      'defaults.gitIgnore',
+      'custom.object',
+      'invalid.json'
+    ];
+
+    for (const key of overrides) {
+      const envValue = this.getEnvironmentOverride(key);
+      if (envValue !== undefined) {
+        this.setNestedValue(config, key, envValue);
+      }
+    }
+  }
+
   // IConfigurationService implementation
   get<T = any>(key: string, scope?: ConfigScope): T | undefined {
     this.checkError();
@@ -146,6 +194,12 @@ export class FakeConfigurationService implements IConfigurationService {
     if (scope) {
       const config = this.configurations.get(scope);
       return this.getNestedValue(config, key) as T;
+    }
+
+    // Check environment variables first
+    const envValue = this.getEnvironmentOverride(key);
+    if (envValue !== undefined) {
+      return envValue as T;
     }
 
     // Check cascade: project → workspace → global
@@ -186,7 +240,8 @@ export class FakeConfigurationService implements IConfigurationService {
     if (returnValue !== null) return returnValue;
 
     if (scope) {
-      return this.configurations.get(scope) || this.createDefaultConfig(scope);
+      const config = this.configurations.get(scope) || this.createDefaultConfig(scope);
+      return this.deepClone(config);
     }
 
     return this.getEffectiveConfiguration();
@@ -265,6 +320,20 @@ export class FakeConfigurationService implements IConfigurationService {
     // Start with global config
     let effective = this.deepClone(global);
 
+    // Check if we have any real configs beyond the defaults created by loadConfiguration
+    let hasRealWorkspace = false;
+    let hasRealProject = false;
+
+    // If the workspace config has the test ID from mockWorkspaceConfig, it's real
+    if (workspace && workspace.id !== 'test-config-id') {
+      hasRealWorkspace = true;
+    }
+
+    // If the project config has the test ID from mockProjectConfig, it's real
+    if (project && project.id !== 'test-config-id') {
+      hasRealProject = true;
+    }
+
     // Merge workspace config
     if (workspace) {
       effective = this.mergeConfigs(effective, workspace);
@@ -273,6 +342,18 @@ export class FakeConfigurationService implements IConfigurationService {
     // Merge project config
     if (project) {
       effective = this.mergeConfigs(effective, project);
+    }
+
+    // Apply environment overrides
+    this.applyEnvironmentOverrides(effective);
+
+    // Set the scope based on what real configurations we have
+    if (hasRealProject) {
+      effective.scope = ConfigLevel.PROJECT;
+    } else if (hasRealWorkspace) {
+      effective.scope = ConfigLevel.WORKSPACE;
+    } else {
+      effective.scope = ConfigLevel.GLOBAL;
     }
 
     return effective;

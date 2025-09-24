@@ -6,14 +6,12 @@
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
 
+import { createCompleteCommand } from '@/cli/completion/complete';
+import { createInstallCommand } from '@/cli/completion/install';
+import { createScriptCommand } from '@/cli/completion/script';
+import { createStatusCommand } from '@/cli/completion/status';
+import { createUninstallCommand } from '@/cli/completion/uninstall';
 import { logger } from '@/lib/logger';
-
-import { createCompleteCommand } from './complete';
-import { createInstallCommand } from './install';
-import { createScriptCommand } from './script';
-import { createStatusCommand } from './status';
-import { createUninstallCommand } from './uninstall';
-
 
 export function createCompletionCommand(container: DependencyContainer): Command {
   const command = new Command('completion');

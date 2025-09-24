@@ -2,16 +2,16 @@
  * Unit tests for ProjectFixService
  */
 
-import { ProjectFixService } from '../../../src/services/project-fix.service';
+import { ProjectFixService } from '@/services/project-fix.service';
 import type {
   Template,
   ProjectManifest,
   ValidationReport,
-} from '../../../src/models';
-import { FakeTemplateService } from '../../fakes/template-service.fake';
-import { FakeFileSystemService } from '../../fakes/file-system.fake';
-import { FakeProjectValidationService } from '../../fakes/project-validation.fake';
-import { FakeProjectManifestService } from '../../fakes/project-manifest.fake';
+} from '@/models';
+import { FakeTemplateService } from '@tests/fakes/template-service.fake';
+import { FakeFileSystemService } from '@tests/fakes/file-system.fake';
+import { FakeProjectValidationService } from '@tests/fakes/project-validation.fake';
+import { FakeProjectManifestService } from '@tests/fakes/project-manifest.fake';
 
 describe('ProjectFixService', () => {
   let fixService: ProjectFixService;

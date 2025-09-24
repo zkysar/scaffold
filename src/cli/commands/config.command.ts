@@ -8,8 +8,7 @@ import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
 
 import { logger } from '@/lib/logger';
-
-import { ConfigurationService } from '../../services';
+import { ConfigurationService } from '@/services';
 
 
 interface ConfigCommandOptions {

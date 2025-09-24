@@ -12,7 +12,7 @@ import {
   createShellEnv,
   completionFileExists,
   isCompletionInShellConfig,
-} from './cli-test-helpers';
+} from '@tests/integration/cli/completion/cli-test-helpers';
 
 describe('scaffold completion install (integration)', () => {
   let tempDir: string;

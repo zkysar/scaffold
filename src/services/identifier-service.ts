@@ -9,8 +9,7 @@ import * as fs from 'fs-extra';
 import { injectable } from 'tsyringe';
 
 import { logger } from '@/lib/logger';
-
-import { shortSHA, isValidSHA, findSHAByPrefix } from '../lib/sha';
+import { shortSHA, isValidSHA, findSHAByPrefix } from '@/lib/sha';
 
 
 /**

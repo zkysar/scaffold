@@ -12,6 +12,7 @@ import inquirer from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
 
 import { selectTemplates } from '@/cli/utils/template-selector';
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
 import { logger } from '@/lib/logger';
 import {
   ProjectExtensionService,
@@ -19,8 +20,6 @@ import {
   TemplateService,
   FileSystemService,
 } from '@/services';
-
-import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 
 interface ExtendCommandOptions {
   template?: string;

@@ -7,10 +7,8 @@ import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
 
 import { logger } from '@/lib/logger';
-
-import type { CompletionContext } from '../../models';
-import { CompletionService } from '../../services';
-
+import type { CompletionContext } from '@/models';
+import { CompletionService } from '@/services';
 
 interface CompleteCommandOptions {
   line?: string;

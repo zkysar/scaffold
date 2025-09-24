@@ -9,10 +9,9 @@ import { resolve } from 'path';
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
 
+import { ExitCode } from '@/constants/exit-codes';
 import { logger } from '@/lib/logger';
 import { FileSystemService } from '@/services';
-
-import { ExitCode } from '../../constants/exit-codes';
 
 
 interface CleanCommandOptions {

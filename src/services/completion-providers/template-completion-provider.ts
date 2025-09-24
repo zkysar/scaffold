@@ -5,9 +5,8 @@
 import { injectable, inject } from 'tsyringe';
 
 import { logger } from '@/lib/logger';
-
-import type { CompletionContext, CompletionItem } from '../../models';
-import { TemplateService } from '../template-service';
+import type { CompletionContext, CompletionItem } from '@/models';
+import { TemplateService } from '@/services/template-service';
 
 
 export interface ITemplateCompletionProvider {
