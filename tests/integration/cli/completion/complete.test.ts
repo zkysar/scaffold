@@ -100,11 +100,11 @@ describe('scaffold completion complete (integration)', () => {
       // Should include template subcommands
       const commandValues = completions.map(c => c.value);
       expect(commandValues).toEqual(expect.arrayContaining([
+        'create',
         'list',
-        'add',
-        'remove',
-        'show',
-        'update'
+        'delete',
+        'export',
+        'import'
       ]));
     });
 
