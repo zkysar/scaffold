@@ -6,8 +6,8 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { DependencyContainer } from 'tsyringe';
-import { CompletionService } from '../../services';
-import { ShellType } from '../../models';
+import { CompletionService } from '@/services';
+import { ShellType } from '@/models';
 import { logger } from '@/lib/logger';
 
 interface InstallCommandOptions {

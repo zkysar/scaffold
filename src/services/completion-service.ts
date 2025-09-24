@@ -19,7 +19,7 @@ import type {
 } from '@/models';
 import { ShellType } from '@/models';
 
-import { TemplateService } from './template-service';
+import { TemplateService } from '@/services/template-service';
 
 export interface ICompletionService {
   /**

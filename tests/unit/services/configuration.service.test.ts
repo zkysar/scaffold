@@ -4,14 +4,14 @@
 
 import * as path from 'path';
 import * as os from 'os';
-import { FakeConfigurationService, FakeFileSystemService } from '../../fakes';
-import { ConfigLevel } from '../../../src/models';
+import { FakeConfigurationService, FakeFileSystemService } from '@tests/fakes';
+import { ConfigLevel } from '@/models';
 import type {
   ScaffoldConfig,
   UserPreferences,
   PathConfiguration,
   DefaultSettings,
-} from '../../../src/models';
+} from '@/models';
 
 // Mock os module
 jest.mock('os', () => ({
@@ -98,15 +98,21 @@ describe('ConfigurationService', () => {
     configService.resetTestState();
     fileSystemService.reset();
 
-    // Setup configurations in the fake service
-    configService.setConfiguration(ConfigLevel.GLOBAL, mockGlobalConfig);
-    configService.setConfiguration(ConfigLevel.WORKSPACE, mockWorkspaceConfig);
-    configService.setConfiguration(ConfigLevel.PROJECT, mockProjectConfig);
+    // Setup configurations in the fake service - use deep clones to prevent mutations
+    configService.setConfiguration(ConfigLevel.GLOBAL, JSON.parse(JSON.stringify(mockGlobalConfig)));
+    configService.setConfiguration(ConfigLevel.WORKSPACE, JSON.parse(JSON.stringify(mockWorkspaceConfig)));
+    configService.setConfiguration(ConfigLevel.PROJECT, JSON.parse(JSON.stringify(mockProjectConfig)));
   });
 
   afterEach(() => {
     configService.resetTestState();
     fileSystemService.reset();
+
+    // Clean up any environment variables that might have been set during tests
+    const envKeys = Object.keys(process.env).filter(key => key.startsWith('SCAFFOLD_'));
+    envKeys.forEach(key => {
+      delete process.env[key];
+    });
   });
 
   describe('constructor', () => {

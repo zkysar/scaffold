@@ -7,12 +7,12 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
-import { TemplateService } from '../../services';
-import { TemplateIdentifierService } from '../../services/template-identifier-service';
-import { shortSHA } from '../../lib/sha';
-import type { Template } from '../../models';
+import { TemplateService } from '@/services';
+import { TemplateIdentifierService } from '@/services/template-identifier-service';
+import { shortSHA } from '@/lib/sha';
+import type { Template } from '@/models';
 import { logger } from '@/lib/logger';
-import { ExitCode, exitWithCode } from '../../constants/exit-codes';
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
 
 interface TemplateCommandOptions {
   verbose?: boolean;

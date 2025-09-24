@@ -9,8 +9,8 @@ import { injectable, inject } from 'tsyringe';
 import { logger } from '@/lib/logger';
 import type { ProjectManifest } from '@/models';
 
-import type { IFileSystemService } from './file-system.service';
-import { FileSystemService } from './file-system.service';
+import type { IFileSystemService } from '@/services/file-system.service';
+import { FileSystemService } from '@/services/file-system.service';
 
 export interface IProjectManifestService {
   /**

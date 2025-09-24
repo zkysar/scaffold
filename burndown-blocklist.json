@@ -25,7 +25,6 @@
       "tests/integration/commands/template.test.ts",
       "tests/contract/import-conventions.test.ts",
       "tests/unit/cli/commands/template.test.ts",
-      "tests/unit/services/configuration.service.test.ts",
       "tests/unit/services/file-system.service.test.ts",
       "tests/unit/services/project-creation.service.test.ts",
       "tests/unit/services/project-extension.service.test.ts",

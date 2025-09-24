@@ -17,7 +17,7 @@ import {
 } from '@/services';
 import { selectTemplates } from '@/cli/utils/template-selector';
 import { logger } from '@/lib/logger';
-import { ExitCode, exitWithCode } from '../../constants/exit-codes';
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
 
 interface ExtendCommandOptions {
   template?: string;

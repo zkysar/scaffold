@@ -29,7 +29,8 @@
     "burndown:test": "node scripts/burndown.js test",
     "burndown:lint": "node scripts/burndown.js lint",
     "burndown:check": "node scripts/burndown.js check",
-    "burndown:remove": "node scripts/burndown.js remove"
+    "burndown:remove": "node scripts/burndown.js remove",
+    "burndown:refresh": "node scripts/burndown.js refresh"
   },
   "keywords": [
     "cli",
