@@ -12,13 +12,7 @@ import { DependencyContainer } from 'tsyringe';
 
 import { ExitCode, exitWithCode } from '@/constants/exit-codes';
 import { logger } from '@/lib/logger';
-import {
-  ProjectFixService,
-  ProjectManifestService,
-  ProjectValidationService,
-  TemplateService,
-  FileSystemService,
-} from '@/services';
+import { ProjectFixService, ProjectManifestService } from '@/services';
 
 interface FixCommandOptions {
   verbose?: boolean;
@@ -41,30 +35,34 @@ export function createFixCommand(container: DependencyContainer): Command {
     .option('--force', 'Fix issues without confirmation prompts')
     .option('--backup', 'Create backup before making changes', true)
     .option('--no-backup', 'Skip backup creation')
-    .action(async (projectPath: string | undefined, options: FixCommandOptions) => {
-      try {
-        await handleFixCommand(projectPath, options, container);
-      } catch (error) {
-        logger.error(error instanceof Error ? error.message : String(error));
+    .action(
+      async (projectPath: string | undefined, options: FixCommandOptions) => {
+        try {
+          await handleFixCommand(projectPath, options, container);
+        } catch (error) {
+          logger.error(error instanceof Error ? error.message : String(error));
 
-        // Handle specific error types
-        if (error instanceof Error) {
-          // Handle our custom error codes first
-          if (error.message.startsWith('INVALID_MANIFEST:')) {
-            logger.error(error.message.replace('INVALID_MANIFEST: ', ''));
-            exitWithCode(ExitCode.USER_ERROR);
-          } else if (error.message.includes('permission') ||
-                     error.message.includes('EACCES') ||
-                     error.message.includes('EPERM')) {
-            exitWithCode(ExitCode.SYSTEM_ERROR);
+          // Handle specific error types
+          if (error instanceof Error) {
+            // Handle our custom error codes first
+            if (error.message.startsWith('INVALID_MANIFEST:')) {
+              logger.error(error.message.replace('INVALID_MANIFEST: ', ''));
+              exitWithCode(ExitCode.USER_ERROR);
+            } else if (
+              error.message.includes('permission') ||
+              error.message.includes('EACCES') ||
+              error.message.includes('EPERM')
+            ) {
+              exitWithCode(ExitCode.SYSTEM_ERROR);
+            } else {
+              exitWithCode(ExitCode.USER_ERROR);
+            }
           } else {
             exitWithCode(ExitCode.USER_ERROR);
           }
-        } else {
-          exitWithCode(ExitCode.USER_ERROR);
         }
       }
-    });
+    );
 
   return command;
 }
@@ -94,10 +92,7 @@ async function handleFixCommand(
   }
 
   // Resolve services from DI container
-  const fileSystemService = container.resolve(FileSystemService);
-  const templateService = container.resolve(TemplateService);
   const manifestService = container.resolve(ProjectManifestService);
-  const validationService = container.resolve(ProjectValidationService);
   const fixService = container.resolve(ProjectFixService);
 
   // Check if this is a scaffold-managed project
@@ -114,23 +109,30 @@ async function handleFixCommand(
 
       // Check for malformed JSON specifically
       // Error message: "Failed to read JSON file: ... Ensure the file exists and contains valid JSON."
-      if ((errorMessage.includes('json') && errorMessage.includes('parse')) ||
-          errorMessage.includes('syntax') ||
-          errorMessage.includes('unexpected') ||
-          errorMessage.includes('invalid json') ||
-          errorMessage.includes('unexpected token') ||
-          errorMessage.includes('malformed') ||
-          (errorMessage.includes('json') && errorMessage.includes('valid')) ||
-          (errorMessage.includes('failed to read json file') && errorMessage.includes('valid json'))) {
+      if (
+        (errorMessage.includes('json') && errorMessage.includes('parse')) ||
+        errorMessage.includes('syntax') ||
+        errorMessage.includes('unexpected') ||
+        errorMessage.includes('invalid json') ||
+        errorMessage.includes('unexpected token') ||
+        errorMessage.includes('malformed') ||
+        (errorMessage.includes('json') && errorMessage.includes('valid')) ||
+        (errorMessage.includes('failed to read json file') &&
+          errorMessage.includes('valid json'))
+      ) {
         // Throw error to be caught by outer catch block for proper exit code handling
-        throw new Error('INVALID_MANIFEST: Invalid or corrupted project manifest file');
+        throw new Error(
+          'INVALID_MANIFEST: Invalid or corrupted project manifest file'
+        );
       }
 
       // For file not found or read errors, treat as non-scaffold project
       // This includes cases where the service can't read the file properly
-      if (errorMessage.includes('file') ||
-          errorMessage.includes('read') ||
-          errorMessage.includes('enoent')) {
+      if (
+        errorMessage.includes('file') ||
+        errorMessage.includes('read') ||
+        errorMessage.includes('enoent')
+      ) {
         manifest = null; // Will be handled as non-scaffold project below
       } else {
         // For other unknown errors, re-throw

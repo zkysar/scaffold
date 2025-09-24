@@ -9,9 +9,8 @@ import * as fs from 'fs-extra';
 import * as semver from 'semver';
 import { injectable, inject } from 'tsyringe';
 
-
 import { logger } from '@/lib/logger';
-
+import { shortSHA, isValidSHA } from '@/lib/sha';
 import type {
   Template,
   TemplateLibrary,
@@ -19,7 +18,6 @@ import type {
   TemplateSource,
 } from '@/models';
 import { TemplateIdentifierService } from '@/services/template-identifier-service';
-import { shortSHA, isValidSHA } from '@/lib/sha';
 
 export interface ITemplateService {
   /**
@@ -100,12 +98,15 @@ export class TemplateService implements ITemplateService {
   private readonly cacheDir: string;
 
   constructor(
-    @inject(TemplateIdentifierService) private readonly identifierService: TemplateIdentifierService,
+    @inject(TemplateIdentifierService)
+    private readonly identifierService: TemplateIdentifierService,
     options?: TemplateServiceOptions
   ) {
     const homeDir = os.homedir();
-    this.templatesDir = options?.templatesDir ?? path.join(homeDir, '.scaffold', 'templates');
-    this.cacheDir = options?.cacheDir ?? path.join(homeDir, '.scaffold', 'cache');
+    this.templatesDir =
+      options?.templatesDir ?? path.join(homeDir, '.scaffold', 'templates');
+    this.cacheDir =
+      options?.cacheDir ?? path.join(homeDir, '.scaffold', 'cache');
   }
 
   async loadTemplates(): Promise<TemplateLibrary> {
@@ -118,7 +119,10 @@ export class TemplateService implements ITemplateService {
       for (const templateDir of templateDirs) {
         try {
           const template = await this.loadTemplate(templateDir);
-          const aliases = await this.identifierService.getAliases(template.id, await this.getAllTemplateSHAs());
+          const aliases = await this.identifierService.getAliases(
+            template.id,
+            await this.getAllTemplateSHAs()
+          );
           templateSummaries.push({
             id: template.id,
             name: template.name,
@@ -166,7 +170,10 @@ export class TemplateService implements ITemplateService {
     const availableSHAs = await this.getAllTemplateSHAs();
 
     // Resolve the identifier to a full SHA
-    const fullSHA = await this.identifierService.resolveIdentifier(identifier, availableSHAs);
+    const fullSHA = await this.identifierService.resolveIdentifier(
+      identifier,
+      availableSHAs
+    );
     if (!fullSHA) {
       throw new Error(`Template '${identifier}' not found`);
     }
@@ -179,7 +186,10 @@ export class TemplateService implements ITemplateService {
     const template = await this.loadTemplate(templatePath);
 
     // Add aliases to the template for display purposes
-    template.aliases = await this.identifierService.getAliases(fullSHA, availableSHAs);
+    template.aliases = await this.identifierService.getAliases(
+      fullSHA,
+      availableSHAs
+    );
 
     return template;
   }
@@ -289,7 +299,10 @@ export class TemplateService implements ITemplateService {
     const availableSHAs = await this.getAllTemplateSHAs();
 
     // Resolve the identifier to a full SHA
-    const fullSHA = await this.identifierService.resolveIdentifier(identifier, availableSHAs);
+    const fullSHA = await this.identifierService.resolveIdentifier(
+      identifier,
+      availableSHAs
+    );
     if (!fullSHA) {
       throw new Error(`Template '${identifier}' not found`);
     }
@@ -302,11 +315,17 @@ export class TemplateService implements ITemplateService {
     try {
       await fs.remove(templatePath);
     } catch (error) {
-      throw new Error(`Failed to delete template '${shortSHA(fullSHA)}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to delete template '${shortSHA(fullSHA)}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  async installTemplate(_source: TemplateSource, _templateId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async installTemplate(
+    _source: TemplateSource,
+    _templateId: string
+  ): Promise<void> {
     throw new Error('Remote template installation not yet implemented');
   }
 
@@ -365,10 +384,14 @@ export class TemplateService implements ITemplateService {
         } else {
           // Validate path is relative (doesn't start with / or contain ..)
           if (folder.path.startsWith('/')) {
-            errors.push(`Folder ${index}: path '${folder.path}' must be relative (cannot start with '/')`);
+            errors.push(
+              `Folder ${index}: path '${folder.path}' must be relative (cannot start with '/')`
+            );
           }
           if (folder.path.includes('../')) {
-            errors.push(`Folder ${index}: path '${folder.path}' cannot contain '../' (directory traversal)`);
+            errors.push(
+              `Folder ${index}: path '${folder.path}' cannot contain '../' (directory traversal)`
+            );
           }
         }
       });
@@ -383,10 +406,14 @@ export class TemplateService implements ITemplateService {
         } else {
           // Validate path is relative (doesn't start with / or contain ..)
           if (file.path.startsWith('/')) {
-            errors.push(`File ${index}: path '${file.path}' must be relative (cannot start with '/')`);
+            errors.push(
+              `File ${index}: path '${file.path}' must be relative (cannot start with '/')`
+            );
           }
           if (file.path.includes('../')) {
-            errors.push(`File ${index}: path '${file.path}' cannot contain '../' (directory traversal)`);
+            errors.push(
+              `File ${index}: path '${file.path}' cannot contain '../' (directory traversal)`
+            );
           }
         }
         if (!file.sourcePath && !file.content) {
@@ -477,14 +504,20 @@ export class TemplateService implements ITemplateService {
           }
 
           if (!rule.target || typeof rule.target !== 'string') {
-            errors.push(`Rule ${index}: target is required and must be a string`);
+            errors.push(
+              `Rule ${index}: target is required and must be a string`
+            );
           } else {
             // Validate target is relative (doesn't start with / or contain ..)
             if (rule.target.startsWith('/')) {
-              errors.push(`Rule ${index}: target '${rule.target}' must be relative (cannot start with '/')`);
+              errors.push(
+                `Rule ${index}: target '${rule.target}' must be relative (cannot start with '/')`
+              );
             }
             if (rule.target.includes('../')) {
-              errors.push(`Rule ${index}: target '${rule.target}' cannot contain '../' (directory traversal)`);
+              errors.push(
+                `Rule ${index}: target '${rule.target}' cannot contain '../' (directory traversal)`
+              );
             }
           }
 
@@ -565,7 +598,9 @@ export class TemplateService implements ITemplateService {
 
       await fs.writeJson(outputPath, exportData, { spaces: 2 });
     } catch (error) {
-      throw new Error(`Failed to export template '${shortSHA(template.id)}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to export template '${shortSHA(template.id)}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -588,12 +623,16 @@ export class TemplateService implements ITemplateService {
         // Migrate from old UUID to SHA (in-memory only for imports)
         // No backup needed as we're not modifying existing files
         template = this.identifierService.migrateTemplateToSHA(template);
-        logger.info(`Imported template migrated to SHA-based ID: ${shortSHA(template.id)}`);
+        logger.info(
+          `Imported template migrated to SHA-based ID: ${shortSHA(template.id)}`
+        );
       }
 
       const existingTemplatePath = await this.findTemplateBySHA(template.id);
       if (existingTemplatePath) {
-        throw new Error(`Template with SHA '${shortSHA(template.id)}' already exists`);
+        throw new Error(
+          `Template with SHA '${shortSHA(template.id)}' already exists`
+        );
       }
 
       await this.saveTemplate(template);
@@ -643,7 +682,8 @@ export class TemplateService implements ITemplateService {
           await fs.copy(templateJsonPath, backupPath);
 
           // Migrate to SHA-based ID
-          templateJson = this.identifierService.migrateTemplateToSHA(templateJson);
+          templateJson =
+            this.identifierService.migrateTemplateToSHA(templateJson);
 
           // Write to temporary file first for atomicity
           const tempPath = `${templateJsonPath}.tmp`;
@@ -652,14 +692,18 @@ export class TemplateService implements ITemplateService {
           // Atomic rename
           await fs.rename(tempPath, templateJsonPath);
 
-          logger.info(`Template migrated to SHA-based ID. Backup saved at: ${backupPath}`);
+          logger.info(
+            `Template migrated to SHA-based ID. Backup saved at: ${backupPath}`
+          );
         } catch (migrationError) {
           // If migration fails, restore from backup if it exists
           if (await fs.pathExists(backupPath)) {
             await fs.copy(backupPath, templateJsonPath, { overwrite: true });
             await fs.remove(backupPath);
           }
-          throw new Error(`Failed to migrate template: ${migrationError instanceof Error ? migrationError.message : 'Unknown error'}`);
+          throw new Error(
+            `Failed to migrate template: ${migrationError instanceof Error ? migrationError.message : 'Unknown error'}`
+          );
         }
       }
 
@@ -787,7 +831,11 @@ export class TemplateService implements ITemplateService {
   }> {
     const migrated: string[] = [];
     const failed: Array<{ template: string; error: string }> = [];
-    const backupDir = path.join(this.templatesDir, '.migration-backups', `migration-${Date.now()}`);
+    const backupDir = path.join(
+      this.templatesDir,
+      '.migration-backups',
+      `migration-${Date.now()}`
+    );
     await fs.ensureDir(backupDir);
 
     const templates = await this.loadTemplates();
@@ -810,17 +858,21 @@ export class TemplateService implements ITemplateService {
           await fs.copy(templateJsonPath, backupPath);
 
           // Migrate template
-          const migratedTemplate = this.identifierService.migrateTemplateToSHA(templateJson);
+          const migratedTemplate =
+            this.identifierService.migrateTemplateToSHA(templateJson);
 
           // Write to temporary file first
           const tempPath = `${templateJsonPath}.tmp`;
           await fs.writeJson(tempPath, migratedTemplate, { spaces: 2 });
 
           // Validate the migrated template
-          const validationErrors = await this.validateTemplate(migratedTemplate);
+          const validationErrors =
+            await this.validateTemplate(migratedTemplate);
           if (validationErrors.length > 0) {
             await fs.remove(tempPath);
-            throw new Error(`Validation failed: ${validationErrors.join(', ')}`);
+            throw new Error(
+              `Validation failed: ${validationErrors.join(', ')}`
+            );
           }
 
           // Atomic rename
@@ -828,16 +880,21 @@ export class TemplateService implements ITemplateService {
 
           // If the directory name doesn't match the new SHA ID, rename it
           if (summary.id !== migratedTemplate.id) {
-            const newTemplatePath = path.join(this.templatesDir, migratedTemplate.id);
+            const newTemplatePath = path.join(
+              this.templatesDir,
+              migratedTemplate.id
+            );
             await fs.move(templatePath, newTemplatePath);
           }
 
-          migrated.push(`${summary.name} (${summary.id} -> ${shortSHA(migratedTemplate.id)})`);
+          migrated.push(
+            `${summary.name} (${summary.id} -> ${shortSHA(migratedTemplate.id)})`
+          );
         }
       } catch (error) {
         failed.push({
           template: summary.name,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }

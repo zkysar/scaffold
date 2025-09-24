@@ -10,7 +10,6 @@ import { DependencyContainer } from 'tsyringe';
 import { logger } from '@/lib/logger';
 import { ConfigurationService } from '@/services';
 
-
 interface ConfigCommandOptions {
   verbose?: boolean;
   dryRun?: boolean;
@@ -72,31 +71,31 @@ async function handleConfigCommand(
 
   const configService = container.resolve(ConfigurationService);
 
-  try {
-    switch (action.toLowerCase()) {
-      case 'list':
-        await handleListConfig(configService, options);
-        break;
-      case 'get':
-        await handleGetConfig(configService, key, options);
-        break;
-      case 'set':
-        await handleSetConfig(configService, key, value, options);
-        break;
-      case 'reset':
-        await handleResetConfig(configService, key, options);
-        break;
-      default:
-        logger.error(chalk.red('Error:'), `Unknown action: ${action}`);
-        logger.info(chalk.gray('Available actions: list, get, set, reset'));
-        process.exit(1);
-    }
-  } catch (error) {
-    throw error;
+  switch (action.toLowerCase()) {
+    case 'list':
+      await handleListConfig(configService, options);
+      break;
+    case 'get':
+      await handleGetConfig(configService, key, options);
+      break;
+    case 'set':
+      await handleSetConfig(configService, key, value, options);
+      break;
+    case 'reset':
+      await handleResetConfig(configService, key, options);
+      break;
+    default:
+      logger.error(chalk.red('Error:'), `Unknown action: ${action}`);
+      logger.info(chalk.gray('Available actions: list, get, set, reset'));
+      process.exit(1);
   }
 }
 
-async function handleListConfig(_configService: ConfigurationService, _options: ConfigCommandOptions): Promise<void> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function handleListConfig(
+  _configService: ConfigurationService,
+  _options: ConfigCommandOptions
+): Promise<void> {
   logger.info(chalk.green('Configuration Settings:'));
   logger.info(
     chalk.gray(
@@ -105,7 +104,12 @@ async function handleListConfig(_configService: ConfigurationService, _options: 
   );
 }
 
-async function handleGetConfig(_configService: ConfigurationService, key: string, _options: ConfigCommandOptions): Promise<void> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function handleGetConfig(
+  _configService: ConfigurationService,
+  key: string,
+  _options: ConfigCommandOptions
+): Promise<void> {
   if (!key) {
     logger.error(
       chalk.red('Error:'),

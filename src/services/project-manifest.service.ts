@@ -8,7 +8,6 @@ import { injectable, inject } from 'tsyringe';
 
 import { logger } from '@/lib/logger';
 import type { ProjectManifest } from '@/models';
-
 import type { IFileSystemService } from '@/services/file-system.service';
 import { FileSystemService } from '@/services/file-system.service';
 
@@ -146,7 +145,9 @@ export class ProjectManifestService implements IProjectManifestService {
 
       // Validate manifest structure before writing
       if (!manifest.version || !manifest.projectName) {
-        throw new Error('Manifest missing required fields: version, projectName');
+        throw new Error(
+          'Manifest missing required fields: version, projectName'
+        );
       }
 
       await this.fileService.writeJson(manifestPath, manifest, {

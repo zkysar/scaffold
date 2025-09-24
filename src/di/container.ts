@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 import { container, DependencyContainer } from 'tsyringe';
 
-import { CompletionService } from '@/services/completion-service';
 import { FileCompletionProvider } from '@/services/completion-providers/file-completion-provider';
 import { ProjectCompletionProvider } from '@/services/completion-providers/project-completion-provider';
 import { TemplateCompletionProvider } from '@/services/completion-providers/template-completion-provider';
+import { CompletionService } from '@/services/completion-service';
 import { ConfigurationService } from '@/services/configuration.service';
 import { FileSystemService } from '@/services/file-system.service';
 import { ProjectCreationService } from '@/services/project-creation.service';

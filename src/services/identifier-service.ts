@@ -6,24 +6,22 @@
 import * as path from 'path';
 
 import * as fs from 'fs-extra';
-import { injectable } from 'tsyringe';
 
 import { logger } from '@/lib/logger';
 import { shortSHA, isValidSHA, findSHAByPrefix } from '@/lib/sha';
-
 
 /**
  * Interface for alias mapping storage
  */
 export interface AliasMapping {
-  [sha: string]: string[];  // SHA -> array of aliases
+  [sha: string]: string[]; // SHA -> array of aliases
 }
 
 /**
  * Interface for reverse alias lookup
  */
 export interface ReverseAliasMapping {
-  [alias: string]: string;  // alias -> SHA
+  [alias: string]: string; // alias -> SHA
 }
 
 /**
@@ -61,12 +59,18 @@ export abstract class IdentifierService {
   async saveAliases(): Promise<void> {
     try {
       await fs.ensureDir(path.dirname(this.aliasFilePath));
-      await fs.writeJson(this.aliasFilePath, {
-        aliases: this.aliasMapping,
-        updated: new Date().toISOString()
-      }, { spaces: 2 });
+      await fs.writeJson(
+        this.aliasFilePath,
+        {
+          aliases: this.aliasMapping,
+          updated: new Date().toISOString(),
+        },
+        { spaces: 2 }
+      );
     } catch (error) {
-      throw new Error(`Failed to save aliases: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to save aliases: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -76,7 +80,10 @@ export abstract class IdentifierService {
    * @param availableSHAs - List of all available full SHAs
    * @returns Full SHA or null if not found
    */
-  async resolveIdentifier(identifier: string, availableSHAs: string[]): Promise<string | null> {
+  async resolveIdentifier(
+    identifier: string,
+    availableSHAs: string[]
+  ): Promise<string | null> {
     if (!identifier || typeof identifier !== 'string') {
       return null;
     }
@@ -116,8 +123,8 @@ export abstract class IdentifierService {
       // Multiple matches - need to handle ambiguity
       throw new Error(
         `Ambiguous identifier '${identifier}' matches multiple items:\n` +
-        matches.map(sha => `  - ${shortSHA(sha, 12)}`).join('\n') +
-        '\nPlease use a longer prefix or an alias.'
+          matches.map(sha => `  - ${shortSHA(sha, 12)}`).join('\n') +
+          '\nPlease use a longer prefix or an alias.'
       );
     }
 
@@ -140,13 +147,17 @@ export abstract class IdentifierService {
 
     // Validate alias format (alphanumeric, dash, underscore)
     if (!/^[a-zA-Z0-9_-]+$/.test(alias)) {
-      throw new Error('Alias must contain only letters, numbers, dashes, and underscores');
+      throw new Error(
+        'Alias must contain only letters, numbers, dashes, and underscores'
+      );
     }
 
     // Check if alias is already used by another SHA
     const existingSHA = this.reverseAliasMapping[alias];
     if (existingSHA && existingSHA !== sha) {
-      throw new Error(`Alias '${alias}' is already registered to ${shortSHA(existingSHA)}`);
+      throw new Error(
+        `Alias '${alias}' is already registered to ${shortSHA(existingSHA)}`
+      );
     }
 
     await this.loadAliases();
