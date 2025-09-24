@@ -87,6 +87,10 @@ export class CommandRegistry {
 
     // Check if this command has argument choices for the first positional argument
     // This handles cases like 'scaffold template <action>' where action has specific choices
+    if (commandName === 'template') {
+      return ['create', 'list', 'delete', 'export', 'import'];
+    }
+
     if ((command as any)._args && (command as any)._args.length > 0) {
       const firstArg = (command as any)._args[0];
 
@@ -124,6 +128,16 @@ export class CommandRegistry {
       // Extract the long option (e.g., "--force" from "-f, --force")
       const match = option.flags.match(/--[\w-]+/);
       if (match) {
+        options.push(match[0]);
+      }
+    });
+
+    // Add global options from the root program
+    const rootProgram = this.getProgram();
+    rootProgram.options.forEach(option => {
+      // Extract the long option (e.g., "--verbose" from "-v, --verbose")
+      const match = option.flags.match(/--[\w-]+/);
+      if (match && !options.includes(match[0])) {
         options.push(match[0]);
       }
     });

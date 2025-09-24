@@ -244,7 +244,8 @@ export class CompletionService implements ICompletionService {
 
       if (isOptionValue) {
         // When completing an option value, only show value completions
-        suggestions.push(...(await this.getOptionValueCompletions(context)));
+        const optionValues = await this.getOptionValueCompletions(context);
+        suggestions.push(...optionValues);
       } else {
         // For all other cases, show mixed completions (commands/subcommands + flags)
 
@@ -272,10 +273,17 @@ export class CompletionService implements ICompletionService {
         }
       }
 
+      // Determine what word to filter by
+      let filterWord = context.currentWord;
+      if (isOptionValue && !filterWord && context.previousWord && !context.previousWord.startsWith('-')) {
+        // When completing option values and currentWord is empty, filter by previousWord
+        filterWord = context.previousWord;
+      }
+
       return {
         completions: this.filterAndSortSuggestions(
           suggestions,
-          context.currentWord
+          filterWord
         ).map(value => ({
           value,
           description: null,
@@ -613,11 +621,21 @@ complete -c scaffold -f -a "(__scaffold_complete)"
 
     // Check if we're completing an option value
     // Only certain flags take values
-    const flagsThatTakeValues = ['--shell', '--template', '--workspace'];
-    const isOptionValue =
-      previousWord !== null &&
-      flagsThatTakeValues.includes(previousWord) &&
-      !currentWord.startsWith('-');
+    const flagsThatTakeValues = ['--shell', '--template', '--workspace', '--path', '--variables'];
+    // Check if we're completing an option value
+    // This handles cases: --shell  and --shell z and continuing after --shell z
+    let isOptionValue = false;
+
+    // Case 1: Direct flag completion (--shell [cursor])
+    if (previousWord !== null && flagsThatTakeValues.includes(previousWord) && !currentWord.startsWith('-')) {
+      isOptionValue = true;
+    } else if (commandLine.length >= 2) {
+      // Case 2: Completing partial value (--shell z[cursor])
+      const lastTwo = commandLine.slice(-2);
+      if (lastTwo.length === 2 && flagsThatTakeValues.includes(lastTwo[0]) && !lastTwo[1].startsWith('-')) {
+        isOptionValue = true;
+      }
+    }
 
     // Skip the 'scaffold' executable name if present
     let words = commandLine;
@@ -642,7 +660,9 @@ complete -c scaffold -f -a "(__scaffold_complete)"
         if (
           word === '--shell' ||
           word === '--template' ||
-          word === '--workspace'
+          word === '--workspace' ||
+          word === '--path' ||
+          word === '--variables'
         ) {
           skipNext = true; // Skip the next word as it's the flag's value
         }
@@ -650,7 +670,8 @@ complete -c scaffold -f -a "(__scaffold_complete)"
       }
 
       // Don't include the current word if we're still typing it
-      if (word !== currentWord) {
+      // Exception: if current word is empty (we're at end of line), include all words
+      if (word !== currentWord || currentWord === '') {
         nonFlagWords.push(word);
       }
     }
@@ -658,6 +679,7 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     // Extract command and subcommand from non-flag words
     const command = nonFlagWords[0] || null;
     const subcommand = nonFlagWords.length > 1 ? nonFlagWords[1] : null;
+
 
     return { command, subcommand, isOptionValue, isFlag };
   }
@@ -691,12 +713,25 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     context: CompletionContext
   ): Promise<string[]> {
     const previousWord = context.previousWord;
+    const { commandLine, currentWord } = context;
 
-    if (previousWord === '--shell') {
+    // Find the flag we're completing the value for
+    let flagWord = previousWord;
+    if (!flagWord || !flagWord.startsWith('-')) {
+      // Check if we're completing the value of a flag (e.g., "--shell z")
+      if (commandLine.length >= 2) {
+        const lastTwo = commandLine.slice(-2);
+        if (lastTwo.length === 2 && lastTwo[0].startsWith('-')) {
+          flagWord = lastTwo[0];
+        }
+      }
+    }
+
+    if (flagWord === '--shell') {
       return ['bash', 'zsh', 'fish'];
     }
 
-    if (previousWord === '--template') {
+    if (flagWord === '--template') {
       try {
         // Load available templates
         const library = await this.templateService.loadTemplates();
@@ -753,14 +788,14 @@ complete -c scaffold -f -a "(__scaffold_complete)"
 
   private filterAndSortSuggestions(
     suggestions: string[],
-    currentWord: string
+    filterWord: string
   ): string[] {
-    if (!currentWord) {
+    if (!filterWord) {
       return suggestions.sort();
     }
 
     return suggestions
-      .filter(suggestion => suggestion.startsWith(currentWord))
+      .filter(suggestion => suggestion.startsWith(filterWord))
       .sort();
   }
 

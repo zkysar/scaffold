@@ -50,8 +50,8 @@ async function handleCompleteCommand(
   const context = parseCompletionContext(options);
 
   if (!context) {
-    // Invalid context, return empty
-    process.exit(0);
+    // Invalid context, exit with error for invalid parameters
+    process.exit(1);
   }
 
   try {
@@ -96,6 +96,7 @@ function parseCompletionContext(
     line,
     cursorPosition
   );
+
 
   // Get environment variables
   const environmentVars = new Map<string, string>();
@@ -165,26 +166,26 @@ function extractCurrentAndPreviousWords(
   const words = parseCommandLine(lineUpToCursor);
 
   // Check if cursor is at end of a word or in the middle of whitespace
-  const isAtWordEnd =
-    cursorPosition < line.length && line[cursorPosition] !== ' ';
-  const isAfterSpace =
-    (cursorPosition > 0 && line[cursorPosition - 1] === ' ') || // Standard case: cursor right after space
-    (cursorPosition < line.length && line[cursorPosition] === ' '); // Cursor ON a space character
+  const isAfterSpace = cursorPosition > 0 && line[cursorPosition - 1] === ' ';
+  const isAtEndOfLine = cursorPosition >= line.length;
 
   let currentWord = '';
   let previousWord: string | null = null;
 
-  if (words.length > 0) {
-    if (isAfterSpace && !isAtWordEnd) {
-      // Cursor is after a space, starting a new word
-      currentWord = '';
-      previousWord = words[words.length - 1];
-    } else {
-      // Cursor is in the middle or at the end of a word
-      currentWord = words[words.length - 1] || '';
-      previousWord = words.length > 1 ? words[words.length - 2] : null;
-    }
+  if (words.length === 0) {
+    return { currentWord: '', previousWord: null };
   }
+
+  if (isAfterSpace || isAtEndOfLine) {
+    // Cursor is after a space or at end of line, starting a new word
+    currentWord = '';
+    previousWord = words[words.length - 1];
+  } else {
+    // Cursor is in the middle of a word
+    currentWord = words[words.length - 1] || '';
+    previousWord = words.length > 1 ? words[words.length - 2] : null;
+  }
+
 
   return { currentWord, previousWord };
 }
