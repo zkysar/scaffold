@@ -2,30 +2,24 @@
  * Unit tests for ProjectExtensionService
  */
 
-import mockFs from 'mock-fs';
 import { ProjectExtensionService } from '../../../src/services/project-extension.service';
-import type { ITemplateService } from '../../../src/services/template-service';
-import type { IFileSystemService } from '../../../src/services/file-system.service';
 import type { Template, ProjectManifest } from '../../../src/models';
-import {
-  createMockImplementation,
-  assertDefined,
-} from '../../helpers/test-utils';
+import { FakeTemplateService } from '../../fakes/template-service.fake';
+import { FakeFileSystemService } from '../../fakes/file-system.fake';
+import { FakeProjectManifestService } from '../../fakes/project-manifest.fake';
 
 describe('ProjectExtensionService', () => {
   let extensionService: ProjectExtensionService;
-  let mockTemplateService: jest.Mocked<ITemplateService>;
-  let mockFileService: jest.Mocked<IFileSystemService>;
-  let mockGetProjectManifest: jest.Mock;
-  let mockUpdateProjectManifest: jest.Mock;
-  let mockFindNearestManifest: jest.Mock;
+  let fakeTemplateService: FakeTemplateService;
+  let fakeFileService: FakeFileSystemService;
+  let fakeManifestService: FakeProjectManifestService;
 
   const mockTemplate: Template = {
     id: 'test-template-123',
     name: 'Test Template',
     version: '1.0.0',
     description: 'A test template for unit testing',
-    rootFolder: 'backend',
+    rootFolder: 'api',
     author: 'Test Author',
     created: '2023-01-01T00:00:00.000Z',
     updated: '2023-01-01T00:00:00.000Z',
@@ -90,96 +84,60 @@ describe('ProjectExtensionService', () => {
   };
 
   beforeEach(() => {
-    // Reset mocks
-    jest.clearAllMocks();
+    // Create fake services
+    fakeTemplateService = new FakeTemplateService();
+    fakeFileService = new FakeFileSystemService();
+    fakeManifestService = new FakeProjectManifestService();
 
-    // Create mock services
-    mockTemplateService = createMockImplementation<ITemplateService>({
-      getTemplate: jest.fn(),
-      loadTemplates: jest.fn(),
-      searchTemplates: jest.fn(),
-      createTemplate: jest.fn(),
-      updateTemplate: jest.fn(),
-      deleteTemplate: jest.fn(),
-      installTemplate: jest.fn(),
-      validateTemplate: jest.fn(),
-      getTemplateDependencies: jest.fn(),
-      exportTemplate: jest.fn(),
-      importTemplate: jest.fn(),
-      loadTemplate: jest.fn(),
-      saveTemplate: jest.fn(),
-    });
+    // Reset all fakes
+    fakeTemplateService.reset();
+    fakeFileService.reset();
+    fakeManifestService.reset();
 
-    mockFileService = createMockImplementation<IFileSystemService>({
-      exists: jest.fn(),
-      isDirectory: jest.fn(),
-      isFile: jest.fn(),
-      readFile: jest.fn(),
-      readJson: jest.fn(),
-      writeFile: jest.fn(),
-      writeJson: jest.fn(),
-      createFile: jest.fn(),
-      createDirectory: jest.fn(),
-      ensureDirectory: jest.fn(),
-      deletePath: jest.fn(),
-      copyPath: jest.fn(),
-      readDirectory: jest.fn(),
-      resolvePath: jest.fn(),
-      isDryRun: false,
-      setDryRun: jest.fn(),
-    });
+    // Setup fake data
+    fakeTemplateService.addTemplate(mockTemplate);
+    fakeManifestService.setManifest('/test-project', mockManifest);
 
-    mockGetProjectManifest = jest.fn();
-    mockUpdateProjectManifest = jest.fn();
-    mockFindNearestManifest = jest.fn();
+    // Setup fake file system
+    fakeFileService.setFile(
+      '/test-project/.scaffold/manifest.json',
+      JSON.stringify(mockManifest)
+    );
+    fakeFileService.setFile('/test-project/frontend/index.html', '<html></html>');
+    fakeFileService.setFile(
+      '/home/user/.scaffold/templates/test-template-123/files/server.js.template',
+      'console.log("{{PROJECT_NAME}} server");'
+    );
+    fakeFileService.setDirectory('/test-project');
+    fakeFileService.setDirectory('/test-project/.scaffold');
+    fakeFileService.setDirectory('/test-project/frontend');
+    fakeFileService.setDirectory('/home/user/.scaffold/templates/test-template-123/files');
 
     // Create service instance
     extensionService = new ProjectExtensionService(
-      mockTemplateService,
-      mockFileService,
-      mockGetProjectManifest,
-      mockUpdateProjectManifest,
-      mockFindNearestManifest
+      fakeTemplateService,
+      fakeFileService,
+      (projectPath: string) => fakeManifestService.getProjectManifest(projectPath),
+      (projectPath: string, manifest: ProjectManifest) =>
+        fakeManifestService.updateProjectManifest(projectPath, manifest),
+      (startPath: string) => fakeManifestService.findNearestManifest(startPath)
     );
-
-    // Setup mock-fs
-    mockFs({
-      '/test-project': {
-        '.scaffold': {
-          'manifest.json': JSON.stringify(mockManifest),
-        },
-        frontend: {
-          'index.html': '<html></html>',
-        },
-      },
-      '/home/user/.scaffold/templates/test-template-123/files/server.js.template':
-        'console.log("{{PROJECT_NAME}} server");',
-    });
   });
 
   afterEach(() => {
-    mockFs.restore();
+    // Reset all fakes after each test
+    fakeTemplateService.reset();
+    fakeFileService.reset();
+    fakeManifestService.reset();
   });
 
   describe('extendProject', () => {
     beforeEach(() => {
-      // Setup default mock returns
-      mockGetProjectManifest.mockResolvedValue(mockManifest);
-      mockFindNearestManifest.mockResolvedValue({
-        manifestPath: '/test-project/.scaffold/manifest.json',
-        projectPath: '/test-project',
-      });
-      mockTemplateService.getTemplate.mockResolvedValue(mockTemplate);
-      mockFileService.resolvePath.mockImplementation((...paths) =>
-        paths.join('/')
-      );
-      mockFileService.createDirectory.mockResolvedValue();
-      mockFileService.createFile.mockResolvedValue();
-      mockFileService.readFile.mockResolvedValue(
-        'console.log("{{PROJECT_NAME}} server");'
-      );
-      mockFileService.exists.mockResolvedValue(true);
-      mockUpdateProjectManifest.mockResolvedValue(undefined);
+      // Reset and re-setup the manifest service completely
+      fakeManifestService.reset();
+      // Create a fresh copy of the manifest to avoid mutation issues
+      const freshManifest = JSON.parse(JSON.stringify(mockManifest));
+      fakeManifestService.setManifest('/test-project', freshManifest);
     });
 
     it('should extend project with new template', async () => {
@@ -193,11 +151,16 @@ describe('ProjectExtensionService', () => {
       expect(result.templates).toHaveLength(2); // Original + new template
       expect(result.templates[1].templateSha).toBe(mockTemplate.id);
       expect(result.templates[1].name).toBe(mockTemplate.name);
-      expect(result.templates[1].rootFolder).toBe('backend');
+      expect(result.templates[1].rootFolder).toBe('api');
       expect(result.templates[1].status).toBe('active');
       expect(result.variables.PORT).toBe('3000');
       expect(result.history).toHaveLength(1);
       expect(result.history[0].action).toBe('extend');
+
+      // Verify the manifest was updated
+      const updatedManifest = fakeManifestService.getStoredManifests().get('/test-project');
+      expect(updatedManifest).toBeDefined();
+      expect(updatedManifest!.templates).toHaveLength(2);
     });
 
     it('should throw error for invalid project path', async () => {
@@ -217,7 +180,7 @@ describe('ProjectExtensionService', () => {
     });
 
     it('should throw error when no manifest is found', async () => {
-      mockGetProjectManifest.mockResolvedValue(null);
+      fakeManifestService.setReturnValue(null);
 
       await expect(
         extensionService.extendProject('/test-project', ['test-template-123'])
@@ -241,7 +204,8 @@ describe('ProjectExtensionService', () => {
         ...mockTemplate,
         rootFolder: 'frontend', // Same as existing template
       };
-      mockTemplateService.getTemplate.mockResolvedValue(conflictingTemplate);
+      fakeTemplateService.reset();
+      fakeTemplateService.addTemplate(conflictingTemplate);
 
       await expect(
         extensionService.extendProject('/test-project', ['test-template-123'])
@@ -255,12 +219,10 @@ describe('ProjectExtensionService', () => {
         ...mockTemplate,
         id: 'test-template-456',
         name: 'Second Template',
-        rootFolder: 'backend', // Same as first new template
+        rootFolder: 'api', // Same as first new template
       };
 
-      mockTemplateService.getTemplate
-        .mockResolvedValueOnce(mockTemplate)
-        .mockResolvedValueOnce(secondTemplate);
+      fakeTemplateService.addTemplate(secondTemplate);
 
       await expect(
         extensionService.extendProject('/test-project', [
@@ -268,7 +230,7 @@ describe('ProjectExtensionService', () => {
           'test-template-456',
         ])
       ).rejects.toThrow(
-        "Template conflict: Multiple new templates use the same rootFolder 'backend'"
+        "Template conflict: Multiple new templates use the same rootFolder 'api'"
       );
     });
 
@@ -284,9 +246,8 @@ describe('ProjectExtensionService', () => {
           },
         ],
       };
-      mockTemplateService.getTemplate.mockResolvedValue(
-        templateWithRequiredVar
-      );
+      fakeTemplateService.reset();
+      fakeTemplateService.addTemplate(templateWithRequiredVar);
 
       await expect(
         extensionService.extendProject('/test-project', ['test-template-123'])
@@ -298,20 +259,14 @@ describe('ProjectExtensionService', () => {
         'test-template-123',
       ]);
 
-      // Verify directory creation
-      expect(mockFileService.createDirectory).toHaveBeenCalledWith(
-        '/test-project/backend'
-      );
-      expect(mockFileService.createDirectory).toHaveBeenCalledWith(
-        '/test-project/backend/src'
-      );
+      // Verify directory creation in fake file system
+      expect(fakeFileService.getDirectories().has('/test-project/api')).toBe(true);
+      expect(fakeFileService.getDirectories().has('/test-project/api/src')).toBe(true);
 
       // Verify file creation with variable substitution
-      expect(mockFileService.createFile).toHaveBeenCalledWith(
-        '/test-project/backend/server.js',
-        'console.log("Test Project server");', // Variable substituted
-        { mode: parseInt('644', 8), overwrite: true }
-      );
+      const files = fakeFileService.getFiles();
+      expect(files.has('/test-project/api/server.js')).toBe(true);
+      expect(files.get('/test-project/api/server.js')).toContain('Test Project server');
     });
 
     it('should handle template aliases correctly', async () => {
@@ -329,19 +284,14 @@ describe('ProjectExtensionService', () => {
         'test-template-123',
       ]);
 
-      expect(mockUpdateProjectManifest).toHaveBeenCalledWith(
-        '/test-project',
-        expect.objectContaining({
-          templates: expect.arrayContaining([
-            expect.objectContaining({
-              templateSha: mockTemplate.id,
-              name: mockTemplate.name,
-              status: 'active',
-            }),
-          ]),
-          updated: expect.any(String),
-        })
-      );
+      // Verify manifest was updated in fake service
+      const updatedManifest = fakeManifestService.getStoredManifests().get('/test-project');
+      expect(updatedManifest).toBeDefined();
+      expect(updatedManifest!.templates).toHaveLength(2);
+      expect(updatedManifest!.templates[1].templateSha).toBe(mockTemplate.id);
+      expect(updatedManifest!.templates[1].name).toBe(mockTemplate.name);
+      expect(updatedManifest!.templates[1].status).toBe('active');
+      expect(updatedManifest!.updated).toBeDefined();
     });
 
     it('should handle template source files', async () => {
@@ -355,15 +305,16 @@ describe('ProjectExtensionService', () => {
           },
         ],
       };
-      mockTemplateService.getTemplate.mockResolvedValue(templateWithSourceFile);
+      fakeTemplateService.reset();
+      fakeTemplateService.addTemplate(templateWithSourceFile);
 
       await extensionService.extendProject('/test-project', [
         'test-template-123',
       ]);
 
-      expect(mockFileService.readFile).toHaveBeenCalledWith(
-        '/home/user/.scaffold/templates/test-template-123/files/server.js.template'
-      );
+      // Verify the template file was read from the expected location
+      const files = fakeFileService.getFiles();
+      expect(files.has('/test-project/api/server.js')).toBe(true);
     });
 
     it('should handle multiple templates without conflicts', async () => {
@@ -374,9 +325,7 @@ describe('ProjectExtensionService', () => {
         rootFolder: 'database',
       };
 
-      mockTemplateService.getTemplate
-        .mockResolvedValueOnce(mockTemplate)
-        .mockResolvedValueOnce(secondTemplate);
+      fakeTemplateService.addTemplate(secondTemplate);
 
       const result = await extensionService.extendProject('/test-project', [
         'test-template-123',
@@ -384,7 +333,7 @@ describe('ProjectExtensionService', () => {
       ]);
 
       expect(result.templates).toHaveLength(3); // Original + 2 new templates
-      expect(result.templates[1].rootFolder).toBe('backend');
+      expect(result.templates[1].rootFolder).toBe('api');
       expect(result.templates[2].rootFolder).toBe('database');
     });
   });

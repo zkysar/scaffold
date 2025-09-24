@@ -57,20 +57,28 @@ export class FakeProjectExtensionService implements IProjectExtensionService {
     this.extendedProjects.push({ projectPath, templateIds, variables });
 
     const manifest: ProjectManifest = {
+      id: 'project-' + Date.now(),
       version: '1.0.0',
       projectName: 'extended-project',
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
       templates: templateIds.map(id => ({
-        templateId: id,
+        templateSha: 'sha-' + id,
+        name: id,
+        version: '1.0.0',
+        rootFolder: projectPath,
         appliedAt: new Date().toISOString(),
-        variables: variables || {},
+        status: 'active' as const,
+        conflicts: [],
       })),
       variables: variables || {},
       history: [
         {
-          action: 'extend',
+          id: 'history-' + Date.now(),
+          action: 'extend' as const,
           timestamp: new Date().toISOString(),
-          templateIds,
-          description: `Extended project with templates: ${templateIds.join(', ')}`,
+          templates: templateIds,
+          changes: [],
         },
       ],
     };

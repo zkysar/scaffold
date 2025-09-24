@@ -8,12 +8,12 @@ import type {
 export class FakeProjectManifestService implements IProjectManifestService {
   private manifests: Map<string, ProjectManifest> = new Map();
   private shouldThrowError: string | null = null;
-  private nextReturnValue: any = null;
+  private nextReturnValue: any = undefined;
 
   reset(): void {
     this.manifests.clear();
     this.shouldThrowError = null;
-    this.nextReturnValue = null;
+    this.nextReturnValue = undefined;
   }
 
   setError(message: string): void {
@@ -37,15 +37,15 @@ export class FakeProjectManifestService implements IProjectManifestService {
   }
 
   private checkReturnValue(): any {
-    if (this.nextReturnValue !== null) {
+    if (this.nextReturnValue !== undefined) {
       const value = this.nextReturnValue;
-      this.nextReturnValue = null;
+      this.nextReturnValue = undefined;
       return value;
     }
-    return null;
+    return undefined;
   }
 
-  async loadManifest(projectPath: string): Promise<ProjectManifest | null> {
+  async loadProjectManifest(projectPath: string): Promise<ProjectManifest | null> {
     this.checkError();
     const returnValue = this.checkReturnValue();
     if (returnValue !== undefined) return returnValue;
@@ -53,7 +53,15 @@ export class FakeProjectManifestService implements IProjectManifestService {
     return this.manifests.get(projectPath) || null;
   }
 
-  async saveManifest(projectPath: string, manifest: ProjectManifest): Promise<void> {
+  async getProjectManifest(projectPath: string): Promise<ProjectManifest | null> {
+    this.checkError();
+    const returnValue = this.checkReturnValue();
+    if (returnValue !== undefined) return returnValue;
+
+    return this.manifests.get(projectPath) || null;
+  }
+
+  async saveProjectManifest(projectPath: string, manifest: ProjectManifest): Promise<void> {
     this.checkError();
     const returnValue = this.checkReturnValue();
     if (returnValue !== null) return;
@@ -61,41 +69,35 @@ export class FakeProjectManifestService implements IProjectManifestService {
     this.manifests.set(projectPath, manifest);
   }
 
-  async updateManifest(
+  async updateProjectManifest(
     projectPath: string,
-    updates: Partial<ProjectManifest>
-  ): Promise<ProjectManifest> {
+    manifest: ProjectManifest
+  ): Promise<void> {
     this.checkError();
     const returnValue = this.checkReturnValue();
-    if (returnValue) return returnValue;
+    if (returnValue !== null) return;
 
-    const existing = this.manifests.get(projectPath) || {
-      version: '1.0.0',
-      projectName: 'default-project',
-      templates: [],
-      variables: {},
-      history: [],
-    };
-
-    const updated = { ...existing, ...updates };
-    this.manifests.set(projectPath, updated);
-    return updated;
+    this.manifests.set(projectPath, manifest);
   }
 
-  async findManifest(
+  async findNearestManifest(
     startPath: string
-  ): Promise<{ manifestPath: string; manifest: ProjectManifest } | null> {
+  ): Promise<{ manifestPath: string; projectPath: string } | null> {
     this.checkError();
     const returnValue = this.checkReturnValue();
     if (returnValue !== undefined) return returnValue;
 
-    // Check if we have a manifest for this path
-    const manifest = this.manifests.get(startPath);
-    if (manifest) {
-      return {
-        manifestPath: `${startPath}/.scaffold/manifest.json`,
-        manifest,
-      };
+    // Check if we have a manifest for this path or any parent path
+    let currentPath = startPath;
+    while (currentPath && currentPath !== '/') {
+      if (this.manifests.has(currentPath)) {
+        return {
+          manifestPath: `${currentPath}/.scaffold/manifest.json`,
+          projectPath: currentPath,
+        };
+      }
+      const parent = currentPath.split('/').slice(0, -1).join('/');
+      currentPath = parent || '/';
     }
 
     return null;

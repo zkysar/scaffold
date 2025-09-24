@@ -71,7 +71,8 @@ export class FakeCompletionService implements ICompletionService {
     return {
       shellType,
       content: `# Fake completion script for ${shellType}`,
-      installInstructions: `Add to your ${shellType} config`,
+      filename: `completion-${shellType}.sh`,
+      installPath: `/mock/home/.scaffold/completion-${shellType}.sh`,
     };
   }
 
@@ -125,8 +126,10 @@ export class FakeCompletionService implements ICompletionService {
     if (returnValue) return returnValue;
 
     return {
-      suggestions: [],
-      hasMore: false,
+      completions: [],
+      cacheKey: null,
+      cacheExpiry: null,
+      errors: [],
     };
   }
 

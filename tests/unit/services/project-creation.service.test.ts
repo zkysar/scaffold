@@ -2,20 +2,17 @@
  * Unit tests for ProjectCreationService
  */
 
-import mockFs from 'mock-fs';
 import { ProjectCreationService } from '../../../src/services/project-creation.service';
-import type { ITemplateService } from '../../../src/services/template-service';
-import type { IFileSystemService } from '../../../src/services/file-system.service';
 import type { Template } from '../../../src/models';
 import {
-  createMockImplementation,
-  assertDefined,
-} from '../../helpers/test-utils';
+  FakeTemplateService,
+  FakeFileSystemService,
+} from '../../fakes';
 
 describe('ProjectCreationService', () => {
   let creationService: ProjectCreationService;
-  let mockTemplateService: jest.Mocked<ITemplateService>;
-  let mockFileService: jest.Mocked<IFileSystemService>;
+  let fakeTemplateService: FakeTemplateService;
+  let fakeFileService: FakeFileSystemService;
 
   const mockTemplate: Template = {
     id: 'test-template-123',
@@ -73,78 +70,31 @@ describe('ProjectCreationService', () => {
   };
 
   beforeEach(() => {
-    // Reset mocks
-    jest.clearAllMocks();
+    // Create fake services
+    fakeTemplateService = new FakeTemplateService();
+    fakeFileService = new FakeFileSystemService();
 
-    // Create mock services
-    mockTemplateService = createMockImplementation<ITemplateService>({
-      getTemplate: jest.fn(),
-      loadTemplates: jest.fn(),
-      searchTemplates: jest.fn(),
-      createTemplate: jest.fn(),
-      updateTemplate: jest.fn(),
-      deleteTemplate: jest.fn(),
-      installTemplate: jest.fn(),
-      validateTemplate: jest.fn(),
-      getTemplateDependencies: jest.fn(),
-      exportTemplate: jest.fn(),
-      importTemplate: jest.fn(),
-      loadTemplate: jest.fn(),
-      saveTemplate: jest.fn(),
-    });
+    // Reset fakes
+    fakeTemplateService.reset();
+    fakeFileService.reset();
 
-    mockFileService = createMockImplementation<IFileSystemService>({
-      exists: jest.fn(),
-      isDirectory: jest.fn(),
-      isFile: jest.fn(),
-      readFile: jest.fn(),
-      readJson: jest.fn(),
-      writeFile: jest.fn(),
-      writeJson: jest.fn(),
-      createFile: jest.fn(),
-      createDirectory: jest.fn(),
-      ensureDirectory: jest.fn(),
-      deletePath: jest.fn(),
-      copyPath: jest.fn(),
-      readDirectory: jest.fn(),
-      resolvePath: jest.fn(),
-      isDryRun: false,
-      setDryRun: jest.fn(),
-    });
+    // Setup template in fake service
+    fakeTemplateService.addTemplate(mockTemplate);
+
+    // Setup file system state
+    fakeFileService.setFile(
+      '/home/user/.scaffold/templates/test-template-123/files/README.md.template',
+      '# {{PROJECT_NAME}}\nWelcome to your new project!'
+    );
 
     // Create service instance
     creationService = new ProjectCreationService(
-      mockTemplateService,
-      mockFileService
+      fakeTemplateService,
+      fakeFileService
     );
-
-    // Setup mock-fs
-    mockFs({
-      '/test-project': {},
-      '/home/user/.scaffold/templates/test-template-123/files/README.md.template':
-        '# {{PROJECT_NAME}}\nWelcome to your new project!',
-    });
-  });
-
-  afterEach(() => {
-    mockFs.restore();
   });
 
   describe('createProject', () => {
-    beforeEach(() => {
-      // Setup default mock returns
-      mockTemplateService.getTemplate.mockResolvedValue(mockTemplate);
-      mockFileService.resolvePath.mockImplementation((...paths) =>
-        paths.join('/')
-      );
-      mockFileService.exists.mockResolvedValue(false);
-      mockFileService.ensureDirectory.mockResolvedValue();
-      mockFileService.createDirectory.mockResolvedValue();
-      mockFileService.createFile.mockResolvedValue();
-      mockFileService.readFile.mockResolvedValue(
-        '# {{PROJECT_NAME}}\nWelcome to your new project!'
-      );
-    });
 
     it('should create a project with valid inputs', async () => {
       const projectName = 'MyTestProject';
@@ -202,9 +152,7 @@ describe('ProjectCreationService', () => {
     });
 
     it('should throw error when template is not found', async () => {
-      mockTemplateService.getTemplate.mockRejectedValue(
-        new Error('Template not found')
-      );
+      fakeTemplateService.setError('Template not found');
 
       await expect(
         creationService.createProject(
@@ -223,9 +171,7 @@ describe('ProjectCreationService', () => {
         rootFolder: 'backend',
       };
 
-      mockTemplateService.getTemplate
-        .mockResolvedValueOnce(mockTemplate)
-        .mockResolvedValueOnce(secondTemplate);
+      fakeTemplateService.addTemplate(secondTemplate);
 
       const result = await creationService.createProject(
         'TestProject',
@@ -246,9 +192,7 @@ describe('ProjectCreationService', () => {
         rootFolder: 'test-project', // Same as first template
       };
 
-      mockTemplateService.getTemplate
-        .mockResolvedValueOnce(mockTemplate)
-        .mockResolvedValueOnce(conflictingTemplate);
+      fakeTemplateService.addTemplate(conflictingTemplate);
 
       await expect(
         creationService.createProject(
@@ -308,12 +252,10 @@ describe('ProjectCreationService', () => {
     it('should create project and .scaffold directories', async () => {
       await creationService.ensureProjectDirectory('/test-project');
 
-      expect(mockFileService.ensureDirectory).toHaveBeenCalledWith(
-        '/test-project'
-      );
-      expect(mockFileService.ensureDirectory).toHaveBeenCalledWith(
-        '/test-project/.scaffold'
-      );
+      expect(await fakeFileService.exists('/test-project')).toBe(true);
+      expect(await fakeFileService.exists('/test-project/.scaffold')).toBe(true);
+      expect(await fakeFileService.isDirectory('/test-project')).toBe(true);
+      expect(await fakeFileService.isDirectory('/test-project/.scaffold')).toBe(true);
     });
 
     it('should throw error for invalid project path', async () => {
@@ -327,9 +269,7 @@ describe('ProjectCreationService', () => {
     });
 
     it('should handle file service errors', async () => {
-      mockFileService.ensureDirectory.mockRejectedValue(
-        new Error('Permission denied')
-      );
+      fakeFileService.setError('Permission denied');
 
       await expect(
         creationService.ensureProjectDirectory('/test-project')

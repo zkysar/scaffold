@@ -42,13 +42,22 @@ export class FakeVariableSubstitutionService implements IVariableSubstitutionSer
     return null;
   }
 
-  async substituteVariables(
+  substituteVariables(
     content: string,
-    variables: Record<string, string>
-  ): Promise<string> {
-    this.checkError();
-    const returnValue = this.checkReturnValue();
-    if (returnValue !== null) return returnValue;
+    variables: Record<string, any>,
+    options?: any
+  ): string {
+    if (this.shouldThrowError) {
+      const error = this.shouldThrowError;
+      this.shouldThrowError = null;
+      throw new Error(error);
+    }
+
+    if (this.nextReturnValue !== null) {
+      const value = this.nextReturnValue;
+      this.nextReturnValue = null;
+      return value;
+    }
 
     let result = content;
 
@@ -69,13 +78,108 @@ export class FakeVariableSubstitutionService implements IVariableSubstitutionSer
 
   async substituteInFile(
     filePath: string,
-    variables: Record<string, string>
+    variables: Record<string, any>,
+    options?: any
   ): Promise<void> {
     this.checkError();
     const returnValue = this.checkReturnValue();
     if (returnValue !== null) return;
 
     // Fake implementation - just track that it was called
+  }
+
+  substituteInPath(
+    path: string,
+    variables: Record<string, any>,
+    options?: any
+  ): string {
+    if (this.shouldThrowError) {
+      const error = this.shouldThrowError;
+      this.shouldThrowError = null;
+      throw new Error(error);
+    }
+
+    if (this.nextReturnValue !== null) {
+      const value = this.nextReturnValue;
+      this.nextReturnValue = null;
+      return value;
+    }
+
+    // Use provided variables
+    let result = path;
+    for (const [key, value] of Object.entries(variables)) {
+      const pattern = new RegExp(`\\$\\{${key}\\}`, 'g');
+      result = result.replace(pattern, String(value));
+    }
+
+    return result;
+  }
+
+  validateRequiredVariables(
+    template: any,
+    provided: Record<string, any>
+  ): any[] {
+    if (this.shouldThrowError) {
+      const error = this.shouldThrowError;
+      this.shouldThrowError = null;
+      throw new Error(error);
+    }
+
+    if (this.nextReturnValue !== null) {
+      const value = this.nextReturnValue;
+      this.nextReturnValue = null;
+      return value;
+    }
+
+    return []; // Simplified implementation
+  }
+
+  extractVariables(content: string): string[] {
+    if (this.shouldThrowError) {
+      const error = this.shouldThrowError;
+      this.shouldThrowError = null;
+      throw new Error(error);
+    }
+
+    if (this.nextReturnValue !== null) {
+      const value = this.nextReturnValue;
+      this.nextReturnValue = null;
+      return value;
+    }
+
+    return []; // Simplified implementation
+  }
+
+  applyTransformation(value: string, transformation: string): string {
+    if (this.shouldThrowError) {
+      const error = this.shouldThrowError;
+      this.shouldThrowError = null;
+      throw new Error(error);
+    }
+
+    if (this.nextReturnValue !== null) {
+      const returnValue = this.nextReturnValue;
+      this.nextReturnValue = null;
+      return returnValue;
+    }
+
+    return value; // Simplified implementation
+  }
+
+  createContext(variables: Record<string, any>): any {
+    if (this.shouldThrowError) {
+      const error = this.shouldThrowError;
+      this.shouldThrowError = null;
+      throw new Error(error);
+    }
+
+    if (this.nextReturnValue !== null) {
+      const value = this.nextReturnValue;
+      this.nextReturnValue = null;
+      return value;
+    }
+
+    return { variables, specialVariables: {}, transforms: {} };
   }
 
   async validateVariables(

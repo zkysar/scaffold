@@ -65,13 +65,17 @@ export class FakeProjectValidationService implements IProjectValidationService {
       errors: [],
       warnings: [],
       stats: {
-        totalChecks: 10,
-        passedChecks: 10,
-        failedChecks: 0,
-        warnings: 0,
+        filesChecked: 10,
+        foldersChecked: 5,
+        templatesChecked: 1,
+        errorsFound: 0,
+        warningsFound: 0,
+        executionTime: 100,
+        rulesEvaluated: 10,
+        errorCount: 0,
+        warningCount: 0,
         duration: 100,
       },
-      checkedTemplates: [],
     };
   }
 
@@ -89,20 +93,23 @@ export class FakeProjectValidationService implements IProjectValidationService {
   // Test helpers
   createError(path: string, message: string): ValidationError {
     return {
-      path,
-      message,
-      rule: 'test-rule',
+      id: 'error-' + Date.now(),
       severity: 'error',
-      autoFixable: false,
+      templateSha: 'test-template-sha',
+      ruleId: 'test-rule',
+      path,
+      expected: 'expected-value',
+      actual: 'actual-value',
+      message,
     };
   }
 
   createWarning(path: string, message: string): ValidationWarning {
     return {
+      id: 'warning-' + Date.now(),
+      template: 'test-template',
       path,
       message,
-      rule: 'test-rule',
-      severity: 'warning',
     };
   }
 

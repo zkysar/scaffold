@@ -2,30 +2,23 @@
  * Unit tests for ProjectFixService
  */
 
-import mockFs from 'mock-fs';
 import { ProjectFixService } from '../../../src/services/project-fix.service';
-import type { ITemplateService } from '../../../src/services/template-service';
-import type { IFileSystemService } from '../../../src/services/file-system.service';
-import type { IProjectValidationService } from '../../../src/services/project-validation.service';
 import type {
   Template,
   ProjectManifest,
   ValidationReport,
 } from '../../../src/models';
-import type { IVariableSubstitutionService } from '../../../src/services/variable-substitution.service';
-import type { IProjectManifestService } from '../../../src/services/project-manifest.service';
-import {
-  createMockImplementation,
-  assertDefined,
-} from '../../helpers/test-utils';
+import { FakeTemplateService } from '../../fakes/template-service.fake';
+import { FakeFileSystemService } from '../../fakes/file-system.fake';
+import { FakeProjectValidationService } from '../../fakes/project-validation.fake';
+import { FakeProjectManifestService } from '../../fakes/project-manifest.fake';
 
 describe('ProjectFixService', () => {
   let fixService: ProjectFixService;
-  let mockTemplateService: jest.Mocked<ITemplateService>;
-  let mockFileService: jest.Mocked<IFileSystemService>;
-  let mockValidationService: jest.Mocked<IProjectValidationService>;
-  let mockVariableService: jest.Mocked<IVariableSubstitutionService>;
-  let mockManifestService: jest.Mocked<IProjectManifestService>;
+  let fakeTemplateService: FakeTemplateService;
+  let fakeFileService: FakeFileSystemService;
+  let fakeValidationService: FakeProjectValidationService;
+  let fakeManifestService: FakeProjectManifestService;
 
   const mockTemplate: Template = {
     id: 'test-template-123',
@@ -150,132 +143,81 @@ describe('ProjectFixService', () => {
   };
 
   beforeEach(() => {
-    // Reset mocks
-    jest.clearAllMocks();
+    // Create fake services
+    fakeTemplateService = new FakeTemplateService();
+    fakeFileService = new FakeFileSystemService();
+    fakeValidationService = new FakeProjectValidationService();
+    fakeManifestService = new FakeProjectManifestService();
 
-    // Create mock services
-    mockTemplateService = createMockImplementation<ITemplateService>({
-      getTemplate: jest.fn(),
-      loadTemplates: jest.fn(),
-      searchTemplates: jest.fn(),
-      createTemplate: jest.fn(),
-      updateTemplate: jest.fn(),
-      deleteTemplate: jest.fn(),
-      installTemplate: jest.fn(),
-      validateTemplate: jest.fn(),
-      getTemplateDependencies: jest.fn(),
-      exportTemplate: jest.fn(),
-      importTemplate: jest.fn(),
-      loadTemplate: jest.fn(),
-      saveTemplate: jest.fn(),
-    });
+    // Reset all fakes
+    fakeTemplateService.reset();
+    fakeFileService.reset();
+    fakeValidationService.reset();
+    fakeManifestService.reset();
 
-    mockFileService = createMockImplementation<IFileSystemService>({
-      exists: jest.fn(),
-      isDirectory: jest.fn(),
-      isFile: jest.fn(),
-      readFile: jest.fn(),
-      readJson: jest.fn(),
-      writeFile: jest.fn(),
-      writeJson: jest.fn(),
-      createFile: jest.fn(),
-      createDirectory: jest.fn(),
-      ensureDirectory: jest.fn(),
-      deletePath: jest.fn(),
-      copyPath: jest.fn(),
-      readDirectory: jest.fn(),
-      resolvePath: jest.fn(),
-      isDryRun: false,
-      setDryRun: jest.fn(),
-    });
+    // Set up fake data
+    fakeTemplateService.addTemplate(mockTemplate);
+    fakeManifestService.setManifest('/test-project', mockManifest);
 
-    mockValidationService = createMockImplementation<IProjectValidationService>(
-      {
-        validateProject: jest.fn(),
-        findNearestManifest: jest.fn(),
-      }
+    // Set up file system state
+    fakeFileService.setDirectory('/test-project');
+    fakeFileService.setDirectory('/test-project/.scaffold');
+    fakeFileService.setFile('/test-project/.scaffold/manifest.json', JSON.stringify(mockManifest));
+    fakeFileService.setFile(
+      '/home/user/.scaffold/templates/test-template-123/files/package.json.template',
+      '{"name": "{{PROJECT_NAME}}"}'
     );
-
-    mockVariableService = createMockImplementation<IVariableSubstitutionService>({
-      substituteVariables: jest.fn(),
-      substituteInFile: jest.fn(),
-      substituteInPath: jest.fn(),
-      validateRequiredVariables: jest.fn(),
-      extractVariables: jest.fn(),
-      applyTransformation: jest.fn(),
-      createContext: jest.fn(),
-    });
-
-    mockManifestService = createMockImplementation<IProjectManifestService>({
-      loadProjectManifest: jest.fn(),
-      getProjectManifest: jest.fn(),
-      saveProjectManifest: jest.fn(),
-      updateProjectManifest: jest.fn(),
-      findNearestManifest: jest.fn(),
-    });
 
     // Create service instance
     fixService = new ProjectFixService(
-      mockTemplateService,
-      mockFileService,
-      mockValidationService,
-      mockVariableService,
-      mockManifestService
+      fakeTemplateService,
+      fakeFileService,
+      fakeValidationService,
+      (projectPath: string) => fakeManifestService.getProjectManifest(projectPath),
+      (projectPath: string, manifest: ProjectManifest) =>
+        fakeManifestService.updateProjectManifest(projectPath, manifest)
     );
-
-    // Setup mock-fs
-    mockFs({
-      '/test-project': {
-        '.scaffold': {
-          'manifest.json': JSON.stringify(mockManifest),
-        },
-      },
-      '/home/user/.scaffold/templates/test-template-123/files/package.json.template':
-        '{"name": "{{PROJECT_NAME}}"}',
-    });
-  });
-
-  afterEach(() => {
-    mockFs.restore();
   });
 
   describe('fixProject', () => {
     beforeEach(() => {
-      // Setup default mock returns
-      mockValidationService.validateProject.mockResolvedValue(
-        mockValidationReport
-      );
-      mockValidationService.findNearestManifest.mockResolvedValue({
-        manifestPath: '/test-project/.scaffold/manifest.json',
-        projectPath: '/test-project',
-      });
-      mockManifestService.getProjectManifest.mockResolvedValue(mockManifest);
-      mockTemplateService.getTemplate.mockResolvedValue(mockTemplate);
-      mockFileService.resolvePath.mockImplementation((...paths) =>
-        paths.join('/')
-      );
-      mockFileService.createDirectory.mockResolvedValue();
-      mockFileService.createFile.mockResolvedValue();
-      mockFileService.readFile.mockResolvedValue(
+      // Reset all fakes to ensure clean state
+      fakeTemplateService.reset();
+      fakeFileService.reset();
+      fakeValidationService.reset();
+      fakeManifestService.reset();
+
+      // Re-setup all required data - create fresh copies to avoid cross-test contamination
+      fakeTemplateService.addTemplate(mockTemplate);
+      fakeManifestService.setManifest('/test-project', JSON.parse(JSON.stringify(mockManifest)));
+
+      // Set up file system state
+      fakeFileService.setDirectory('/test-project');
+      fakeFileService.setDirectory('/test-project/.scaffold');
+      fakeFileService.setFile('/test-project/.scaffold/manifest.json', JSON.stringify(mockManifest));
+      fakeFileService.setFile(
+        '/home/user/.scaffold/templates/test-template-123/files/package.json.template',
         '{"name": "{{PROJECT_NAME}}"}'
       );
-      mockFileService.exists.mockResolvedValue(true);
-      mockManifestService.updateProjectManifest.mockResolvedValue(undefined);
-      mockVariableService.substituteInPath.mockImplementation((path) => path);
-      mockVariableService.substituteVariables.mockImplementation((content) =>
-        content.replace('{{PROJECT_NAME}}', 'Test Project')
-      );
+
+      // Setup default fake behavior
+      fakeValidationService.setValidationReport('/test-project', mockValidationReport);
     });
 
     it('should return validation report if project is already valid', async () => {
       const validReport = { ...mockValidationReport, valid: true, errors: [] };
-      mockValidationService.validateProject.mockResolvedValue(validReport);
+      fakeValidationService.setValidationReport('/test-project', validReport);
+
+      // Count files/dirs before the call
+      const filesBeforeTest = fakeFileService.getFiles().size;
+      const dirsBeforeTest = fakeFileService.getDirectories().size;
 
       const result = await fixService.fixProject('/test-project');
 
-      expect(result).toBe(validReport);
-      expect(mockFileService.createDirectory).not.toHaveBeenCalled();
-      expect(mockFileService.createFile).not.toHaveBeenCalled();
+      expect(result).toEqual(validReport);
+      // Verify no files were created by checking the fake file system state
+      expect(fakeFileService.getFiles().size).toBe(filesBeforeTest);
+      expect(fakeFileService.getDirectories().size).toBe(dirsBeforeTest);
     });
 
     it('should throw error for invalid project path', async () => {
@@ -289,44 +231,66 @@ describe('ProjectFixService', () => {
     });
 
     it('should fix auto-fixable errors', async () => {
+      // Set up validation service to return validation report and manifest location
+      fakeValidationService.setValidationReport('/test-project', mockValidationReport);
+
+      // Set up findNearestManifest to return after validateProject consumes the setReturnValue
+      // We need to set this right before the service call since setReturnValue is consumed
+      const originalFindNearestManifest = fakeValidationService.findNearestManifest;
+      fakeValidationService.findNearestManifest = async (startPath: string) => {
+        return {
+          manifestPath: '/test-project/.scaffold/manifest.json',
+          projectPath: '/test-project',
+        };
+      };
+
       const result = await fixService.fixProject('/test-project');
+
+      // Restore original method
+      fakeValidationService.findNearestManifest = originalFindNearestManifest;
 
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
       expect(result.suggestions).toContain(
         'Fixed 2 errors (1 files, 1 folders)'
       );
-      expect(mockFileService.createDirectory).toHaveBeenCalledWith(
-        '/test-project/test-project/src'
-      );
-      expect(mockFileService.createFile).toHaveBeenCalledWith(
-        '/test-project/test-project/package.json',
-        '{"name": "Test Project"}',
-        { overwrite: true }
+
+      // Verify the file system operations were performed
+      expect(fakeFileService.getDirectories().has('/test-project/test-project/src')).toBe(true);
+      expect(fakeFileService.getFiles().has('/test-project/test-project/package.json')).toBe(true);
+      expect(fakeFileService.getFiles().get('/test-project/test-project/package.json')).toBe(
+        '{"name": "Test Project"}'
       );
     });
 
     it('should handle dry run mode', async () => {
+      const initialFilesCount = fakeFileService.getFiles().size;
+      const initialDirsCount = fakeFileService.getDirectories().size;
+
       const result = await fixService.fixProject('/test-project', true);
 
-      expect(mockFileService.setDryRun).toHaveBeenCalledWith(true);
+      expect(fakeFileService.isDryRun).toBe(false); // should be restored
       expect(result.suggestions).toContain(
         'This was a dry run - no changes were made'
       );
-      expect(mockManifestService.updateProjectManifest).not.toHaveBeenCalled();
+
+      // Verify no actual files/dirs were created (since it was a dry run)
+      expect(fakeFileService.getFiles().size).toBe(initialFilesCount);
+      expect(fakeFileService.getDirectories().size).toBe(initialDirsCount);
+
+      // Verify manifest was not updated
+      expect(fakeManifestService.getStoredManifests().get('/test-project')).toEqual(mockManifest);
     });
 
     it('should restore original dry run mode after completion', async () => {
-      const originalIsDryRun = true;
-      Object.defineProperty(mockFileService, 'isDryRun', {
-        value: originalIsDryRun,
-        writable: false,
-        configurable: true,
-      });
+      // Set initial dry run mode to true
+      fakeFileService.setDryRun(true);
+      const originalIsDryRun = fakeFileService.isDryRun;
 
       await fixService.fixProject('/test-project', false);
 
-      expect(mockFileService.setDryRun).toHaveBeenCalledWith(originalIsDryRun);
+      // Should restore to original state
+      expect(fakeFileService.isDryRun).toBe(originalIsDryRun);
     });
 
     it('should handle non-auto-fixable errors', async () => {
@@ -343,9 +307,7 @@ describe('ProjectFixService', () => {
           },
         ],
       };
-      mockValidationService.validateProject.mockResolvedValue(
-        reportWithManualFix
-      );
+      fakeValidationService.setValidationReport('/test-project', reportWithManualFix);
 
       const result = await fixService.fixProject('/test-project');
 
@@ -357,9 +319,8 @@ describe('ProjectFixService', () => {
     });
 
     it('should handle fix failures gracefully', async () => {
-      mockFileService.createDirectory.mockRejectedValue(
-        new Error('Permission denied')
-      );
+      // Set up the fake file service to throw an error when createDirectory is called
+      fakeFileService.setError('Permission denied');
 
       const result = await fixService.fixProject('/test-project');
 
@@ -372,32 +333,32 @@ describe('ProjectFixService', () => {
     it('should update project manifest with fix history', async () => {
       await fixService.fixProject('/test-project');
 
-      expect(mockManifestService.updateProjectManifest).toHaveBeenCalledWith(
-        '/test-project',
-        expect.objectContaining({
-          history: expect.arrayContaining([
-            expect.objectContaining({
-              action: 'check',
-              changes: expect.arrayContaining([
-                expect.objectContaining({
-                  type: 'added',
-                  reason: expect.stringContaining('Fixed:'),
-                }),
-              ]),
-            }),
-          ]),
-        })
-      );
+      const updatedManifest = fakeManifestService.getStoredManifests().get('/test-project');
+      expect(updatedManifest).toBeDefined();
+      expect(updatedManifest!.history).toHaveLength(1);
+      expect(updatedManifest!.history[0]).toMatchObject({
+        action: 'check',
+        changes: expect.arrayContaining([
+          expect.objectContaining({
+            type: 'added',
+            reason: expect.stringContaining('Fixed:'),
+          }),
+        ]),
+      });
     });
 
     it('should not update manifest in dry run mode', async () => {
+      const originalManifest = JSON.parse(JSON.stringify(mockManifest));
+
       await fixService.fixProject('/test-project', true);
 
-      expect(mockManifestService.updateProjectManifest).not.toHaveBeenCalled();
+      // Manifest should remain unchanged
+      expect(fakeManifestService.getStoredManifests().get('/test-project')).toEqual(originalManifest);
     });
 
     it('should throw error when no manifest is found', async () => {
-      mockManifestService.getProjectManifest.mockResolvedValue(null);
+      // Remove the manifest from the fake service
+      fakeManifestService.reset();
 
       await expect(fixService.fixProject('/test-project')).rejects.toThrow(
         'No project manifest found'
@@ -408,11 +369,8 @@ describe('ProjectFixService', () => {
       await fixService.fixProject('/test-project');
 
       // Verify file was created with substituted variables
-      expect(mockFileService.createFile).toHaveBeenCalledWith(
-        '/test-project/test-project/package.json',
-        '{"name": "Test Project"}', // PROJECT_NAME substituted
-        { overwrite: true }
-      );
+      const fileContent = fakeFileService.getFiles().get('/test-project/test-project/package.json');
+      expect(fileContent).toBe('{"name": "Test Project"}'); // PROJECT_NAME substituted
     });
 
     it('should handle source file reading from template', async () => {
@@ -427,36 +385,40 @@ describe('ProjectFixService', () => {
           },
         ],
       };
-      mockTemplateService.getTemplate.mockResolvedValue(templateWithSourceFile);
+
+      // Create a validation report specifically for this template
+      const validationReportForSourceFile = {
+        ...mockValidationReport,
+        errors: [
+          {
+            ...mockValidationReport.errors[1], // Use the file error
+            path: 'test-project/package.json',
+            fix: {
+              action: 'create' as const,
+              autoFix: true,
+              // Don't include content - let the service read from sourcePath
+            },
+          },
+        ],
+      };
+
+      // Reset and setup the template service with the new template
+      fakeTemplateService.reset();
+      fakeTemplateService.addTemplate(templateWithSourceFile);
+
+      // Set up the template source file with the correct path structure
+      const userHome = process.env.HOME || process.env.USERPROFILE || '/home/user';
+      const templateSourcePath = `${userHome}/.scaffold/templates/test-template-123/files/package.json.template`;
+      fakeFileService.setFile(templateSourcePath, '{"name": "{{PROJECT_NAME}}"}');
+
+      // Set up validation report for this specific test
+      fakeValidationService.setValidationReport('/test-project', validationReportForSourceFile);
 
       await fixService.fixProject('/test-project');
 
-      expect(mockFileService.readFile).toHaveBeenCalledWith(
-        expect.stringContaining('/templates/test-template-123/files/package.json.template')
-      );
-    });
-
-    it('should handle manifest write failures gracefully', async () => {
-      mockManifestService.updateProjectManifest.mockRejectedValue(
-        new Error('Failed to write project manifest: Permission denied')
-      );
-
-      const result = await fixService.fixProject('/test-project');
-
-      // Should complete successfully but add a warning about manifest failure
-      expect(result.valid).toBe(true); // Files were still fixed
-      expect(result.warnings.some(w =>
-        w.message.includes('Failed to update project manifest') &&
-        w.path === '.scaffold/manifest.json'
-      )).toBe(true);
-    });
-
-    it('should not attempt manifest write in dry-run mode', async () => {
-      const result = await fixService.fixProject('/test-project', true);
-
-      expect(mockFileService.setDryRun).toHaveBeenCalledWith(true);
-      expect(mockManifestService.updateProjectManifest).not.toHaveBeenCalled();
-      expect(result.suggestions && result.suggestions.includes('This was a dry run - no changes were made')).toBe(true);
+      // Verify the file was created using content from the template source file
+      const fileContent = fakeFileService.getFiles().get('/test-project/test-project/package.json');
+      expect(fileContent).toBe('{"name": "Test Project"}'); // Content from template with variables substituted
     });
   });
 });

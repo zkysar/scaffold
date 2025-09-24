@@ -84,8 +84,17 @@ export class FakeIdentifierService extends IdentifierService {
     return null;
   }
 
+  async getAliases(sha: string, availableSHAs: string[]): Promise<string[]> {
+    this.checkError();
+    const returnValue = this.checkReturnValue();
+    if (returnValue !== null) return returnValue;
+
+    const aliases = this.aliasMapping[sha] || [];
+    return aliases.filter(alias => this.reverseAliasMapping[alias] === sha);
+  }
+
   // Test helpers
-  getAliases(): { aliases: Record<string, string[]>; reverse: Record<string, string> } {
+  getTestAliases(): { aliases: Record<string, string[]>; reverse: Record<string, string> } {
     return {
       aliases: { ...this.aliasMapping },
       reverse: { ...this.reverseAliasMapping },

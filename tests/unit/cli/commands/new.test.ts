@@ -66,13 +66,13 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn(),
       } as any;
-      const mockProjectServiceInstance = {
+      const mockProjectCreationServiceInstance = {
         createProject: jest.fn(),
       } as any;
       const mockFileSystemServiceInstance = {} as any;
 
       mockTemplateService.mockImplementation(() => mockTemplateServiceInstance);
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance);
+      mockProjectCreationService.mockImplementation(() => mockProjectCreationServiceInstance);
       mockFileSystemService.mockImplementation(() => mockFileSystemServiceInstance);
     }
 
@@ -160,7 +160,7 @@ describe('scaffold new command unit tests', () => {
           templates: [{ id: 'template1', name: 'Template 1', description: 'Test template' }]
         } as TemplateLibrary),
       };
-      const mockProjectServiceInstance = {
+      const mockProjectCreationServiceInstance = {
         createProject: jest.fn().mockResolvedValue({
           projectName: 'test-project',
           templates: [{ name: 'Template 1', version: '1.0.0' }]
@@ -168,7 +168,7 @@ describe('scaffold new command unit tests', () => {
       };
 
       mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectCreationService.mockImplementation(() => mockProjectCreationServiceInstance as any);
 
       const result = await executeCommand([]);
 
@@ -368,7 +368,7 @@ describe('scaffold new command unit tests', () => {
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn(),
       };
-      const mockProjectServiceInstance = {
+      const mockProjectCreationServiceInstance = {
         createProject: jest.fn().mockResolvedValue({
           projectName: 'test-project',
           templates: [{ name: 'My Template', version: '1.0.0' }]
@@ -376,7 +376,7 @@ describe('scaffold new command unit tests', () => {
       };
 
       mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectCreationService.mockImplementation(() => mockProjectCreationServiceInstance as any);
 
       const result = await executeCommand(['test-project', '--template', 'my-template']);
 
@@ -490,7 +490,7 @@ describe('scaffold new command unit tests', () => {
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn(),
       };
-      const mockProjectServiceInstance = {
+      const mockProjectCreationServiceInstance = {
         createProject: jest.fn().mockResolvedValue({
           projectName: 'test-project',
           templates: [{ name: 'My Template', version: '1.0.0' }]
@@ -498,12 +498,12 @@ describe('scaffold new command unit tests', () => {
       };
 
       mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectCreationService.mockImplementation(() => mockProjectCreationServiceInstance as any);
 
       const variables = JSON.stringify({ author: 'John Doe', version: '2.0.0' });
       await executeCommand(['test-project', '--template', 'my-template', '--variables', variables]);
 
-      expect(mockProjectServiceInstance.createProject).toHaveBeenCalledWith(
+      expect(mockProjectCreationServiceInstance.createProject).toHaveBeenCalledWith(
         'test-project',
         ['my-template'],
         expect.any(String),
@@ -560,7 +560,7 @@ describe('scaffold new command unit tests', () => {
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn(),
       };
-      const mockProjectServiceInstance = {
+      const mockProjectCreationServiceInstance = {
         createProject: jest.fn().mockResolvedValue({
           id: 'project-123',
           projectName: 'test-project',
@@ -570,7 +570,7 @@ describe('scaffold new command unit tests', () => {
       };
 
       mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectCreationService.mockImplementation(() => mockProjectCreationServiceInstance as any);
 
       const result = await executeCommand(['test-project', '--template', 'my-template', '--verbose']);
 
@@ -606,12 +606,12 @@ describe('scaffold new command unit tests', () => {
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn(),
       };
-      const mockProjectServiceInstance = {
+      const mockProjectCreationServiceInstance = {
         createProject: jest.fn().mockRejectedValue(new Error('Project creation failed')),
       };
 
       mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectCreationService.mockImplementation(() => mockProjectCreationServiceInstance as any);
 
       const result = await executeCommand(['test-project', '--template', 'my-template']);
 
@@ -626,12 +626,12 @@ describe('scaffold new command unit tests', () => {
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn(),
       };
-      const mockProjectServiceInstance = {
+      const mockProjectCreationServiceInstance = {
         createProject: jest.fn().mockRejectedValue(new Error('Service error occurred')),
       };
 
       mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectCreationService.mockImplementation(() => mockProjectCreationServiceInstance as any);
 
       const result = await executeCommand(['test-project', '--template', 'my-template']);
 
@@ -646,14 +646,14 @@ describe('scaffold new command unit tests', () => {
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn(),
       };
-      const mockProjectServiceInstance = {
+      const mockProjectCreationServiceInstance = {
         createProject: jest.fn().mockImplementation(() => {
           throw new Error('Unexpected error');
         }),
       };
 
       mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectCreationService.mockImplementation(() => mockProjectCreationServiceInstance as any);
 
       const result = await executeCommand(['test-project', '--template', 'my-template']);
 
@@ -670,7 +670,7 @@ describe('scaffold new command unit tests', () => {
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn(),
       };
-      const mockProjectServiceInstance = {
+      const mockProjectCreationServiceInstance = {
         createProject: jest.fn().mockResolvedValue({
           projectName: 'test-project',
           templates: [{ name: 'My Template', version: '1.0.0' }]
@@ -678,7 +678,7 @@ describe('scaffold new command unit tests', () => {
       };
 
       mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectCreationService.mockImplementation(() => mockProjectCreationServiceInstance as any);
 
       const result = await executeCommand(['test-project', '--template', 'my-template']);
 
