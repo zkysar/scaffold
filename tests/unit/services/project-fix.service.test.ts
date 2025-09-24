@@ -12,6 +12,7 @@ import { FakeTemplateService } from '../../fakes/template-service.fake';
 import { FakeFileSystemService } from '../../fakes/file-system.fake';
 import { FakeProjectValidationService } from '../../fakes/project-validation.fake';
 import { FakeProjectManifestService } from '../../fakes/project-manifest.fake';
+import { FakeVariableSubstitutionService } from '../../fakes/variable-substitution.fake';
 
 describe('ProjectFixService', () => {
   let fixService: ProjectFixService;
@@ -19,6 +20,7 @@ describe('ProjectFixService', () => {
   let fakeFileService: FakeFileSystemService;
   let fakeValidationService: FakeProjectValidationService;
   let fakeManifestService: FakeProjectManifestService;
+  let fakeVariableService: FakeVariableSubstitutionService;
 
   const mockTemplate: Template = {
     id: 'test-template-123',
@@ -148,12 +150,14 @@ describe('ProjectFixService', () => {
     fakeFileService = new FakeFileSystemService();
     fakeValidationService = new FakeProjectValidationService();
     fakeManifestService = new FakeProjectManifestService();
+    fakeVariableService = new FakeVariableSubstitutionService();
 
     // Reset all fakes
     fakeTemplateService.reset();
     fakeFileService.reset();
     fakeValidationService.reset();
     fakeManifestService.reset();
+    fakeVariableService.reset();
 
     // Set up fake data
     fakeTemplateService.addTemplate(mockTemplate);
@@ -173,9 +177,8 @@ describe('ProjectFixService', () => {
       fakeTemplateService,
       fakeFileService,
       fakeValidationService,
-      (projectPath: string) => fakeManifestService.getProjectManifest(projectPath),
-      (projectPath: string, manifest: ProjectManifest) =>
-        fakeManifestService.updateProjectManifest(projectPath, manifest)
+      fakeVariableService,
+      fakeManifestService
     );
   });
 

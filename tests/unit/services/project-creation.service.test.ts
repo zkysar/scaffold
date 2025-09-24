@@ -8,11 +8,13 @@ import {
   FakeTemplateService,
   FakeFileSystemService,
 } from '../../fakes';
+import { FakeVariableSubstitutionService } from '../../fakes/variable-substitution.fake';
 
 describe('ProjectCreationService', () => {
   let creationService: ProjectCreationService;
   let fakeTemplateService: FakeTemplateService;
   let fakeFileService: FakeFileSystemService;
+  let fakeVariableService: FakeVariableSubstitutionService;
 
   const mockTemplate: Template = {
     id: 'test-template-123',
@@ -73,10 +75,12 @@ describe('ProjectCreationService', () => {
     // Create fake services
     fakeTemplateService = new FakeTemplateService();
     fakeFileService = new FakeFileSystemService();
+    fakeVariableService = new FakeVariableSubstitutionService();
 
     // Reset fakes
     fakeTemplateService.reset();
     fakeFileService.reset();
+    fakeVariableService.reset();
 
     // Setup template in fake service
     fakeTemplateService.addTemplate(mockTemplate);
@@ -90,7 +94,8 @@ describe('ProjectCreationService', () => {
     // Create service instance
     creationService = new ProjectCreationService(
       fakeTemplateService,
-      fakeFileService
+      fakeFileService,
+      fakeVariableService
     );
   });
 

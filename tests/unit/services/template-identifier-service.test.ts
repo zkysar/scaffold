@@ -80,7 +80,7 @@ describe('TemplateIdentifierService', () => {
       (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
       (fs.writeJson as jest.Mock).mockResolvedValue(undefined);
 
-      await service['saveAliases'](mockAliases);
+      await service['saveAliases']();
 
       expect(fs.ensureDir).toHaveBeenCalledWith(path.dirname(aliasFilePath));
       expect(fs.writeJson).toHaveBeenCalledWith(aliasFilePath, mockAliases, { spaces: 2 });
@@ -92,7 +92,7 @@ describe('TemplateIdentifierService', () => {
       (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
       (fs.writeJson as jest.Mock).mockRejectedValue(new Error('Write error'));
 
-      await expect(service['saveAliases'](mockAliases)).rejects.toThrow('Write error');
+      await expect(service['saveAliases']()).rejects.toThrow('Write error');
     });
   });
 
@@ -175,7 +175,7 @@ describe('TemplateIdentifierService', () => {
       (fs.ensureDir as jest.Mock).mockResolvedValue(undefined);
       (fs.writeJson as jest.Mock).mockResolvedValue(undefined);
 
-      await service.unregisterAlias(alias);
+      await service.removeAlias(alias);
 
       expect(fs.writeJson).toHaveBeenCalledWith(
         aliasFilePath,
@@ -188,7 +188,7 @@ describe('TemplateIdentifierService', () => {
       (fs.pathExists as jest.Mock).mockResolvedValue(true);
       (fs.readJson as jest.Mock).mockResolvedValue({});
 
-      await expect(service.unregisterAlias('non-existent')).resolves.not.toThrow();
+      await expect(service.removeAlias('non-existent')).resolves.not.toThrow();
     });
   });
 
@@ -323,17 +323,17 @@ describe('TemplateIdentifierService', () => {
       (fs.pathExists as jest.Mock).mockResolvedValue(true);
       (fs.readJson as jest.Mock).mockResolvedValue(mockAliases);
 
-      const aliases = await service.getAllAliases();
+      const aliases = await service.getAllMappings();
 
-      expect(aliases).toEqual(mockAliases);
+      expect(aliases).toEqual(new Map(Object.entries(mockAliases)));
     });
 
     it('should return empty object if file does not exist', async () => {
       (fs.pathExists as jest.Mock).mockResolvedValue(false);
 
-      const aliases = await service.getAllAliases();
+      const aliases = await service.getAllMappings();
 
-      expect(aliases).toEqual({});
+      expect(aliases).toEqual(new Map());
     });
   });
 

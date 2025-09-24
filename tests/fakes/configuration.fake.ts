@@ -143,6 +143,12 @@ export class FakeConfigurationService implements IConfigurationService {
     const returnValue = this.checkReturnValue<T>();
     if (returnValue !== null) return returnValue;
 
+    // Check environment override first
+    const envValue = this.getEnvironmentOverride(key);
+    if (envValue !== undefined) {
+      return envValue as T;
+    }
+
     if (scope) {
       const config = this.configurations.get(scope);
       return this.getNestedValue(config, key) as T;
@@ -239,7 +245,7 @@ export class FakeConfigurationService implements IConfigurationService {
 
     // In the fake, we just verify the configuration exists
     if (!this.configurations.has(scope)) {
-      throw new Error(`No configuration found for scope: ${scope}`);
+      throw new Error('No configuration found for scope');
     }
   }
 
@@ -275,6 +281,63 @@ export class FakeConfigurationService implements IConfigurationService {
       effective = this.mergeConfigs(effective, project);
     }
 
+    // Apply environment overrides
+    this.applyEnvironmentOverrides(effective);
+
     return effective;
+  }
+
+  private applyEnvironmentOverrides(config: ScaffoldConfig): void {
+    // Apply common environment overrides
+    const overrides = [
+      'preferences.colorOutput',
+      'preferences.verboseOutput',
+      'preferences.strictModeDefault',
+      'preferences.confirmDestructive',
+      'preferences.backupBeforeSync',
+      'paths.templatesDir',
+      'paths.cacheDir',
+      'paths.backupDir',
+      'defaults.gitIgnore',
+    ];
+
+    // Also check for any SCAFFOLD_* environment variables
+    Object.keys(process.env).forEach(envKey => {
+      if (envKey.startsWith('SCAFFOLD_')) {
+        // Convert environment key back to nested key
+        const configKey = envKey
+          .replace('SCAFFOLD_', '')
+          .toLowerCase()
+          .replace(/_/g, '.');
+
+        if (!overrides.includes(configKey)) {
+          overrides.push(configKey);
+        }
+      }
+    });
+
+    for (const key of overrides) {
+      const envValue = this.getEnvironmentOverride(key);
+      if (envValue !== undefined) {
+        this.setNestedValue(config, key, envValue);
+      }
+    }
+  }
+
+  private getEnvironmentOverride(key: string): any {
+    // Convert nested keys to environment variable format
+    // e.g., "preferences.colorOutput" → "SCAFFOLD_PREFERENCES_COLOR_OUTPUT"
+    const envKey = 'SCAFFOLD_' + key.toUpperCase().replace(/\./g, '_');
+    const envValue = process.env[envKey];
+
+    if (envValue === undefined) return undefined;
+
+    // Try to parse as JSON for complex values
+    try {
+      return JSON.parse(envValue);
+    } catch {
+      // Return as string for simple values
+      return envValue;
+    }
   }
 }

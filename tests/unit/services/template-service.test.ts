@@ -13,6 +13,7 @@ import {
   createMockImplementation,
   assertDefined,
 } from '../../helpers/test-utils';
+import { FakeTemplateIdentifierService } from '../../fakes/identifier-service.fake';
 
 // Mock fs-extra with manual implementation
 jest.mock('fs-extra');
@@ -147,6 +148,7 @@ class InMemoryFileSystem {
 
 describe('TemplateService', () => {
   let templateService: TemplateService;
+  let fakeIdentifierService: FakeTemplateIdentifierService;
   let fileSystem: InMemoryFileSystem;
   const mockHomeDir = '/home/user';
   const templatesDir = path.join(mockHomeDir, '.scaffold', 'templates');
@@ -239,6 +241,10 @@ describe('TemplateService', () => {
   };
 
   beforeEach(() => {
+    // Setup fake services
+    fakeIdentifierService = new FakeTemplateIdentifierService();
+    fakeIdentifierService.reset();
+
     // Setup in-memory file system
     fileSystem = new InMemoryFileSystem();
     fileSystem.reset();
@@ -312,7 +318,7 @@ describe('TemplateService', () => {
     );
 
     // Create TemplateService with default dependencies
-    templateService = new TemplateService({
+    templateService = new TemplateService(fakeIdentifierService, {
       templatesDir,
       cacheDir,
     });

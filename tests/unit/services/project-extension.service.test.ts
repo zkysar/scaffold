@@ -7,12 +7,16 @@ import type { Template, ProjectManifest } from '../../../src/models';
 import { FakeTemplateService } from '../../fakes/template-service.fake';
 import { FakeFileSystemService } from '../../fakes/file-system.fake';
 import { FakeProjectManifestService } from '../../fakes/project-manifest.fake';
+import { FakeVariableSubstitutionService } from '../../fakes/variable-substitution.fake';
+import { FakeProjectValidationService } from '../../fakes/project-validation.fake';
 
 describe('ProjectExtensionService', () => {
   let extensionService: ProjectExtensionService;
   let fakeTemplateService: FakeTemplateService;
   let fakeFileService: FakeFileSystemService;
   let fakeManifestService: FakeProjectManifestService;
+  let fakeVariableService: FakeVariableSubstitutionService;
+  let fakeValidationService: FakeProjectValidationService;
 
   const mockTemplate: Template = {
     id: 'test-template-123',
@@ -88,11 +92,15 @@ describe('ProjectExtensionService', () => {
     fakeTemplateService = new FakeTemplateService();
     fakeFileService = new FakeFileSystemService();
     fakeManifestService = new FakeProjectManifestService();
+    fakeVariableService = new FakeVariableSubstitutionService();
+    fakeValidationService = new FakeProjectValidationService();
 
     // Reset all fakes
     fakeTemplateService.reset();
     fakeFileService.reset();
     fakeManifestService.reset();
+    fakeVariableService.reset();
+    fakeValidationService.reset();
 
     // Setup fake data
     fakeTemplateService.addTemplate(mockTemplate);
@@ -117,10 +125,9 @@ describe('ProjectExtensionService', () => {
     extensionService = new ProjectExtensionService(
       fakeTemplateService,
       fakeFileService,
-      (projectPath: string) => fakeManifestService.getProjectManifest(projectPath),
-      (projectPath: string, manifest: ProjectManifest) =>
-        fakeManifestService.updateProjectManifest(projectPath, manifest),
-      (startPath: string) => fakeManifestService.findNearestManifest(startPath)
+      fakeVariableService,
+      fakeManifestService,
+      fakeValidationService
     );
   });
 
@@ -129,6 +136,8 @@ describe('ProjectExtensionService', () => {
     fakeTemplateService.reset();
     fakeFileService.reset();
     fakeManifestService.reset();
+    fakeVariableService.reset();
+    fakeValidationService.reset();
   });
 
   describe('extendProject', () => {

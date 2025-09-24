@@ -396,7 +396,7 @@ describe('FileSystemService', () => {
 
       await fileSystemService.writeJson('/test/replacer-test.json', data, { replacer });
 
-      const parsed = await fileSystemService.readJson('/test/replacer-test.json');
+      const parsed = await fileSystemService.readJson<{ password: string; username: string }>('/test/replacer-test.json');
       expect(parsed.password).toBe('[REDACTED]');
       expect(parsed.username).toBe('user');
     });
