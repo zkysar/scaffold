@@ -3,6 +3,7 @@
  * Tests option parsing, validation, flow control, and error handling
  */
 
+import 'reflect-metadata';
 import { createTemplateCommand } from '../../../../src/cli/commands/template.command';
 import {
   TemplateService,
@@ -11,6 +12,7 @@ import { TemplateIdentifierService } from '../../../../src/services/template-ide
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import type { Template, TemplateLibrary, TemplateSummary } from '../../../../src/models';
+import { container } from 'tsyringe';
 
 // Mock dependencies
 jest.mock('../../../../src/services');
@@ -49,7 +51,8 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
   }) as any;
 
   try {
-    const command = createTemplateCommand();
+    // Create mock container
+    const mockContainer = container.createChildContainer();
 
     if (mockServices) {
       // Set up default service mocks
@@ -67,10 +70,11 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
         getAliases: jest.fn(),
       } as any;
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance);
-      (mockTemplateIdentifierService.getInstance as jest.Mock).mockReturnValue(mockIdentifierServiceInstance);
+      mockContainer.register(TemplateService, { useValue: mockTemplateServiceInstance });
+      mockContainer.register(TemplateIdentifierService, { useValue: mockIdentifierServiceInstance });
     }
 
+    const command = createTemplateCommand(mockContainer);
     await command.parseAsync(args, { from: 'user' });
   } catch (error) {
     if (error instanceof Error && error.message !== 'Process exit called') {
@@ -97,7 +101,8 @@ describe('scaffold template command unit tests', () => {
 
   describe('command structure', () => {
     it('should create command with correct configuration', () => {
-      const command = createTemplateCommand();
+      const mockContainer = container.createChildContainer();
+      const command = createTemplateCommand(mockContainer);
 
       expect(command.name()).toBe('template');
       expect(command.description()).toBe('Manage templates (create/list/delete/export/import/alias)');
@@ -117,7 +122,8 @@ describe('scaffold template command unit tests', () => {
     });
 
     it('should have proper option configurations', () => {
-      const command = createTemplateCommand();
+      const mockContainer = container.createChildContainer();
+      const command = createTemplateCommand(mockContainer);
       const options = command.options;
 
       const verboseOption = options.find(opt => opt.long === '--verbose');

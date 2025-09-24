@@ -80,8 +80,8 @@ async function handleShowCommand(
   const format = options.format || 'table';
 
   if (verbose) {
-    logger.info(chalk.blue('Show item:'), item);
-    logger.info(chalk.blue('Format:'), format);
+    logger.raw(chalk.blue('Show item:'), item);
+    logger.raw(chalk.blue('Format:'), format);
   }
 
   switch (item.toLowerCase()) {
@@ -100,7 +100,7 @@ async function handleShowCommand(
       await showAllInfo(options, container);
       break;
     default:
-      logger.error(chalk.red('Error:'), `Unknown item: ${item}`);
+      logger.error( `Unknown item: ${item}`);
       logger.info(
         chalk.gray('Available items: project, template, config, all')
       );
@@ -132,7 +132,7 @@ async function showProjectInfo(
       }
     } catch (parseError) {
       // Handle JSON parsing errors
-      logger.error(chalk.red('Error:'), 'Malformed project manifest file.');
+      logger.error( 'Malformed project manifest file.');
       logger.info(
         chalk.gray('The .scaffold/manifest.json file contains invalid JSON.')
       );
@@ -156,17 +156,17 @@ async function showProjectInfo(
       return;
     }
 
-    logger.info(chalk.blue('Project Name:'), manifest.projectName);
-    logger.info(chalk.blue('Version:'), manifest.version);
-    logger.info(chalk.blue('Created:'), manifest.created);
-    logger.info(chalk.blue('Last Updated:'), manifest.updated);
+    logger.raw(chalk.blue('Project Name:'), manifest.projectName);
+    logger.raw(chalk.blue('Version:'), manifest.version);
+    logger.raw(chalk.blue('Created:'), manifest.created);
+    logger.raw(chalk.blue('Last Updated:'), manifest.updated);
 
     if (manifest.templates.length > 0) {
-      logger.info(chalk.blue('Applied Templates:'));
+      logger.raw(chalk.blue('Applied Templates:'));
       for (const template of manifest.templates) {
-        logger.info(chalk.gray('  -'), `${template.name}@${template.version}`);
+        logger.raw(chalk.gray('  -'), `${template.name}@${template.version}`);
         if (verbose) {
-          logger.info(chalk.gray('    Applied:'), template.appliedAt);
+          logger.raw(chalk.gray('    Applied:'), template.appliedAt);
         }
       }
     } else {
@@ -174,9 +174,9 @@ async function showProjectInfo(
     }
 
     if (Object.keys(manifest.variables).length > 0) {
-      logger.info(chalk.blue('Variables:'));
+      logger.raw(chalk.blue('Variables:'));
       for (const [key, value] of Object.entries(manifest.variables)) {
-        logger.info(chalk.gray('  -'), `${key}: ${value}`);
+        logger.raw(chalk.gray('  -'), `${key}: ${value}`);
       }
     }
   } catch (error) {
@@ -196,7 +196,7 @@ async function showProjectInfo(
                  error.message.includes('JSON') ||
                  error.message.includes('invalid json')) {
         // Handle malformed manifest
-        logger.error(chalk.red('Error:'), 'Malformed project manifest file.');
+        logger.error( 'Malformed project manifest file.');
         logger.info(
           chalk.gray('The .scaffold/manifest.json file contains invalid JSON.')
         );
@@ -234,17 +234,17 @@ async function showTemplateInfo(
     return;
   }
 
-  logger.info(chalk.blue(`Found ${library.templates.length} template(s):`));
+  logger.raw(chalk.blue(`Found ${library.templates.length} template(s):`));
   logger.info('');
 
   for (const template of library.templates) {
-    logger.info(chalk.bold(template.name), chalk.gray(`(${template.id})`));
-    logger.info(chalk.gray('  Version:'), template.version);
-    logger.info(chalk.gray('  Description:'), template.description);
+    logger.raw(chalk.bold(template.name), chalk.gray(`(${template.id})`));
+    logger.raw(chalk.gray('  Version:'), template.version);
+    logger.raw(chalk.gray('  Description:'), template.description);
     logger.info('');
   }
 
-  logger.info(chalk.blue('Total: ') + library.templates.length + ' templates');
+  logger.raw(chalk.blue('Total: ') + library.templates.length + ' templates');
 }
 
 async function showConfigurationInfo(
@@ -292,14 +292,14 @@ async function showConfigurationInfo(
     );
   } catch (error) {
     // If anything fails, show basic default information
-    logger.info(chalk.blue('Templates Directory:'), 'Not configured');
-    logger.info(chalk.blue('Cache Directory:'), 'Not configured');
-    logger.info(chalk.blue('Backup Directory:'), 'Not configured');
-    logger.info(chalk.blue('Strict Mode Default:'), 'Disabled');
-    logger.info(chalk.blue('Color Output:'), 'Yes');
-    logger.info(chalk.blue('Verbose Output:'), 'No');
-    logger.info(chalk.blue('Confirm Destructive:'), 'Yes');
-    logger.info(chalk.blue('Backup Before Sync:'), 'Yes');
+    logger.raw(chalk.blue('Templates Directory:'), 'Not configured');
+    logger.raw(chalk.blue('Cache Directory:'), 'Not configured');
+    logger.raw(chalk.blue('Backup Directory:'), 'Not configured');
+    logger.raw(chalk.blue('Strict Mode Default:'), 'Disabled');
+    logger.raw(chalk.blue('Color Output:'), 'Yes');
+    logger.raw(chalk.blue('Verbose Output:'), 'No');
+    logger.raw(chalk.blue('Confirm Destructive:'), 'Yes');
+    logger.raw(chalk.blue('Backup Before Sync:'), 'Yes');
   }
 }
 

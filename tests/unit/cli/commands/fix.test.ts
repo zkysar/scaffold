@@ -3,6 +3,7 @@
  * Tests option parsing, validation, flow control, and error handling
  */
 
+import 'reflect-metadata';
 import { createFixCommand } from '../../../../src/cli/commands/fix.command';
 import {
   ProjectFixService,
@@ -14,6 +15,7 @@ import {
 import { Command } from 'commander';
 import { existsSync } from 'fs';
 import type { ProjectManifest, ValidationReport } from '../../../../src/models';
+import { container } from 'tsyringe';
 
 // Mock dependencies
 jest.mock('../../../../src/services');
@@ -85,12 +87,20 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
   }) as any;
 
   try {
-    const command = createFixCommand();
+    // Create mock container
+    const mockContainer = container.createChildContainer();
 
     if (mockServices) {
       setupServiceMocks();
+      // Register mock services in container
+      mockContainer.register(TemplateService, { useValue: mockTemplateServiceInstance });
+      mockContainer.register(FileSystemService, { useValue: mockFileSystemServiceInstance });
+      mockContainer.register(ProjectManifestService, { useValue: mockProjectManifestServiceInstance });
+      mockContainer.register(ProjectValidationService, { useValue: mockProjectValidationServiceInstance });
+      mockContainer.register(ProjectFixService, { useValue: mockProjectFixServiceInstance });
     }
 
+    const command = createFixCommand(mockContainer);
     await command.parseAsync(args, { from: 'user' });
   } catch (error) {
     if (error instanceof Error && error.message !== 'Process exit called') {
@@ -118,7 +128,8 @@ describe('scaffold fix command unit tests', () => {
 
   describe('command structure', () => {
     it('should create command with correct configuration', () => {
-      const command = createFixCommand();
+      const mockContainer = container.createChildContainer();
+      const command = createFixCommand(mockContainer);
 
       expect(command.name()).toBe('fix');
       expect(command.description()).toBe('Fix project structure issues automatically');
@@ -139,7 +150,8 @@ describe('scaffold fix command unit tests', () => {
     });
 
     it('should have proper option configurations', () => {
-      const command = createFixCommand();
+      const mockContainer = container.createChildContainer();
+      const command = createFixCommand(mockContainer);
       const options = command.options;
 
       const verboseOption = options.find(opt => opt.long === '--verbose');

@@ -3,6 +3,7 @@
  * Tests option parsing, validation, flow control, and error handling
  */
 
+import 'reflect-metadata';
 import { createNewCommand } from '@/cli/commands/new.command';
 import {
   ProjectCreationService,
@@ -15,6 +16,7 @@ import inquirer from 'inquirer';
 import { existsSync } from 'fs';
 import mockFs from 'mock-fs';
 import type { ProjectManifest, TemplateLibrary, Template } from '@/models';
+import { container, DependencyContainer } from 'tsyringe';
 
 // Mock dependencies
 jest.mock('@/services');
@@ -30,6 +32,24 @@ const mockTemplateService = TemplateService as jest.MockedClass<typeof TemplateS
 const mockFileSystemService = FileSystemService as jest.MockedClass<typeof FileSystemService>;
 const mockInquirer = inquirer as jest.Mocked<typeof inquirer>;
 const mockExistsSync = existsSync as jest.MockedFunction<typeof existsSync>;
+
+// Helper function to create a command with mock container
+function createMockCommand(): Command {
+  const mockContainer = container.createChildContainer();
+
+  // Register minimal mock services
+  const mockTemplateService = { loadTemplates: jest.fn() } as any;
+  const mockProjectCreationService = { createProject: jest.fn() } as any;
+  const mockProjectManifestService = { updateProjectManifest: jest.fn() } as any;
+  const mockFileSystemService = {} as any;
+
+  mockContainer.register(TemplateService, { useValue: mockTemplateService });
+  mockContainer.register(ProjectCreationService, { useValue: mockProjectCreationService });
+  mockContainer.register(ProjectManifestService, { useValue: mockProjectManifestService });
+  mockContainer.register(FileSystemService, { useValue: mockFileSystemService });
+
+  return createNewCommand(mockContainer);
+}
 
 // Helper to execute command and capture results
 async function executeCommand(args: string[], mockServices = true): Promise<{
@@ -59,7 +79,8 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
   }) as any;
 
   try {
-    const command = createNewCommand();
+    // Create mock container
+    const mockContainer = container.createChildContainer();
 
     if (mockServices) {
       // Set up default service mocks
@@ -69,13 +90,18 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
       const mockProjectCreationServiceInstance = {
         createProject: jest.fn(),
       } as any;
+      const mockProjectManifestServiceInstance = {
+        updateProjectManifest: jest.fn(),
+      } as any;
       const mockFileSystemServiceInstance = {} as any;
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance);
-      mockProjectCreationService.mockImplementation(() => mockProjectCreationServiceInstance);
-      mockFileSystemService.mockImplementation(() => mockFileSystemServiceInstance);
+      mockContainer.register(TemplateService, { useValue: mockTemplateServiceInstance });
+      mockContainer.register(ProjectCreationService, { useValue: mockProjectCreationServiceInstance });
+      mockContainer.register(ProjectManifestService, { useValue: mockProjectManifestServiceInstance });
+      mockContainer.register(FileSystemService, { useValue: mockFileSystemServiceInstance });
     }
 
+    const command = createNewCommand(mockContainer);
     await command.parseAsync(args, { from: 'user' });
   } catch (error) {
     if (error instanceof Error && error.message !== 'Process exit called') {
@@ -104,7 +130,7 @@ describe('scaffold new command unit tests', () => {
 
   describe('command structure', () => {
     it('should create command with correct configuration', () => {
-      const command = createNewCommand();
+      const command = createMockCommand();
 
       expect(command.name()).toBe('new');
       expect(command.description()).toBe('Create new project from template');
@@ -125,7 +151,7 @@ describe('scaffold new command unit tests', () => {
     });
 
     it('should have proper option configurations', () => {
-      const command = createNewCommand();
+      const command = createMockCommand();
       const options = command.options;
 
       const templateOption = options.find(opt => opt.long === '--template');
@@ -186,7 +212,7 @@ describe('scaffold new command unit tests', () => {
     it('should validate project name format in prompt', async () => {
       mockInquirer.prompt.mockResolvedValueOnce({ name: 'valid-project' });
 
-      const command = createNewCommand();
+      const command = createMockCommand();
       // Extract the validator function from the prompt configuration
       let validatorFunction: Function | undefined;
 

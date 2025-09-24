@@ -8,7 +8,7 @@ import { resolve } from 'path';
 
 import chalk from 'chalk';
 import { Command } from 'commander';
-import inquirer from 'inquirer';
+import { prompt } from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
 
 import { selectTemplates } from '@/cli/utils/template-selector';
@@ -119,7 +119,7 @@ async function handleNewCommand(
   // Prompt for project name if not provided
   let finalProjectName: string;
   if (!hasValidProjectName) {
-    const { name } = await inquirer.prompt([
+    const { name } = await prompt([
       {
         type: 'input',
         name: 'name',
@@ -149,7 +149,7 @@ async function handleNewCommand(
   // Prompt for path if not provided
   let basePath: string;
   if (!options.path) {
-    const { useCurrentDir } = await inquirer.prompt([
+    const { useCurrentDir } = await prompt([
       {
         type: 'confirm',
         name: 'useCurrentDir',
@@ -159,7 +159,7 @@ async function handleNewCommand(
     ]);
 
     if (!useCurrentDir) {
-      const { customPath } = await inquirer.prompt([
+      const { customPath } = await prompt([
         {
           type: 'input',
           name: 'customPath',
@@ -185,12 +185,12 @@ async function handleNewCommand(
   const targetPath = resolve(basePath, finalProjectName);
 
   if (verbose) {
-    logger.info(chalk.blue('Target path:'), targetPath);
+    logger.raw(chalk.blue('Target path:'), targetPath);
   }
 
   // Check if target directory already exists
   if (existsSync(targetPath)) {
-    const { overwrite } = await inquirer.prompt([
+    const { overwrite } = await prompt([
       {
         type: 'confirm',
         name: 'overwrite',
@@ -214,7 +214,7 @@ async function handleNewCommand(
   if (options.template) {
     templateIds = [options.template];
     if (verbose) {
-      logger.info(chalk.blue('Using template:'), options.template);
+      logger.raw(chalk.blue('Using template:'), options.template);
     }
   } else {
     // Use the new template selector utility
@@ -222,7 +222,7 @@ async function handleNewCommand(
       templateIds = await selectTemplates(templateService, { verbose });
 
       if (verbose) {
-        logger.info(chalk.blue('Selected templates:'), templateIds);
+        logger.raw(chalk.blue('Selected templates:'), templateIds);
       }
     } catch (error) {
       if (
@@ -252,7 +252,7 @@ async function handleNewCommand(
     try {
       variables = JSON.parse(options.variables);
       if (verbose) {
-        logger.info(chalk.blue('Variables:'), variables);
+        logger.raw(chalk.blue('Variables:'), variables);
       }
     } catch (error) {
       throw new Error(
@@ -263,10 +263,10 @@ async function handleNewCommand(
 
   if (dryRun) {
     logger.info(chalk.yellow('DRY RUN - Showing what would be created'));
-    logger.info(chalk.blue('Project name:'), finalProjectName);
-    logger.info(chalk.blue('Target path:'), targetPath);
-    logger.info(chalk.blue('Templates:'), templateIds);
-    logger.info(chalk.blue('Variables:'), variables);
+    logger.raw(chalk.blue('Project name:'), finalProjectName);
+    logger.raw(chalk.blue('Target path:'), targetPath);
+    logger.raw(chalk.blue('Templates:'), templateIds);
+    logger.raw(chalk.blue('Variables:'), variables);
     logger.info('');
   }
 
@@ -291,16 +291,16 @@ async function handleNewCommand(
     logger.info(chalk.green('✓ Project created successfully!'));
   }
 
-  logger.info(chalk.blue('Project name:'), manifest.projectName);
-  logger.info(chalk.blue('Location:'), targetPath);
-  logger.info(
+  logger.raw(chalk.blue('Project name:'), manifest.projectName);
+  logger.raw(chalk.blue('Location:'), targetPath);
+  logger.raw(
     chalk.blue('Templates applied:'),
     manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
   );
 
   if (verbose) {
-    logger.info(chalk.blue('Manifest ID:'), manifest.id);
-    logger.info(chalk.blue('Created at:'), manifest.created);
+    logger.raw(chalk.blue('Manifest ID:'), manifest.id);
+    logger.raw(chalk.blue('Created at:'), manifest.created);
   }
 
   exitWithCode(ExitCode.SUCCESS);
