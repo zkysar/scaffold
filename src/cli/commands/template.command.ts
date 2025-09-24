@@ -11,6 +11,7 @@ import { TemplateService } from '../../services';
 import { TemplateIdentifierService } from '../../services/template-identifier-service';
 import { shortSHA } from '../../lib/sha';
 import type { Template } from '../../models';
+import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 
 interface TemplateCommandOptions {
   verbose?: boolean;
@@ -38,7 +39,7 @@ export function createTemplateCommand(container: DependencyContainer): Command {
         await handleTemplateCommand(action, identifier, alias, finalOptions, container);
       } catch (error) {
         console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
-        process.exit(1);
+        exitWithCode(ExitCode.USER_ERROR);
       }
     });
 
@@ -86,7 +87,7 @@ async function handleTemplateCommand(
     default:
       console.error(chalk.red('Error:'), `Unknown action: ${action}`);
       console.log(chalk.gray('Available actions: list, create, delete, export, import, alias'));
-      process.exit(1);
+      exitWithCode(ExitCode.USER_ERROR);
   }
 }
 
@@ -169,7 +170,7 @@ async function handleCreateTemplate(
       'Template name is required for create action'
     );
     console.log(chalk.gray('Usage: scaffold template create <name>'));
-    process.exit(1);
+    exitWithCode(ExitCode.USER_ERROR);
   }
 
   if (verbose) {
@@ -276,6 +277,10 @@ async function handleCreateTemplate(
           'Use a different name or delete the existing template first.'
         )
       );
+      exitWithCode(ExitCode.USER_ERROR);
+    } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
+      console.error(chalk.red('Error:'), 'Permission denied');
+      exitWithCode(ExitCode.SYSTEM_ERROR);
     } else {
       throw error;
     }
@@ -297,7 +302,7 @@ async function handleDeleteTemplate(
       'Template name or ID is required for delete action'
     );
     console.log(chalk.gray('Usage: scaffold template delete <name>'));
-    process.exit(1);
+    exitWithCode(ExitCode.USER_ERROR);
   }
 
   if (verbose) {
@@ -313,7 +318,7 @@ async function handleDeleteTemplate(
 
     if (!template) {
       console.error(chalk.red('Error:'), `Template '${name}' not found`);
-      process.exit(1);
+      exitWithCode(ExitCode.USER_ERROR);
     }
 
     if (!force && !dryRun) {
@@ -346,6 +351,10 @@ async function handleDeleteTemplate(
   } catch (error) {
     if (error instanceof Error && error.message.includes('not found')) {
       console.error(chalk.red('Error:'), `Template '${name}' not found`);
+      exitWithCode(ExitCode.USER_ERROR);
+    } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
+      console.error(chalk.red('Error:'), 'Permission denied');
+      exitWithCode(ExitCode.SYSTEM_ERROR);
     } else {
       throw error;
     }
@@ -368,7 +377,7 @@ async function handleExportTemplate(
     console.log(
       chalk.gray('Usage: scaffold template export <name> [-o output.json]')
     );
-    process.exit(1);
+    exitWithCode(ExitCode.USER_ERROR);
   }
 
   const outputPath = options.output || `./${name}-template.json`;
@@ -387,7 +396,7 @@ async function handleExportTemplate(
 
     if (!template) {
       console.error(chalk.red('Error:'), `Template '${name}' not found`);
-      process.exit(1);
+      exitWithCode(ExitCode.USER_ERROR);
     }
 
     if (dryRun) {
@@ -409,6 +418,10 @@ async function handleExportTemplate(
   } catch (error) {
     if (error instanceof Error && error.message.includes('not found')) {
       console.error(chalk.red('Error:'), `Template '${name}' not found`);
+      exitWithCode(ExitCode.USER_ERROR);
+    } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
+      console.error(chalk.red('Error:'), 'Permission denied writing to output file');
+      exitWithCode(ExitCode.SYSTEM_ERROR);
     } else {
       throw error;
     }
@@ -429,7 +442,7 @@ async function handleImportTemplate(
       'Archive path is required for import action'
     );
     console.log(chalk.gray('Usage: scaffold template import <archive-path>'));
-    process.exit(1);
+    exitWithCode(ExitCode.USER_ERROR);
   }
 
   if (verbose) {
@@ -465,6 +478,7 @@ async function handleImportTemplate(
       console.log(
         chalk.gray('Delete the existing template first or modify the import.')
       );
+      exitWithCode(ExitCode.USER_ERROR);
     } else if (
       error instanceof Error &&
       error.message.includes('does not exist')
@@ -473,6 +487,10 @@ async function handleImportTemplate(
         chalk.red('Error:'),
         `Archive file '${archivePath}' not found`
       );
+      exitWithCode(ExitCode.USER_ERROR);
+    } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
+      console.error(chalk.red('Error:'), 'Permission denied');
+      exitWithCode(ExitCode.SYSTEM_ERROR);
     } else {
       throw error;
     }
@@ -489,13 +507,13 @@ async function handleAliasTemplate(
   if (!identifier) {
     console.error(chalk.red('Error:'), 'Template SHA or existing alias is required');
     console.log(chalk.gray('Usage: scaffold template alias <sha-or-alias> <new-alias>'));
-    process.exit(1);
+    exitWithCode(ExitCode.USER_ERROR);
   }
 
   if (!alias) {
     console.error(chalk.red('Error:'), 'New alias is required');
     console.log(chalk.gray('Usage: scaffold template alias <sha-or-alias> <new-alias>'));
-    process.exit(1);
+    exitWithCode(ExitCode.USER_ERROR);
   }
 
   try {
@@ -518,8 +536,13 @@ async function handleAliasTemplate(
     if (error instanceof Error) {
       if (error.message.includes('not found')) {
         console.error(chalk.red('Error:'), `Template '${identifier}' not found`);
+        exitWithCode(ExitCode.USER_ERROR);
       } else if (error.message.includes('already registered')) {
         console.error(chalk.red('Error:'), error.message);
+        exitWithCode(ExitCode.USER_ERROR);
+      } else if (error.message.includes('EACCES') || error.message.includes('EPERM')) {
+        console.error(chalk.red('Error:'), 'Permission denied');
+        exitWithCode(ExitCode.SYSTEM_ERROR);
       } else {
         throw error;
       }
