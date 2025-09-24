@@ -8,6 +8,7 @@ import { resolve } from 'path';
 
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
+import { ExitCode } from '../../constants/exit-codes';
 
 import { FileSystemService } from '@/services';
 import { logger } from '@/lib/logger';
@@ -35,7 +36,7 @@ export function createCleanCommand(container: DependencyContainer): Command {
         await handleCleanCommand(options, container);
       } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
-        process.exit(1);
+        process.exit(ExitCode.SYSTEM_ERROR);
       }
     });
 
