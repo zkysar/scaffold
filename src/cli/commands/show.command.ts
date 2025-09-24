@@ -3,20 +3,20 @@
  * Display information about templates, projects, or configuration
  */
 
-import { Command } from 'commander';
-import chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
+
+import chalk from 'chalk';
+import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
+
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
+import { logger } from '@/lib/logger';
+import type { ProjectManifest } from '@/models';
 import {
-  ProjectManifestService,
   TemplateService,
   ConfigurationService,
-  FileSystemService,
-} from '../../services';
-import { ExitCode } from '../../constants/exit-codes';
-import type { ProjectManifest } from '../../models';
+} from '@/services';
 
 interface ShowCommandOptions {
   verbose?: boolean;
@@ -52,11 +52,19 @@ Examples:
       try {
         await handleShowCommand(item, options, container);
       } catch (error) {
-        console.error(
-          chalk.red('Error:'),
-          error instanceof Error ? error.message : String(error)
-        );
-        process.exit(ExitCode.SYSTEM_ERROR);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Check if it's a system/permission error
+        if (errorMessage.includes('permission denied') ||
+            errorMessage.includes('EACCES') ||
+            errorMessage.includes('EPERM') ||
+            errorMessage.includes('ENOENT') ||
+            errorMessage.includes('no such file or directory')) {
+          exitWithCode(ExitCode.SYSTEM_ERROR, `System error: ${errorMessage}`);
+        } else {
+          // Default to user error for other cases
+          exitWithCode(ExitCode.USER_ERROR, `Error: ${errorMessage}`);
+        }
       }
     });
 
@@ -72,51 +80,46 @@ async function handleShowCommand(
   const format = options.format || 'table';
 
   if (verbose) {
-    console.log(chalk.blue('Show item:'), item);
-    console.log(chalk.blue('Format:'), format);
+    logger.info(chalk.blue('Show item:'), item);
+    logger.info(chalk.blue('Format:'), format);
   }
 
-  try {
-    switch (item.toLowerCase()) {
-      case 'project':
-        await showProjectInfo(options, container);
-        break;
-      case 'template':
-      case 'templates':
-        await showTemplateInfo(options, container);
-        break;
-      case 'config':
-      case 'configuration':
-        await showConfigurationInfo(options, container);
-        break;
-      case 'all':
-        await showAllInfo(options, container);
-        break;
-      default:
-        console.error(chalk.red('Error:'), `Unknown item: ${item}`);
-        console.log(
-          chalk.gray('Available items: project, template, config, all')
-        );
-        process.exit(ExitCode.USER_ERROR);
-    }
-  } catch (error) {
-    throw error;
+  switch (item.toLowerCase()) {
+    case 'project':
+      await showProjectInfo(options, container);
+      break;
+    case 'template':
+    case 'templates':
+      await showTemplateInfo(options, container);
+      break;
+    case 'config':
+    case 'configuration':
+      await showConfigurationInfo(options, container);
+      break;
+    case 'all':
+      await showAllInfo(options, container);
+      break;
+    default:
+      logger.error(chalk.red('Error:'), `Unknown item: ${item}`);
+      logger.info(
+        chalk.gray('Available items: project, template, config, all')
+      );
+      exitWithCode(ExitCode.USER_ERROR);
   }
 }
 
 async function showProjectInfo(
   options: ShowCommandOptions,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   container: DependencyContainer
 ): Promise<void> {
   const verbose = options.verbose || false;
   const format = options.format || 'table';
 
-  console.log(chalk.green('Project Information:'));
-  console.log('');
+  logger.info(chalk.green('Project Information:'));
+  logger.info('');
 
   try {
-    const fileSystemService = container.resolve(FileSystemService);
-    const manifestService = container.resolve(ProjectManifestService);
 
     // Try to load manifest
     const manifestPath = path.join(process.cwd(), '.scaffold', 'manifest.json');
@@ -129,18 +132,18 @@ async function showProjectInfo(
       }
     } catch (parseError) {
       // Handle JSON parsing errors
-      console.error(chalk.red('Error:'), 'Malformed project manifest file.');
-      console.log(
+      logger.error(chalk.red('Error:'), 'Malformed project manifest file.');
+      logger.info(
         chalk.gray('The .scaffold/manifest.json file contains invalid JSON.')
       );
-      process.exit(ExitCode.USER_ERROR);
+      exitWithCode(ExitCode.USER_ERROR);
     }
 
     if (!manifest) {
-      console.log(
+      logger.info(
         chalk.yellow('This directory is not a scaffold-managed project.')
       );
-      console.log(
+      logger.info(
         chalk.gray(
           'Use "scaffold new" to create a new project or "scaffold check" to validate.'
         )
@@ -149,40 +152,40 @@ async function showProjectInfo(
     }
 
     if (format === 'json') {
-      console.log(JSON.stringify(manifest, null, 2));
+      logger.info(JSON.stringify(manifest, null, 2));
       return;
     }
 
-    console.log(chalk.blue('Project Name:'), manifest.projectName);
-    console.log(chalk.blue('Version:'), manifest.version);
-    console.log(chalk.blue('Created:'), manifest.created);
-    console.log(chalk.blue('Last Updated:'), manifest.updated);
+    logger.info(chalk.blue('Project Name:'), manifest.projectName);
+    logger.info(chalk.blue('Version:'), manifest.version);
+    logger.info(chalk.blue('Created:'), manifest.created);
+    logger.info(chalk.blue('Last Updated:'), manifest.updated);
 
     if (manifest.templates.length > 0) {
-      console.log(chalk.blue('Applied Templates:'));
+      logger.info(chalk.blue('Applied Templates:'));
       for (const template of manifest.templates) {
-        console.log(chalk.gray('  -'), `${template.name}@${template.version}`);
+        logger.info(chalk.gray('  -'), `${template.name}@${template.version}`);
         if (verbose) {
-          console.log(chalk.gray('    Applied:'), template.appliedAt);
+          logger.info(chalk.gray('    Applied:'), template.appliedAt);
         }
       }
     } else {
-      console.log(chalk.yellow('No templates applied'));
+      logger.info(chalk.yellow('No templates applied'));
     }
 
     if (Object.keys(manifest.variables).length > 0) {
-      console.log(chalk.blue('Variables:'));
+      logger.info(chalk.blue('Variables:'));
       for (const [key, value] of Object.entries(manifest.variables)) {
-        console.log(chalk.gray('  -'), `${key}: ${value}`);
+        logger.info(chalk.gray('  -'), `${key}: ${value}`);
       }
     }
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes('No manifest found')) {
-        console.log(
+        logger.info(
           chalk.yellow('This directory is not a scaffold-managed project.')
         );
-        console.log(
+        logger.info(
           chalk.gray(
             'Use "scaffold new" to create a new project or "scaffold check" to validate.'
           )
@@ -193,11 +196,11 @@ async function showProjectInfo(
                  error.message.includes('JSON') ||
                  error.message.includes('invalid json')) {
         // Handle malformed manifest
-        console.error(chalk.red('Error:'), 'Malformed project manifest file.');
-        console.log(
+        logger.error(chalk.red('Error:'), 'Malformed project manifest file.');
+        logger.info(
           chalk.gray('The .scaffold/manifest.json file contains invalid JSON.')
         );
-        process.exit(ExitCode.USER_ERROR);
+        exitWithCode(ExitCode.USER_ERROR);
       }
     }
     throw error;
@@ -210,20 +213,20 @@ async function showTemplateInfo(
 ): Promise<void> {
   const format = options.format || 'table';
 
-  console.log(chalk.green('Template Information:'));
-  console.log('');
+  logger.info(chalk.green('Template Information:'));
+  logger.info('');
 
   const templateService = container.resolve(TemplateService);
   const library = await templateService.loadTemplates();
 
   if (format === 'json') {
-    console.log(JSON.stringify(library.templates, null, 2));
+    logger.info(JSON.stringify(library.templates, null, 2));
     return;
   }
 
   if (library.templates.length === 0) {
-    console.log(chalk.yellow('No templates available.'));
-    console.log(
+    logger.info(chalk.yellow('No templates available.'));
+    logger.info(
       chalk.gray(
         'Use "scaffold template create" to create your first template.'
       )
@@ -231,17 +234,17 @@ async function showTemplateInfo(
     return;
   }
 
-  console.log(chalk.blue(`Found ${library.templates.length} template(s):`))
-  console.log('');
+  logger.info(chalk.blue(`Found ${library.templates.length} template(s):`));
+  logger.info('');
 
   for (const template of library.templates) {
-      console.log(chalk.bold(template.name), chalk.gray(`(${template.id})`));
-      console.log(chalk.gray('  Version:'), template.version);
-      console.log(chalk.gray('  Description:'), template.description);
-      console.log('');
-    }
+    logger.info(chalk.bold(template.name), chalk.gray(`(${template.id})`));
+    logger.info(chalk.gray('  Version:'), template.version);
+    logger.info(chalk.gray('  Description:'), template.description);
+    logger.info('');
+  }
 
-  console.log(chalk.blue('Total:'), library.templates.length, 'templates');
+  logger.info(chalk.blue('Total: ') + library.templates.length + ' templates');
 }
 
 async function showConfigurationInfo(
@@ -250,8 +253,8 @@ async function showConfigurationInfo(
 ): Promise<void> {
   const format = options.format || 'table';
 
-  console.log(chalk.green('Configuration Information:'));
-  console.log('');
+  logger.info(chalk.green('Configuration Information:'));
+  logger.info('');
 
   try {
     const configService = container.resolve(ConfigurationService);
@@ -259,52 +262,44 @@ async function showConfigurationInfo(
     const config = configService.getEffectiveConfiguration();
 
     if (format === 'json') {
-      console.log(JSON.stringify(config, null, 2));
+      logger.info(JSON.stringify(config, null, 2));
       return;
     }
 
-    console.log(
-      chalk.blue('Templates Directory:'),
-      config.paths?.templatesDir || 'Not configured'
+    logger.info(
+      chalk.blue('Templates Directory: ') + (config.paths?.templatesDir || 'Not configured')
     );
-    console.log(
-      chalk.blue('Cache Directory:'),
-      config.paths?.cacheDir || 'Not configured'
+    logger.info(
+      chalk.blue('Cache Directory: ') + (config.paths?.cacheDir || 'Not configured')
     );
-    console.log(
-      chalk.blue('Backup Directory:'),
-      config.paths?.backupDir || 'Not configured'
+    logger.info(
+      chalk.blue('Backup Directory: ') + (config.paths?.backupDir || 'Not configured')
     );
-    console.log(
-      chalk.blue('Strict Mode Default:'),
-      config.preferences?.strictModeDefault ? 'Enabled' : 'Disabled'
+    logger.info(
+      chalk.blue('Strict Mode Default: ') + (config.preferences?.strictModeDefault ? 'Enabled' : 'Disabled')
     );
-    console.log(
-      chalk.blue('Color Output:'),
-      config.preferences?.colorOutput ? 'Yes' : 'No'
+    logger.info(
+      chalk.blue('Color Output: ') + (config.preferences?.colorOutput ? 'Yes' : 'No')
     );
-    console.log(
-      chalk.blue('Verbose Output:'),
-      config.preferences?.verboseOutput ? 'Yes' : 'No'
+    logger.info(
+      chalk.blue('Verbose Output: ') + (config.preferences?.verboseOutput ? 'Yes' : 'No')
     );
-    console.log(
-      chalk.blue('Confirm Destructive:'),
-      config.preferences?.confirmDestructive ? 'Yes' : 'No'
+    logger.info(
+      chalk.blue('Confirm Destructive: ') + (config.preferences?.confirmDestructive ? 'Yes' : 'No')
     );
-    console.log(
-      chalk.blue('Backup Before Sync:'),
-      config.preferences?.backupBeforeSync ? 'Yes' : 'No'
+    logger.info(
+      chalk.blue('Backup Before Sync: ') + (config.preferences?.backupBeforeSync ? 'Yes' : 'No')
     );
   } catch (error) {
     // If anything fails, show basic default information
-    console.log(chalk.blue('Templates Directory:'), 'Not configured');
-    console.log(chalk.blue('Cache Directory:'), 'Not configured');
-    console.log(chalk.blue('Backup Directory:'), 'Not configured');
-    console.log(chalk.blue('Strict Mode Default:'), 'Disabled');
-    console.log(chalk.blue('Color Output:'), 'Yes');
-    console.log(chalk.blue('Verbose Output:'), 'No');
-    console.log(chalk.blue('Confirm Destructive:'), 'Yes');
-    console.log(chalk.blue('Backup Before Sync:'), 'Yes');
+    logger.info(chalk.blue('Templates Directory:'), 'Not configured');
+    logger.info(chalk.blue('Cache Directory:'), 'Not configured');
+    logger.info(chalk.blue('Backup Directory:'), 'Not configured');
+    logger.info(chalk.blue('Strict Mode Default:'), 'Disabled');
+    logger.info(chalk.blue('Color Output:'), 'Yes');
+    logger.info(chalk.blue('Verbose Output:'), 'No');
+    logger.info(chalk.blue('Confirm Destructive:'), 'Yes');
+    logger.info(chalk.blue('Backup Before Sync:'), 'Yes');
   }
 }
 
@@ -312,14 +307,14 @@ async function showAllInfo(
   options: ShowCommandOptions,
   container: DependencyContainer
 ): Promise<void> {
-  console.log(chalk.green('=== Scaffold Information ==='));
-  console.log('');
+  logger.info(chalk.green('=== Scaffold Information ==='));
+  logger.info('');
 
   await showProjectInfo(options, container);
-  console.log('');
+  logger.info('');
 
   await showTemplateInfo(options, container);
-  console.log('');
+  logger.info('');
 
   await showConfigurationInfo(options, container);
 }

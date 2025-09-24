@@ -14,9 +14,10 @@ import {
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '../../services';
+} from '@/services';
+import { selectTemplates } from '@/cli/utils/template-selector';
+import { logger } from '@/lib/logger';
 import { ExitCode, exitWithCode } from '../../constants/exit-codes';
-import { selectTemplates } from '../utils/template-selector';
 
 interface ExtendCommandOptions {
   template?: string;
@@ -50,8 +51,8 @@ export function createExtendCommand(container: DependencyContainer): Command {
         if (errorMessage.includes('EACCES') ||
             errorMessage.includes('EPERM') ||
             errorMessage.includes('permission denied')) {
-          console.error(chalk.red('Error:'), errorMessage);
-          process.exit(ExitCode.SYSTEM_ERROR);
+          logger.error(errorMessage);
+          exitWithCode(ExitCode.SYSTEM_ERROR);
         }
 
         // Check for file system errors that are system-level issues
@@ -59,13 +60,13 @@ export function createExtendCommand(container: DependencyContainer): Command {
             errorMessage.includes('EISDIR') ||
             errorMessage.includes('EMFILE') ||
             errorMessage.includes('ENOSPC')) {
-          console.error(chalk.red('Error:'), errorMessage);
-          process.exit(ExitCode.SYSTEM_ERROR);
+          logger.error(errorMessage);
+          exitWithCode(ExitCode.SYSTEM_ERROR);
         }
 
         // All other errors are considered user errors (invalid input, etc.)
-        console.error(chalk.red('Error:'), errorMessage);
-        process.exit(ExitCode.USER_ERROR);
+        logger.error(errorMessage);
+        exitWithCode(ExitCode.USER_ERROR);
       }
     });
 
@@ -87,16 +88,13 @@ async function handleExtendCommand(
     : resolve(process.cwd());
 
   if (verbose) {
-    console.log(chalk.blue('Extending project:'), targetPath);
+    logger.info(chalk.blue('Extending project:') + " " +  targetPath);
   }
 
   // Check if directory exists
   if (!existsSync(targetPath)) {
-    console.error(
-      chalk.red('Error:'),
-      `Directory "${targetPath}" does not exist`
-    );
-    process.exit(ExitCode.USER_ERROR);
+    logger.error(`Directory "${targetPath}" does not exist`);
+    exitWithCode(ExitCode.USER_ERROR);
   }
 
   // Resolve services from DI container
@@ -117,23 +115,23 @@ async function handleExtendCommand(
     // Check if it's a missing manifest (not a scaffold project)
     if (errorMessage.includes('manifest.json') &&
         (errorMessage.includes('does not exist') || errorMessage.includes('Ensure the file exists'))) {
-      console.error(chalk.red('Error:'), 'Not a scaffold-managed project');
-      console.log(chalk.gray('No .scaffold/manifest.json file found.'));
-      console.log(
+      logger.error('Not a scaffold-managed project');
+      logger.info(chalk.gray('No .scaffold/manifest.json file found.'));
+      logger.info(
         chalk.gray('Use "scaffold new" to create a new project first.')
       );
-      process.exit(ExitCode.USER_ERROR);
+      exitWithCode(ExitCode.USER_ERROR);
     }
 
     // For any other manifest loading error (corrupted JSON, etc.)
-    console.error(chalk.red('Error:'), errorMessage);
+    logger.error(errorMessage);
     exitWithCode(ExitCode.USER_ERROR);
   }
 
   if (!manifest) {
-    console.error(chalk.red('Error:'), 'Not a scaffold-managed project');
-    console.log(chalk.gray('No .scaffold/manifest.json file found.'));
-    console.log(
+    logger.error('Not a scaffold-managed project');
+    logger.info(chalk.gray('No .scaffold/manifest.json file found.'));
+    logger.info(
       chalk.gray('Use "scaffold new" to create a new project first.')
     );
     exitWithCode(ExitCode.USER_ERROR);
@@ -143,7 +141,7 @@ async function handleExtendCommand(
   if (options.template) {
     templateIds = [options.template];
     if (verbose) {
-      console.log(chalk.blue('Using template:'), options.template);
+      logger.info(chalk.blue('Using template:') + " " +  options.template);
     }
   } else {
     // Get already applied template SHAs to exclude them from selection
@@ -152,9 +150,8 @@ async function handleExtendCommand(
       .map((template: any) => template.templateSha);
 
     if (verbose && excludeTemplateIds.length > 0) {
-      console.log(
-        chalk.blue('Excluding already applied templates:'),
-        excludeTemplateIds
+      logger.info(
+        chalk.blue('Excluding already applied templates: ') + excludeTemplateIds.join(', ')
       );
     }
 
@@ -169,13 +166,13 @@ async function handleExtendCommand(
 
       // Handle case where no templates are available or user cancels
       if (templateIds.length === 0) {
-        console.log(chalk.yellow('No additional templates available to apply.'));
-        console.log(
+        logger.info(chalk.yellow('No additional templates available to apply.'));
+        logger.info(
           chalk.gray(
             'All available templates are already applied to this project.'
           )
         );
-        console.log(
+        logger.info(
           chalk.gray(
             'Or specify a specific template with: scaffold extend [project] --template <template-name>'
           )
@@ -188,13 +185,13 @@ async function handleExtendCommand(
         (error.message.includes('Failed to load templates') ||
          error.message.includes('No templates available'))
       ) {
-        console.log(chalk.yellow('No templates found.'));
-        console.log(
+        logger.info(chalk.yellow('No templates found.'));
+        logger.info(
           chalk.gray(
             'Use "scaffold template create" to create your first template.'
           )
         );
-        console.log(
+        logger.info(
           chalk.gray(
             'Or specify a template with: scaffold extend [project] --template <template-name>'
           )
@@ -211,7 +208,7 @@ async function handleExtendCommand(
     try {
       variables = JSON.parse(options.variables);
       if (verbose) {
-        console.log(chalk.blue('Variables:'), variables);
+        logger.info(chalk.blue('Variables:') + " " + JSON.stringify(variables));
       }
     } catch (error) {
       throw new Error(
@@ -221,11 +218,11 @@ async function handleExtendCommand(
   }
 
   if (dryRun) {
-    console.log(chalk.yellow('DRY RUN - Would extend project with:'));
-    console.log(chalk.blue('Project:'), (manifest as any).projectName);
-    console.log(chalk.blue('Templates:'), templateIds);
-    console.log(chalk.blue('Variables:'), variables);
-    console.log(chalk.blue('Target path:'), targetPath);
+    logger.info(chalk.yellow('DRY RUN - Would extend project with:'));
+    logger.info(chalk.blue('Project:') + " " +  manifest.projectName);
+    logger.info(chalk.blue('Templates:') + " " +  templateIds);
+    logger.info(chalk.blue('Variables:') + " " + JSON.stringify(variables));
+    logger.info(chalk.blue('Target path:') + " " +  targetPath);
     return;
   }
 
@@ -238,13 +235,13 @@ async function handleExtendCommand(
         {
           type: 'confirm',
           name: 'proceed',
-          message: `Add template "${template.name}" to project "${(manifest as any).projectName}"?`,
+          message: `Add template "${template.name}" to project "${manifest.projectName}"?`,
           default: true,
         },
       ]);
 
       if (!proceed) {
-        console.log(chalk.yellow('Operation cancelled.'));
+        logger.info(chalk.yellow('Operation cancelled.'));
         return;
       }
     } catch (error) {
@@ -253,7 +250,7 @@ async function handleExtendCommand(
   }
 
   if (verbose) {
-    console.log(chalk.blue('Extending project with template:'), templateIds[0]);
+    logger.info(chalk.blue('Extending project with template:') + " " +  templateIds[0]);
   }
 
   // Extend the project with the new template
@@ -263,19 +260,18 @@ async function handleExtendCommand(
     variables
   );
 
-  console.log(chalk.green('✓ Project extended successfully!'));
-  console.log(chalk.blue('Project name:'), updatedManifest.projectName);
-  console.log(chalk.blue('Location:'), targetPath);
+  logger.info(chalk.green('✓ Project extended successfully!'));
+  logger.info(chalk.blue('Project name:') + " " +  updatedManifest.projectName);
+  logger.info(chalk.blue('Location:') + " " +  targetPath);
 
   // Find the newly added template
   const newTemplate = updatedManifest.templates[updatedManifest.templates.length - 1];
-  console.log(chalk.blue('Template added:'), `${newTemplate.name}@${newTemplate.version}`);
+  logger.info(chalk.blue('Template added:') + " " +  `${newTemplate.name}@${newTemplate.version}`);
 
   if (verbose) {
-    console.log(chalk.blue('Updated at:'), updatedManifest.updated);
-    console.log(
-      chalk.blue('Total templates:'),
-      updatedManifest.templates.filter(t => t.status === 'active').length
+    logger.info(chalk.blue('Updated at:') + " " +  updatedManifest.updated);
+    logger.info(
+      chalk.blue('Total templates: ') + updatedManifest.templates.filter(t => t.status === 'active').length
     );
   }
 }

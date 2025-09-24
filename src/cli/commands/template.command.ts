@@ -11,6 +11,7 @@ import { TemplateService } from '../../services';
 import { TemplateIdentifierService } from '../../services/template-identifier-service';
 import { shortSHA } from '../../lib/sha';
 import type { Template } from '../../models';
+import { logger } from '@/lib/logger';
 import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 
 interface TemplateCommandOptions {
@@ -38,8 +39,19 @@ export function createTemplateCommand(container: DependencyContainer): Command {
         const finalOptions = options || {};
         await handleTemplateCommand(action, identifier, alias, finalOptions, container);
       } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
-        exitWithCode(ExitCode.USER_ERROR);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Check if it's a system/permission error
+        if (errorMessage.includes('permission denied') ||
+            errorMessage.includes('EACCES') ||
+            errorMessage.includes('EPERM') ||
+            errorMessage.includes('ENOENT') ||
+            errorMessage.includes('no such file or directory')) {
+          exitWithCode(ExitCode.SYSTEM_ERROR, `System error: ${errorMessage}`);
+        } else {
+          // Default to user error for other cases
+          exitWithCode(ExitCode.USER_ERROR, `Error: ${errorMessage}`);
+        }
       }
     });
 
@@ -56,10 +68,10 @@ async function handleTemplateCommand(
   const verbose = options.verbose || false;
 
   if (verbose) {
-    console.log(chalk.blue('Template action:'), action);
-    if (identifier) console.log(chalk.blue('Template identifier:'), identifier);
-    if (alias) console.log(chalk.blue('Alias:'), alias);
-    console.log(chalk.blue('Options:'), JSON.stringify(options, null, 2));
+    logger.info(chalk.blue('Template action:'), action);
+    if (identifier) logger.info(chalk.blue('Template identifier:'), identifier);
+    if (alias) logger.info(chalk.blue('Alias:'), alias);
+    logger.info(chalk.blue('Options:'), JSON.stringify(options, null, 2));
   }
 
   const templateService = container.resolve(TemplateService);
@@ -85,8 +97,8 @@ async function handleTemplateCommand(
       await handleAliasTemplate(identifierService, templateService, identifier, alias, options);
       break;
     default:
-      console.error(chalk.red('Error:'), `Unknown action: ${action}`);
-      console.log(chalk.gray('Available actions: list, create, delete, export, import, alias'));
+      logger.error(chalk.red('Error:'), `Unknown action: ${action}`);
+      logger.info(chalk.gray('Available actions: list, create, delete, export, import, alias'));
       exitWithCode(ExitCode.USER_ERROR);
   }
 }
@@ -101,8 +113,8 @@ async function handleListTemplates(
     const library = await templateService.loadTemplates();
 
     if (library.templates.length === 0) {
-      console.log(chalk.yellow('No templates found.'));
-      console.log(
+      logger.info(chalk.yellow('No templates found.'));
+      logger.info(
         chalk.gray(
           'Use "scaffold template create" to create your first template.'
         )
@@ -110,42 +122,40 @@ async function handleListTemplates(
       return;
     }
 
-    console.log(chalk.green('Available Templates:'));
-    console.log('');
+    logger.info(chalk.green('Available Templates:'));
+    logger.info('');
 
     for (const template of library.templates) {
       const shortId = shortSHA(template.id, verbose ? 12 : 8);
       const aliasStr = template.aliases && template.aliases.length > 0
         ? ` (alias: ${template.aliases.map(a => `"${a}"`).join(', ')})`
         : '';
-      console.log(chalk.bold(template.name), chalk.gray(`${shortId}${aliasStr}`));
-      console.log(chalk.gray('  Version:'), template.version);
-      console.log(chalk.gray('  Description:'), template.description);
-      console.log(
-        chalk.gray('  Location:'),
-        `~/.scaffold/templates/${template.id}/template.json`
+      logger.info(chalk.bold(template.name), chalk.gray(`${shortId}${aliasStr}`));
+      logger.info(chalk.gray('  Version:'), template.version);
+      logger.info(chalk.gray('  Description:'), template.description);
+      logger.info(
+        chalk.gray('  Location: ') + `~/.scaffold/templates/${template.id}/template.json`
       );
 
       if (verbose) {
-        console.log(chalk.gray('  Source:'), template.source);
-        console.log(
-          chalk.gray('  Installed:'),
-          template.installed ? 'Yes' : 'No'
+        logger.info(chalk.gray('  Source:'), template.source);
+        logger.info(
+          chalk.gray('  Installed: ') + (template.installed ? 'Yes' : 'No')
         );
-        console.log(chalk.gray('  Last Updated:'), template.lastUpdated);
+        logger.info(chalk.gray('  Last Updated:'), template.lastUpdated);
       }
 
-      console.log('');
+      logger.info('');
     }
 
-    console.log(chalk.blue('Total:'), library.templates.length, 'templates');
+    logger.info(chalk.blue('Total: ') + library.templates.length + ' templates');
   } catch (error) {
     if (
       error instanceof Error &&
       error.message.includes('No templates found')
     ) {
-      console.log(chalk.yellow('No templates found.'));
-      console.log(
+      logger.info(chalk.yellow('No templates found.'));
+      logger.info(
         chalk.gray(
           'Use "scaffold template create" to create your first template.'
         )
@@ -165,16 +175,16 @@ async function handleCreateTemplate(
   const dryRun = options.dryRun || false;
 
   if (!name) {
-    console.error(
+    logger.error(
       chalk.red('Error:'),
       'Template name is required for create action'
     );
-    console.log(chalk.gray('Usage: scaffold template create <name>'));
+    logger.info(chalk.gray('Usage: scaffold template create <name>'));
     exitWithCode(ExitCode.USER_ERROR);
   }
 
   if (verbose) {
-    console.log(chalk.blue('Creating template:'), name);
+    logger.info(chalk.blue('Creating template:'), name);
   }
 
   // Interactive template creation
@@ -251,8 +261,8 @@ async function handleCreateTemplate(
   };
 
   if (dryRun) {
-    console.log(chalk.yellow('DRY RUN - Template would be created with:'));
-    console.log(JSON.stringify(template, null, 2));
+    logger.info(chalk.yellow('DRY RUN - Template would be created with:'));
+    logger.info(JSON.stringify(template, null, 2));
     return;
   }
 
@@ -260,26 +270,26 @@ async function handleCreateTemplate(
     await templateService.createTemplate(template);
     // Template ID is now SHA computed by the service
     const createdTemplate = await templateService.getTemplate(template.name);
-    console.log(chalk.green('✓ Template created successfully!'));
-    console.log(chalk.blue('Template SHA:'), shortSHA(createdTemplate.id));
-    console.log(chalk.blue('Template Name:'), template.name);
-    console.log(chalk.blue('Version:'), template.version);
+    logger.info(chalk.green('✓ Template created successfully!'));
+    logger.info(chalk.blue('Template SHA:'), shortSHA(createdTemplate.id));
+    logger.info(chalk.blue('Template Name:'), template.name);
+    logger.info(chalk.blue('Version:'), template.version);
 
     if (verbose) {
-      console.log(chalk.gray('Full SHA:'), createdTemplate.id);
-      console.log(chalk.gray('Location:'), `~/.scaffold/templates/${createdTemplate.id}/template.json`);
+      logger.info(chalk.gray('Full SHA:'), createdTemplate.id);
+      logger.info(chalk.gray('Location:'), `~/.scaffold/templates/${createdTemplate.id}/template.json`);
     }
   } catch (error) {
     if (error instanceof Error && error.message.includes('already exists')) {
-      console.error(chalk.red('Error:'), `Template '${name}' already exists`);
-      console.log(
+      logger.error(chalk.red('Error:'), `Template '${name}' already exists`);
+      logger.info(
         chalk.gray(
           'Use a different name or delete the existing template first.'
         )
       );
       exitWithCode(ExitCode.USER_ERROR);
     } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
-      console.error(chalk.red('Error:'), 'Permission denied');
+      logger.error(chalk.red('Error:'), 'Permission denied');
       exitWithCode(ExitCode.SYSTEM_ERROR);
     } else {
       throw error;
@@ -297,16 +307,16 @@ async function handleDeleteTemplate(
   const force = options.force || false;
 
   if (!name) {
-    console.error(
+    logger.error(
       chalk.red('Error:'),
       'Template name or ID is required for delete action'
     );
-    console.log(chalk.gray('Usage: scaffold template delete <name>'));
+    logger.info(chalk.gray('Usage: scaffold template delete <name>'));
     exitWithCode(ExitCode.USER_ERROR);
   }
 
   if (verbose) {
-    console.log(chalk.blue('Deleting template:'), name);
+    logger.info(chalk.blue('Deleting template:'), name);
   }
 
   try {
@@ -317,7 +327,7 @@ async function handleDeleteTemplate(
     );
 
     if (!template) {
-      console.error(chalk.red('Error:'), `Template '${name}' not found`);
+      logger.error(chalk.red('Error:'), `Template '${name}' not found`);
       exitWithCode(ExitCode.USER_ERROR);
     }
 
@@ -332,28 +342,28 @@ async function handleDeleteTemplate(
       ]);
 
       if (!confirm) {
-        console.log(chalk.yellow('Operation cancelled.'));
+        logger.info(chalk.yellow('Operation cancelled.'));
         return;
       }
     }
 
     if (dryRun) {
-      console.log(chalk.yellow('DRY RUN - Would delete template:'));
-      console.log(chalk.blue('  SHA:'), shortSHA(template.id));
-      console.log(chalk.blue('  Name:'), template.name);
-      console.log(chalk.blue('  Version:'), template.version);
+      logger.info(chalk.yellow('DRY RUN - Would delete template:'));
+      logger.info(chalk.blue('  SHA:'), shortSHA(template.id));
+      logger.info(chalk.blue('  Name:'), template.name);
+      logger.info(chalk.blue('  Version:'), template.version);
       return;
     }
 
     await templateService.deleteTemplate(template.id);
-    console.log(chalk.green('✓ Template deleted successfully!'));
-    console.log(chalk.blue('Deleted:'), `${template.name} (${shortSHA(template.id)})`);
+    logger.info(chalk.green('✓ Template deleted successfully!'));
+    logger.info(chalk.blue('Deleted:'), `${template.name} (${shortSHA(template.id)})`);
   } catch (error) {
     if (error instanceof Error && error.message.includes('not found')) {
-      console.error(chalk.red('Error:'), `Template '${name}' not found`);
+      logger.error(chalk.red('Error:'), `Template '${name}' not found`);
       exitWithCode(ExitCode.USER_ERROR);
     } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
-      console.error(chalk.red('Error:'), 'Permission denied');
+      logger.error(chalk.red('Error:'), 'Permission denied');
       exitWithCode(ExitCode.SYSTEM_ERROR);
     } else {
       throw error;
@@ -370,11 +380,11 @@ async function handleExportTemplate(
   const dryRun = options.dryRun || false;
 
   if (!name) {
-    console.error(
+    logger.error(
       chalk.red('Error:'),
       'Template name or ID is required for export action'
     );
-    console.log(
+    logger.info(
       chalk.gray('Usage: scaffold template export <name> [-o output.json]')
     );
     exitWithCode(ExitCode.USER_ERROR);
@@ -383,8 +393,8 @@ async function handleExportTemplate(
   const outputPath = options.output || `./${name}-template.json`;
 
   if (verbose) {
-    console.log(chalk.blue('Exporting template:'), name);
-    console.log(chalk.blue('Output path:'), outputPath);
+    logger.info(chalk.blue('Exporting template:'), name);
+    logger.info(chalk.blue('Output path:'), outputPath);
   }
 
   try {
@@ -395,32 +405,30 @@ async function handleExportTemplate(
     );
 
     if (!template) {
-      console.error(chalk.red('Error:'), `Template '${name}' not found`);
+      logger.error(chalk.red('Error:'), `Template '${name}' not found`);
       exitWithCode(ExitCode.USER_ERROR);
     }
 
     if (dryRun) {
-      console.log(
-        chalk.yellow('DRY RUN - Would export template to:'),
-        outputPath
+      logger.info(
+        chalk.yellow('DRY RUN - Would export template to: ') + outputPath
       );
-      console.log(
-        chalk.blue('  Template:'),
-        `${template.name} (${template.id})`
+      logger.info(
+        chalk.blue('  Template: ') + `${template.name} (${template.id})`
       );
       return;
     }
 
     await templateService.exportTemplate(template.id, outputPath);
-    console.log(chalk.green('✓ Template exported successfully!'));
-    console.log(chalk.blue('Template:'), `${template.name} (${template.id})`);
-    console.log(chalk.blue('Output:'), outputPath);
+    logger.info(chalk.green('✓ Template exported successfully!'));
+    logger.info(chalk.blue('Template:'), `${template.name} (${template.id})`);
+    logger.info(chalk.blue('Output:'), outputPath);
   } catch (error) {
     if (error instanceof Error && error.message.includes('not found')) {
-      console.error(chalk.red('Error:'), `Template '${name}' not found`);
+      logger.error(chalk.red('Error:'), `Template '${name}' not found`);
       exitWithCode(ExitCode.USER_ERROR);
     } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
-      console.error(chalk.red('Error:'), 'Permission denied writing to output file');
+      logger.error(chalk.red('Error:'), 'Permission denied writing to output file');
       exitWithCode(ExitCode.SYSTEM_ERROR);
     } else {
       throw error;
@@ -437,45 +445,44 @@ async function handleImportTemplate(
   const dryRun = options.dryRun || false;
 
   if (!archivePath) {
-    console.error(
+    logger.error(
       chalk.red('Error:'),
       'Archive path is required for import action'
     );
-    console.log(chalk.gray('Usage: scaffold template import <archive-path>'));
+    logger.info(chalk.gray('Usage: scaffold template import <archive-path>'));
     exitWithCode(ExitCode.USER_ERROR);
   }
 
   if (verbose) {
-    console.log(chalk.blue('Importing template from:'), archivePath);
+    logger.info(chalk.blue('Importing template from:'), archivePath);
   }
 
   if (dryRun) {
-    console.log(
-      chalk.yellow('DRY RUN - Would import template from:'),
-      archivePath
+    logger.info(
+      chalk.yellow('DRY RUN - Would import template from: ') + archivePath
     );
     return;
   }
 
   try {
     const template = await templateService.importTemplate(archivePath);
-    console.log(chalk.green('✓ Template imported successfully!'));
-    console.log(chalk.blue('Template SHA:'), shortSHA(template.id));
-    console.log(chalk.blue('Template Name:'), template.name);
-    console.log(chalk.blue('Version:'), template.version);
-    console.log(chalk.blue('Description:'), template.description);
+    logger.info(chalk.green('✓ Template imported successfully!'));
+    logger.info(chalk.blue('Template SHA:'), shortSHA(template.id));
+    logger.info(chalk.blue('Template Name:'), template.name);
+    logger.info(chalk.blue('Version:'), template.version);
+    logger.info(chalk.blue('Description:'), template.description);
 
     if (verbose) {
-      console.log(chalk.gray('Full SHA:'), template.id);
-      console.log(chalk.gray('Location:'), `~/.scaffold/templates/${template.id}/template.json`);
+      logger.info(chalk.gray('Full SHA:'), template.id);
+      logger.info(chalk.gray('Location:'), `~/.scaffold/templates/${template.id}/template.json`);
     }
   } catch (error) {
     if (error instanceof Error && error.message.includes('already exists')) {
-      console.error(
+      logger.error(
         chalk.red('Error:'),
         'Template with the same ID already exists'
       );
-      console.log(
+      logger.info(
         chalk.gray('Delete the existing template first or modify the import.')
       );
       exitWithCode(ExitCode.USER_ERROR);
@@ -483,13 +490,13 @@ async function handleImportTemplate(
       error instanceof Error &&
       error.message.includes('does not exist')
     ) {
-      console.error(
+      logger.error(
         chalk.red('Error:'),
         `Archive file '${archivePath}' not found`
       );
       exitWithCode(ExitCode.USER_ERROR);
     } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
-      console.error(chalk.red('Error:'), 'Permission denied');
+      logger.error(chalk.red('Error:'), 'Permission denied');
       exitWithCode(ExitCode.SYSTEM_ERROR);
     } else {
       throw error;
@@ -505,14 +512,14 @@ async function handleAliasTemplate(
   options: TemplateCommandOptions
 ): Promise<void> {
   if (!identifier) {
-    console.error(chalk.red('Error:'), 'Template SHA or existing alias is required');
-    console.log(chalk.gray('Usage: scaffold template alias <sha-or-alias> <new-alias>'));
+    logger.error(chalk.red('Error:'), 'Template SHA or existing alias is required');
+    logger.info(chalk.gray('Usage: scaffold template alias <sha-or-alias> <new-alias>'));
     exitWithCode(ExitCode.USER_ERROR);
   }
 
   if (!alias) {
-    console.error(chalk.red('Error:'), 'New alias is required');
-    console.log(chalk.gray('Usage: scaffold template alias <sha-or-alias> <new-alias>'));
+    logger.error(chalk.red('Error:'), 'New alias is required');
+    logger.info(chalk.gray('Usage: scaffold template alias <sha-or-alias> <new-alias>'));
     exitWithCode(ExitCode.USER_ERROR);
   }
 
@@ -523,25 +530,25 @@ async function handleAliasTemplate(
     // Register the alias
     await identifierService.registerAlias(template.id, alias);
 
-    console.log(chalk.green('✓ Alias registered successfully!'));
-    console.log(chalk.blue('Template:'), `${template.name} (${shortSHA(template.id)})`);
-    console.log(chalk.blue('New alias:'), alias);
+    logger.info(chalk.green('✓ Alias registered successfully!'));
+    logger.info(chalk.blue('Template:'), `${template.name} (${shortSHA(template.id)})`);
+    logger.info(chalk.blue('New alias:'), alias);
 
     // Show all aliases for this template
     const allAliases = await identifierService.getAliases(template.id, [template.id]);
     if (allAliases.length > 1) {
-      console.log(chalk.gray('All aliases:'), allAliases.map(a => `"${a}"`).join(', '));
+      logger.info(chalk.gray('All aliases:'), allAliases.map(a => `"${a}"`).join(', '));
     }
   } catch (error) {
     if (error instanceof Error) {
       if (error.message.includes('not found')) {
-        console.error(chalk.red('Error:'), `Template '${identifier}' not found`);
+        logger.error(chalk.red('Error:'), `Template '${identifier}' not found`);
         exitWithCode(ExitCode.USER_ERROR);
       } else if (error.message.includes('already registered')) {
-        console.error(chalk.red('Error:'), error.message);
+        logger.error(chalk.red('Error:'), error.message);
         exitWithCode(ExitCode.USER_ERROR);
       } else if (error.message.includes('EACCES') || error.message.includes('EPERM')) {
-        console.error(chalk.red('Error:'), 'Permission denied');
+        logger.error(chalk.red('Error:'), 'Permission denied');
         exitWithCode(ExitCode.SYSTEM_ERROR);
       } else {
         throw error;

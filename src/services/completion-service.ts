@@ -2,19 +2,23 @@
  * Service for managing shell completion installation and generation
  */
 
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
+
 import * as fs from 'fs-extra';
 import { injectable, inject } from 'tsyringe';
+
+import { CommandRegistry } from '@/cli/completion/command-registry';
+import { logger } from '@/lib/logger';
 import type {
   CompletionConfig,
   CompletionContext,
   CompletionResult,
   CompletionItem,
   ShellCompletionScript,
-} from '../models';
-import { ShellType } from '../models';
-import { CommandRegistry } from '../cli/completion/command-registry';
+} from '@/models';
+import { ShellType } from '@/models';
+
 import { TemplateService } from './template-service';
 
 export interface ICompletionService {
@@ -86,9 +90,8 @@ export class CompletionService implements ICompletionService {
     try {
       const ppid = process.ppid;
       if (ppid) {
-        // Dynamic require needed for optional shell detection
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { exec } = require('child_process');
+        // Dynamic import needed for optional shell detection
+        const { exec } = await import('child_process');
         const result = await new Promise<string>((resolve, reject) => {
           exec(
             `ps -p ${ppid} -o comm=`,
@@ -174,7 +177,7 @@ export class CompletionService implements ICompletionService {
     const config = await this.getCompletionStatus(detectedShell);
 
     if (!config.isInstalled) {
-      console.log(`Completion not installed for ${detectedShell}`);
+      logger.info(`Completion not installed for ${detectedShell}`);
       return;
     }
 
@@ -729,15 +732,12 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     if (command === 'template' && ['delete', 'export'].includes(subcommand)) {
       // For template delete/export, we should provide template name completions
       // Import the template provider to get template names
-      // Dynamic requires needed for completion providers
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // Dynamic imports needed for completion providers
       const {
         TemplateCompletionProvider,
-      } = require('./completion-providers/template-completion-provider');
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { TemplateService } = require('./template-service');
+      } = await import('./completion-providers/template-completion-provider');
       const templateProvider = new TemplateCompletionProvider(
-        new TemplateService()
+        this.templateService
       );
       const templates = await templateProvider.getTemplateCompletions(context);
       return templates.map((t: CompletionItem) => t.value);

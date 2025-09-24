@@ -3,25 +3,27 @@
  */
 
 import { randomUUID } from 'crypto';
+
 import { injectable, inject } from 'tsyringe';
+
 import type {
   ValidationReport,
   ValidationError,
   ValidationWarning,
   ValidationStats,
-  ProjectManifest,
   HistoryEntry,
-} from '../models';
-import type { ITemplateService } from './template-service';
-import { TemplateService } from './template-service';
+} from '@/models';
+
 import type { IFileSystemService } from './file-system.service';
 import { FileSystemService } from './file-system.service';
-import type { IProjectValidationService } from './project-validation.service';
-import { ProjectValidationService } from './project-validation.service';
-import type { IVariableSubstitutionService } from './variable-substitution.service';
-import { VariableSubstitutionService } from './variable-substitution.service';
 import type { IProjectManifestService } from './project-manifest.service';
 import { ProjectManifestService } from './project-manifest.service';
+import type { IProjectValidationService } from './project-validation.service';
+import { ProjectValidationService } from './project-validation.service';
+import type { ITemplateService } from './template-service';
+import { TemplateService } from './template-service';
+import type { IVariableSubstitutionService } from './variable-substitution.service';
+import { VariableSubstitutionService } from './variable-substitution.service';
 
 export interface IProjectFixService {
   /**

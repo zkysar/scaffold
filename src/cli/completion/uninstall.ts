@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { DependencyContainer } from 'tsyringe';
 import { CompletionService } from '../../services';
+import { logger } from '@/lib/logger';
 
 interface UninstallCommandOptions {
   verbose?: boolean;
@@ -29,7 +30,7 @@ export function createUninstallCommand(container: DependencyContainer): Command 
         const verbose = options.verbose || rootOptions.verbose || false;
         await handleUninstallCommand({ ...options, verbose }, container);
       } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+        logger.error(chalk.red('Error: ') + (error instanceof Error ? error.message : String(error)));
         process.exit(1);
       }
     });
@@ -46,7 +47,7 @@ async function handleUninstallCommand(
   const completionService = container.resolve(CompletionService);
 
   if (verbose) {
-    console.log(chalk.blue('Checking completion status...'));
+    logger.info(chalk.blue('Checking completion status...'));
   }
 
   const shellType = await completionService.detectShell();
@@ -55,48 +56,48 @@ async function handleUninstallCommand(
   const status = await completionService.getCompletionStatus(shellType);
 
   if (!status.isInstalled) {
-    console.log(chalk.yellow('Shell completion is not installed.'));
-    console.log(chalk.gray('Nothing to remove.'));
+    logger.info(chalk.yellow('Shell completion is not installed.'));
+    logger.info(chalk.gray('Nothing to remove.'));
     return;
   }
 
   if (verbose) {
-    console.log(chalk.blue('Current status:'));
-    console.log(chalk.gray(`  Installed: ${status.isInstalled}`));
-    console.log(chalk.gray(`  Enabled: ${status.isEnabled}`));
-    console.log(chalk.gray(`  Shell: ${status.shellType}`));
-    console.log(chalk.gray(`  Install path: ${status.installPath}`));
+    logger.info(chalk.blue('Current status:'));
+    logger.info(chalk.gray(`  Installed: ${status.isInstalled}`));
+    logger.info(chalk.gray(`  Enabled: ${status.isEnabled}`));
+    logger.info(chalk.gray(`  Shell: ${status.shellType}`));
+    logger.info(chalk.gray(`  Install path: ${status.installPath}`));
   }
 
   try {
     // Uninstall completion
     await completionService.uninstallCompletion(shellType);
 
-    console.log(chalk.green('✓ Shell completion removed successfully'));
+    logger.info(chalk.green('✓ Shell completion removed successfully'));
 
     if (status.installPath) {
-      console.log(chalk.gray(`Removed from: ${status.installPath}`));
+      logger.info(chalk.gray(`Removed from: ${status.installPath}`));
 
       // Show manual cleanup instructions if needed
-      console.log('');
-      console.log(chalk.blue('Manual cleanup (if needed):'));
+      logger.info('');
+      logger.info(chalk.blue('Manual cleanup (if needed):'));
 
       switch (status.shellType) {
         case 'bash':
-          console.log(chalk.gray('Remove any references to the completion script from ~/.bashrc'));
+          logger.info(chalk.gray('Remove any references to the completion script from ~/.bashrc'));
           break;
         case 'zsh':
-          console.log(chalk.gray('Remove any references to the completion script from ~/.zshrc'));
-          console.log(chalk.gray('You may need to rebuild completion cache: rm -f ~/.zcompdump*'));
+          logger.info(chalk.gray('Remove any references to the completion script from ~/.zshrc'));
+          logger.info(chalk.gray('You may need to rebuild completion cache: rm -f ~/.zcompdump*'));
           break;
         case 'fish':
-          console.log(chalk.gray('Fish completion will be automatically disabled in new sessions'));
+          logger.info(chalk.gray('Fish completion will be automatically disabled in new sessions'));
           break;
       }
     }
 
   } catch (error) {
-    console.error(chalk.red('Failed to remove completion:'), error instanceof Error ? error.message : String(error));
+    logger.error(chalk.red('Failed to remove completion: ') + (error instanceof Error ? error.message : String(error)));
     process.exit(1);
   }
 }

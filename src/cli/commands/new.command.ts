@@ -11,15 +11,14 @@ import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
 
+import { selectTemplates } from '@/cli/utils/template-selector';
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
+import { logger } from '@/lib/logger';
 import {
   ProjectCreationService,
   ProjectManifestService,
   TemplateService,
-  FileSystemService,
 } from '@/services';
-import { logger } from '@/lib/logger';
-import { ExitCode, exitWithCode } from '../../constants/exit-codes';
-import { selectTemplates } from '../utils/template-selector';
 
 interface NewCommandOptions {
   template?: string;
@@ -89,28 +88,28 @@ async function handleNewCommand(
       if (defaultTemplate) {
         templateToUse = 'default';
         if (verbose) {
-          console.log('No template specified, using default template');
+          logger.info('No template specified, using default template');
         }
       } else {
-        console.log('No template specified. Use --template option to specify a template.');
-        process.exit(ExitCode.USER_ERROR);
+        logger.info('No template specified. Use --template option to specify a template.');
+        exitWithCode(ExitCode.USER_ERROR);
       }
     } catch (error) {
-      console.log('No template specified. Use --template option to specify a template.');
-      process.exit(ExitCode.USER_ERROR);
+      logger.info('No template specified. Use --template option to specify a template.');
+      exitWithCode(ExitCode.USER_ERROR);
     }
   }
 
   // Second check: Validate project name if provided as argument
   if (projectName !== undefined) {
     if (!projectName || projectName.trim().length === 0) {
-      console.log('Project name cannot be empty');
-      process.exit(ExitCode.USER_ERROR);
+      logger.info('Project name cannot be empty');
+      exitWithCode(ExitCode.USER_ERROR);
     }
     // Validate project name (no special characters except dash and underscore)
     if (!/^[a-zA-Z0-9_-]+$/.test(projectName.trim())) {
-      console.log('Project name can only contain letters, numbers, dashes, and underscores');
-      process.exit(ExitCode.USER_ERROR);
+      logger.info('Project name can only contain letters, numbers, dashes, and underscores');
+      exitWithCode(ExitCode.USER_ERROR);
     }
   }
 
@@ -143,8 +142,8 @@ async function handleNewCommand(
   }
 
   if (verbose) {
-    logger.info(chalk.blue('Creating new project:'), finalProjectName);
-    logger.info(chalk.blue('Options:'), JSON.stringify(options, null, 2));
+    logger.raw(chalk.blue('Creating new project:'), finalProjectName);
+    logger.raw(chalk.blue('Options:'), JSON.stringify(options, null, 2));
   }
 
   // Prompt for path if not provided
@@ -206,7 +205,6 @@ async function handleNewCommand(
   }
 
   // Resolve services from DI container
-  const fileSystemService = container.resolve(FileSystemService);
   const manifestService = container.resolve(ProjectManifestService);
   const projectCreationService = container.resolve(ProjectCreationService);
 
@@ -272,41 +270,37 @@ async function handleNewCommand(
     logger.info('');
   }
 
-  try {
-    // Create the project
-    const manifest = await projectCreationService.createProject(
-      finalProjectName,
-      templateIds,
-      targetPath,
-      variables,
-      dryRun
-    );
+  // Create the project
+  const manifest = await projectCreationService.createProject(
+    finalProjectName,
+    templateIds,
+    targetPath,
+    variables,
+    dryRun
+  );
 
-    // Save the manifest using the manifest service (skip in dry-run mode)
-    if (!dryRun) {
-      await manifestService.updateProjectManifest(targetPath, manifest);
-    }
+  // Save the manifest using the manifest service (skip in dry-run mode)
+  if (!dryRun) {
+    await manifestService.updateProjectManifest(targetPath, manifest);
+  }
 
-    if (dryRun) {
-      logger.info(chalk.green('✓ Dry run completed successfully!'));
-      logger.info(chalk.gray('No files were actually created.'));
-    } else {
-      logger.info(chalk.green('✓ Project created successfully!'));
-    }
+  if (dryRun) {
+    logger.info(chalk.green('✓ Dry run completed successfully!'));
+    logger.info(chalk.gray('No files were actually created.'));
+  } else {
+    logger.info(chalk.green('✓ Project created successfully!'));
+  }
 
-    logger.info(chalk.blue('Project name:'), manifest.projectName);
-    logger.info(chalk.blue('Location:'), targetPath);
-    logger.info(
-      chalk.blue('Templates applied:'),
-      manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
-    );
+  logger.info(chalk.blue('Project name:'), manifest.projectName);
+  logger.info(chalk.blue('Location:'), targetPath);
+  logger.info(
+    chalk.blue('Templates applied:'),
+    manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+  );
 
-    if (verbose) {
-      logger.info(chalk.blue('Manifest ID:'), manifest.id);
-      logger.info(chalk.blue('Created at:'), manifest.created);
-    }
-  } catch (error) {
-    throw error;
+  if (verbose) {
+    logger.info(chalk.blue('Manifest ID:'), manifest.id);
+    logger.info(chalk.blue('Created at:'), manifest.created);
   }
 
   exitWithCode(ExitCode.SUCCESS);

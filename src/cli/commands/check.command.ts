@@ -3,20 +3,21 @@
  * Validate project structure against applied templates
  */
 
-import { Command } from 'commander';
-import { resolve } from 'path';
 import { existsSync } from 'fs';
-import chalk from 'chalk';
+import { resolve } from 'path';
+
+import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
+
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
+import { createLogger, logger } from '@/lib/logger';
+import type { ValidationReport } from '@/models';
 import {
   ProjectValidationService,
   ProjectManifestService,
   TemplateService,
   FileSystemService,
-} from '../../services';
-import type { ValidationReport } from '../../models';
-import { ExitCode, exitWithCode } from '../../constants/exit-codes';
-import { createLogger, logger } from '../../lib/logger';
+} from '@/services';
 
 interface CheckCommandOptions {
   verbose?: boolean;
@@ -93,7 +94,9 @@ async function handleCheckCommand(
   }
 
   // Resolve services from DI container
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const fileSystemService = container.resolve(FileSystemService);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const templateService = container.resolve(TemplateService);
   const manifestService = container.resolve(ProjectManifestService);
   const validationService = container.resolve(ProjectValidationService);
@@ -110,9 +113,8 @@ async function handleCheckCommand(
 
         // Log error details for debugging
         if (verbose) {
-          console.log(
-            chalk.gray('Manifest error details:'),
-            manifestError.message
+          logger.gray(
+            `Manifest error details: ${manifestError.message}`
           );
         }
 
@@ -239,10 +241,10 @@ function displaySummary(report: ValidationReport): void {
     }
   }
 
-  console.log(chalk.gray(`Files checked: ${report.stats.filesChecked}`));
-  console.log(chalk.gray(`Folders checked: ${report.stats.foldersChecked}`));
-  console.log(chalk.gray(`Rules evaluated: ${report.stats.rulesEvaluated}`));
-  console.log(chalk.gray(`Duration: ${report.stats.duration}ms`));
+  logger.gray(`Files checked: ${report.stats.filesChecked}`);
+  logger.gray(`Folders checked: ${report.stats.foldersChecked}`);
+  logger.gray(`Rules evaluated: ${report.stats.rulesEvaluated}`);
+  logger.gray(`Duration: ${report.stats.duration}ms`);
 }
 
 function displayTable(report: ValidationReport, verbose: boolean): void {
@@ -252,83 +254,81 @@ function displayTable(report: ValidationReport, verbose: boolean): void {
 
   // Display errors
   if (report.errors.length > 0) {
-    console.log(chalk.red('Errors:'));
+    logger.red('Errors:');
     for (const error of report.errors) {
-      console.log(chalk.red('  ✗'), error.message);
+      logger.red(`  ✗ ${error.message}`);
       if (error.file) {
-        console.log(chalk.gray(`    File: ${error.file}`));
+        logger.gray(`    File: ${error.file}`);
       }
       if (error.rule) {
-        console.log(chalk.gray(`    Rule: ${error.rule}`));
+        logger.gray(`    Rule: ${error.rule}`);
       }
       if (verbose && error.suggestion) {
-        console.log(chalk.gray(`    Suggestion: ${error.suggestion}`));
+        logger.gray(`    Suggestion: ${error.suggestion}`);
       }
     }
-    console.log('');
+    logger.newLine();
   }
 
   // Display warnings
   if (report.warnings.length > 0) {
-    console.log(chalk.yellow('Warnings:'));
+    logger.yellow('Warnings:');
     for (const warning of report.warnings) {
-      console.log(chalk.yellow('  ⚠'), warning.message);
+      logger.yellow(`  ⚠ ${warning.message}`);
       if (warning.file) {
-        console.log(chalk.gray(`    File: ${warning.file}`));
+        logger.gray(`    File: ${warning.file}`);
       }
       if (warning.rule) {
-        console.log(chalk.gray(`    Rule: ${warning.rule}`));
+        logger.gray(`    Rule: ${warning.rule}`);
       }
       if (verbose && warning.suggestion) {
-        console.log(chalk.gray(`    Suggestion: ${warning.suggestion}`));
+        logger.gray(`    Suggestion: ${warning.suggestion}`);
       }
     }
-    console.log('');
+    logger.newLine();
   }
 
   // Display success message if no issues
   if (report.errors.length === 0 && report.warnings.length === 0) {
-    console.log(chalk.green('✓ All validation checks passed'));
-    console.log('');
+    logger.green('✓ All validation checks passed');
+    logger.newLine();
   }
 
   // Display stats
-  console.log(chalk.blue('Statistics:'));
-  console.log(chalk.gray(`  Files checked: ${report.stats.filesChecked}`));
-  console.log(chalk.gray(`  Folders checked: ${report.stats.foldersChecked}`));
-  console.log(chalk.gray(`  Rules evaluated: ${report.stats.rulesEvaluated}`));
-  console.log(chalk.gray(`  Errors: ${report.stats.errorCount}`));
-  console.log(chalk.gray(`  Warnings: ${report.stats.warningCount}`));
-  console.log(chalk.gray(`  Duration: ${report.stats.duration}ms`));
+  logger.infoBlue('Statistics:');
+  logger.gray(`  Files checked: ${report.stats.filesChecked}`);
+  logger.gray(`  Folders checked: ${report.stats.foldersChecked}`);
+  logger.gray(`  Rules evaluated: ${report.stats.rulesEvaluated}`);
+  logger.gray(`  Errors: ${report.stats.errorCount}`);
+  logger.gray(`  Warnings: ${report.stats.warningCount}`);
+  logger.gray(`  Duration: ${report.stats.duration}ms`);
 
   if (verbose) {
-    console.log('');
-    console.log(chalk.blue('Passed Rules:'));
+    logger.newLine();
+    logger.infoBlue('Passed Rules:');
     if (report.passedRules && report.passedRules.length > 0) {
       for (const rule of report.passedRules) {
-        console.log(chalk.green('  ✓'), rule);
+        logger.green(`  ✓ ${rule}`);
       }
     } else {
-      console.log(chalk.gray('  None'));
+      logger.gray('  None');
     }
 
     if (report.skippedRules && report.skippedRules.length > 0) {
-      console.log('');
-      console.log(chalk.blue('Skipped Rules:'));
+      logger.newLine();
+      logger.infoBlue('Skipped Rules:');
       for (const rule of report.skippedRules) {
-        console.log(chalk.gray('  -'), rule);
+        logger.gray(`  - ${rule}`);
       }
     }
   }
 
-  console.log('');
+  logger.newLine();
 
   // Display suggestions for next steps
   if (report.errors.length > 0) {
-    console.log(chalk.yellow('Next steps:'));
-    console.log(
-      chalk.gray('  • Run "scaffold fix" to automatically fix issues')
-    );
-    console.log(chalk.gray('  • Use --verbose for detailed error information'));
+    logger.yellow('Next steps:');
+    logger.gray('  • Run "scaffold fix" to automatically fix issues');
+    logger.gray('  • Use --verbose for detailed error information');
   }
 }

@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import { TemplateService } from '../../services';
 import type { TemplateSummary } from '../../models';
+import { logger } from '@/lib/logger';
 
 export interface TemplateSelectionOptions {
   verbose?: boolean;
@@ -37,8 +38,8 @@ export async function selectTemplates(
 
     if (library.templates.length === 0) {
       if (verbose) {
-        console.log(chalk.yellow('No templates found.'));
-        console.log(
+        logger.info(chalk.yellow('No templates found.'));
+        logger.info(
           chalk.gray(
             'Use "scaffold template create" to create your first template.'
           )
@@ -59,7 +60,7 @@ export async function selectTemplates(
 
     if (availableTemplates.length === 0) {
       if (verbose) {
-        console.log(chalk.yellow('No available templates after filtering.'));
+        logger.info(chalk.yellow('No available templates after filtering.'));
       }
 
       if (required) {
@@ -70,10 +71,8 @@ export async function selectTemplates(
     }
 
     if (verbose) {
-      console.log(
-        chalk.blue('Found'),
-        availableTemplates.length,
-        'available templates'
+      logger.info(
+        chalk.blue('Found ') + availableTemplates.length + ' available templates'
       );
     }
 
@@ -102,7 +101,7 @@ export async function selectTemplates(
       ]);
 
       if (verbose && selectedTemplates.length > 0) {
-        console.log(chalk.blue('Selected templates:'), selectedTemplates);
+        logger.info(chalk.blue('Selected templates:') + " " +  selectedTemplates);
       }
 
       return selectedTemplates;
@@ -117,7 +116,7 @@ export async function selectTemplates(
       ]);
 
       if (verbose) {
-        console.log(chalk.blue('Selected template:'), selectedTemplate);
+        logger.info(chalk.blue('Selected template:') + ' ' + selectedTemplate);
       }
 
       return [selectedTemplate];
@@ -128,8 +127,8 @@ export async function selectTemplates(
       error.message.includes('Failed to load templates')
     ) {
       if (verbose) {
-        console.log(chalk.yellow('No templates found.'));
-        console.log(
+        logger.info(chalk.yellow('No templates found.'));
+        logger.info(
           chalk.gray(
             'Use "scaffold template create" to create your first template.'
           )

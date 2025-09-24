@@ -8,6 +8,7 @@ import chalk from 'chalk';
 import { DependencyContainer } from 'tsyringe';
 import { CompletionService } from '../../services';
 import { ShellType } from '../../models';
+import { logger } from '@/lib/logger';
 
 interface ScriptCommandOptions {
   shell?: ShellType;
@@ -27,7 +28,7 @@ export function createScriptCommand(container: DependencyContainer): Command {
       try {
         await handleScriptCommand(options, container);
       } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+        logger.error(chalk.red('Error: ') + (error instanceof Error ? error.message : String(error)));
         process.exit(1);
       }
     });
@@ -49,12 +50,12 @@ async function handleScriptCommand(
   if (!shellType) {
     shellType = await completionService.detectShell();
     if (verbose) {
-      console.log(chalk.blue('Detected shell:'), shellType);
+      logger.info(chalk.blue('Detected shell:') + " " +  shellType);
     }
   }
 
   if (verbose) {
-    console.log(chalk.blue('Generating completion script for:'), shellType);
+    logger.info(chalk.blue('Generating completion script for:') + " " +  shellType);
   }
 
   try {
@@ -63,25 +64,25 @@ async function handleScriptCommand(
 
     if (showInstructions) {
       // Show header with instructions
-      console.log(chalk.blue(`# Shell completion script for scaffold CLI (${shellType})`));
-      console.log(chalk.blue('# Installation instructions:'));
-      console.log(chalk.blue('# 1. Save this script to a file'));
-      console.log(chalk.blue('# 2. Source it in your shell configuration'));
-      console.log(chalk.blue('#'));
-      console.log('');
+      logger.info(chalk.blue(`# Shell completion script for scaffold CLI (${shellType})`));
+      logger.info(chalk.blue('# Installation instructions:'));
+      logger.info(chalk.blue('# 1. Save this script to a file'));
+      logger.info(chalk.blue('# 2. Source it in your shell configuration'));
+      logger.info(chalk.blue('#'));
+      logger.info('');
     }
 
     // Output the script
-    console.log(scriptInfo.content);
+    logger.info(scriptInfo.content);
 
     if (verbose && !showInstructions) {
-      console.log('');
-      console.log(chalk.blue('Installation instructions:'));
-      console.log(chalk.gray('Save this script and source it in your shell configuration'));
+      logger.info('');
+      logger.info(chalk.blue('Installation instructions:'));
+      logger.info(chalk.gray('Save this script and source it in your shell configuration'));
     }
 
   } catch (error) {
-    console.error(chalk.red('Failed to generate completion script:'), error instanceof Error ? error.message : String(error));
+    logger.error(chalk.red('Failed to generate completion script: ') + (error instanceof Error ? error.message : String(error)));
     process.exit(1);
   }
 }

@@ -8,6 +8,7 @@ import chalk from 'chalk';
 import { DependencyContainer } from 'tsyringe';
 import { CompletionService } from '../../services';
 import { ShellType } from '../../models';
+import { logger } from '@/lib/logger';
 
 interface InstallCommandOptions {
   shell?: ShellType;
@@ -34,7 +35,7 @@ export function createInstallCommand(container: DependencyContainer): Command {
         const verbose = options.verbose || rootOptions.verbose || false;
         await handleInstallCommand({ ...options, verbose }, container);
       } catch (error) {
-        console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+        logger.error(chalk.red('Error: ') + (error instanceof Error ? error.message : String(error)));
         process.exit(1);
       }
     });
@@ -56,13 +57,13 @@ async function handleInstallCommand(
   if (!shellType) {
     shellType = await completionService.detectShell();
     if (verbose) {
-      console.log(chalk.blue('Detected shell:'), shellType);
+      logger.info(chalk.blue('Detected shell:') + " " +  shellType);
     }
   }
 
   if (verbose) {
-    console.log(chalk.blue('Installing completion for:'), shellType);
-    console.log(chalk.blue('Force reinstall:'), force);
+    logger.info(chalk.blue('Installing completion for:') + " " +  shellType);
+    logger.info(chalk.blue('Force reinstall:') + " " +  force);
   }
 
   try {
@@ -70,35 +71,35 @@ async function handleInstallCommand(
     const status = await completionService.getCompletionStatus(shellType);
 
     if (status.isInstalled && status.isEnabled && !force) {
-      console.log(chalk.yellow('Shell completion is already installed and enabled.'));
-      console.log(chalk.gray(`Shell: ${status.shellType}`));
-      console.log(chalk.gray(`Install path: ${status.installPath}`));
-      console.log(chalk.gray('Use --force to reinstall'));
+      logger.info(chalk.yellow('Shell completion is already installed and enabled.'));
+      logger.info(chalk.gray(`Shell: ${status.shellType}`));
+      logger.info(chalk.gray(`Install path: ${status.installPath}`));
+      logger.info(chalk.gray('Use --force to reinstall'));
       return;
     }
 
     // Install completion
     const config = await completionService.installCompletion(shellType, force);
 
-    console.log(chalk.green('✓ Shell completion installed successfully'));
-    console.log(chalk.gray(`Shell: ${shellType}`));
-    console.log(chalk.gray(`Install path: ${config.installPath}`));
+    logger.info(chalk.green('✓ Shell completion installed successfully'));
+    logger.info(chalk.gray(`Shell: ${shellType}`));
+    logger.info(chalk.gray(`Install path: ${config.installPath}`));
 
     // Show installation instructions
     const script = await completionService.generateCompletionScript(shellType);
-    console.log('');
-    console.log(chalk.blue('To enable completion:'));
-    console.log(chalk.gray('Restart your shell or source your shell configuration file'));
+    logger.info('');
+    logger.info(chalk.blue('To enable completion:'));
+    logger.info(chalk.gray('Restart your shell or source your shell configuration file'));
 
     if (verbose) {
-      console.log('');
-      console.log(chalk.blue('Completion script preview:'));
-      console.log(chalk.gray(script.content.slice(0, 200) + '...'));
+      logger.info('');
+      logger.info(chalk.blue('Completion script preview:'));
+      logger.info(chalk.gray(script.content.slice(0, 200) + '...'));
     }
 
   } catch (error) {
     if (error instanceof Error && error.message.includes('already installed')) {
-      console.log(chalk.yellow(error.message));
+      logger.info(chalk.yellow(error.message));
       return;
     }
     throw error;
