@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 . "$(dirname "$0")/_/husky.sh"
 
+# Silently refresh burndown statistics and auto-remove passing tests
+BURNDOWN_SILENT=true node scripts/burndown.js refresh --silent
+
 # Run lint-staged with burndown configuration
 npx lint-staged --config .lintstagedrc.burndown.js
 
