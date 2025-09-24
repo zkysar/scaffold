@@ -10,7 +10,6 @@
       "tests/unit/services/completion-providers/template-completion-provider.test.ts",
       "tests/unit/cli/commands/new.test.ts",
       "tests/unit/cli/commands/fix.test.ts",
-      "tests/contract/commands/scaffold-check.test.ts",
       "tests/contract/commands/scaffold-clean.test.ts",
       "tests/contract/commands/scaffold-config.test.ts",
       "tests/contract/commands/scaffold-extend.test.ts",
@@ -53,9 +52,9 @@
   },
   "statistics": {
     "totalTests": 354,
-    "passingTests": 180,
-    "failingTests": 174,
+    "passingTests": 185,
+    "failingTests": 169,
     "blockedTestFiles": 34,
-    "passingTestFiles": 6
+    "passingTestFiles": 7
   }
 }

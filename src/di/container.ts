@@ -16,6 +16,21 @@ import { FileCompletionProvider } from '../services/completion-providers/file-co
 import { ProjectCompletionProvider } from '../services/completion-providers/project-completion-provider';
 import { TemplateCompletionProvider } from '../services/completion-providers/template-completion-provider';
 
+// Import fake services for testing
+import {
+  FakeFileSystemService,
+  FakeConfigurationService,
+  FakeTemplateIdentifierService,
+  FakeVariableSubstitutionService,
+  FakeProjectManifestService,
+  FakeTemplateService,
+  FakeProjectCreationService,
+  FakeProjectValidationService,
+  FakeProjectFixService,
+  FakeProjectExtensionService,
+  FakeCompletionService,
+} from '../../tests/fakes';
+
 export function configureContainer(): DependencyContainer {
   // Phase 1: Core Services (no dependencies)
   container.registerSingleton(FileSystemService);
@@ -47,8 +62,25 @@ export function configureContainer(): DependencyContainer {
 export function createTestContainer(): DependencyContainer {
   const testContainer = container.createChildContainer();
 
-  // Register test-specific implementations here
-  // This allows overriding services for testing
+  // Register fake service instances for testing
+  // Phase 1: Core Services
+  testContainer.registerInstance(FileSystemService, new FakeFileSystemService() as any);
+  testContainer.registerInstance(ConfigurationService, new FakeConfigurationService() as any);
+
+  // Phase 2: Identifier Services
+  testContainer.registerInstance(TemplateIdentifierService, new FakeTemplateIdentifierService() as any);
+
+  // Phase 3: Data Services
+  testContainer.registerInstance(VariableSubstitutionService, new FakeVariableSubstitutionService() as any);
+  testContainer.registerInstance(ProjectManifestService, new FakeProjectManifestService() as any);
+  testContainer.registerInstance(TemplateService, new FakeTemplateService() as any);
+
+  // Phase 4: Business Logic Services
+  testContainer.registerInstance(ProjectCreationService, new FakeProjectCreationService() as any);
+  testContainer.registerInstance(ProjectValidationService, new FakeProjectValidationService() as any);
+  testContainer.registerInstance(ProjectFixService, new FakeProjectFixService() as any);
+  testContainer.registerInstance(ProjectExtensionService, new FakeProjectExtensionService() as any);
+  testContainer.registerInstance(CompletionService, new FakeCompletionService() as any);
 
   return testContainer;
 }
