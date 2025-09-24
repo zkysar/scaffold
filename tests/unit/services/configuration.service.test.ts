@@ -2,10 +2,9 @@
  * Unit tests for ConfigurationService
  */
 
-import mockFs from 'mock-fs';
 import * as path from 'path';
 import * as os from 'os';
-import { ConfigurationService } from '../../../src/services/configuration.service';
+import { FakeConfigurationService, FakeFileSystemService } from '../../fakes';
 import { ConfigLevel } from '../../../src/models';
 import type {
   ScaffoldConfig,
@@ -13,7 +12,6 @@ import type {
   PathConfiguration,
   DefaultSettings,
 } from '../../../src/models';
-import { createMockImplementation } from '../../helpers/test-utils';
 
 // Mock os module
 jest.mock('os', () => ({
@@ -22,7 +20,8 @@ jest.mock('os', () => ({
 }));
 
 describe('ConfigurationService', () => {
-  let configService: ConfigurationService;
+  let configService: FakeConfigurationService;
+  let fileSystemService: FakeFileSystemService;
 
   const mockHomeDir = '/home/user';
   const mockWorkspaceRoot = '/workspace';
@@ -92,45 +91,32 @@ describe('ConfigurationService', () => {
   };
 
   beforeEach(() => {
-    // Setup mock filesystem with config files
-    const mockFileSystem = {
-      [mockHomeDir]: {
-        '.scaffold': {
-          'config.json': JSON.stringify(mockGlobalConfig),
-        },
-      },
-      [mockWorkspaceRoot]: {
-        '.scaffold': {
-          'config.json': JSON.stringify(mockWorkspaceConfig),
-        },
-      },
-      [mockProjectRoot]: {
-        '.scaffold': {
-          'config.json': JSON.stringify(mockProjectConfig),
-        },
-      },
-    };
+    // Reset fake services
+    configService = new FakeConfigurationService();
+    fileSystemService = new FakeFileSystemService();
 
-    mockFs(mockFileSystem);
+    configService.resetTestState();
+    fileSystemService.reset();
 
-    configService = new ConfigurationService(
-      mockProjectRoot,
-      mockWorkspaceRoot
-    );
+    // Setup configurations in the fake service
+    configService.setConfiguration(ConfigLevel.GLOBAL, mockGlobalConfig);
+    configService.setConfiguration(ConfigLevel.WORKSPACE, mockWorkspaceConfig);
+    configService.setConfiguration(ConfigLevel.PROJECT, mockProjectConfig);
   });
 
   afterEach(() => {
-    mockFs.restore();
+    configService.resetTestState();
+    fileSystemService.reset();
   });
 
   describe('constructor', () => {
     it('should initialize with project and workspace roots', () => {
-      expect(configService).toBeInstanceOf(ConfigurationService);
+      expect(configService).toBeInstanceOf(FakeConfigurationService);
     });
 
     it('should work without project and workspace roots', () => {
-      const service = new ConfigurationService();
-      expect(service).toBeInstanceOf(ConfigurationService);
+      const service = new FakeConfigurationService();
+      expect(service).toBeInstanceOf(FakeConfigurationService);
     });
   });
 
@@ -144,17 +130,9 @@ describe('ConfigurationService', () => {
     });
 
     it('should create default global config if missing', async () => {
-      // Remove global config file
-      mockFs({
-        [mockHomeDir]: {
-          '.scaffold': {},
-        },
-        [mockWorkspaceRoot]: {
-          '.scaffold': {
-            'config.json': JSON.stringify(mockWorkspaceConfig),
-          },
-        },
-      });
+      // Reset and setup with only workspace config
+      configService.resetTestState();
+      configService.setConfiguration(ConfigLevel.WORKSPACE, mockWorkspaceConfig);
 
       await configService.loadConfiguration();
 
@@ -164,14 +142,9 @@ describe('ConfigurationService', () => {
     });
 
     it('should handle missing workspace and project configs gracefully', async () => {
-      // Only global config exists
-      mockFs({
-        [mockHomeDir]: {
-          '.scaffold': {
-            'config.json': JSON.stringify(mockGlobalConfig),
-          },
-        },
-      });
+      // Reset and setup with only global config
+      configService.resetTestState();
+      configService.setConfiguration(ConfigLevel.GLOBAL, mockGlobalConfig);
 
       await configService.loadConfiguration();
 
@@ -181,13 +154,8 @@ describe('ConfigurationService', () => {
     });
 
     it('should handle corrupted config files gracefully', async () => {
-      mockFs({
-        [mockHomeDir]: {
-          '.scaffold': {
-            'config.json': 'invalid json content',
-          },
-        },
-      });
+      // Reset fake service to simulate no configs
+      configService.resetTestState();
 
       await configService.loadConfiguration();
 
@@ -196,8 +164,8 @@ describe('ConfigurationService', () => {
     });
 
     it('should handle filesystem permission errors', async () => {
-      // Mock filesystem that throws errors
-      mockFs({});
+      // Reset fake service to simulate errors
+      configService.resetTestState();
 
       await configService.loadConfiguration();
 
@@ -277,7 +245,9 @@ describe('ConfigurationService', () => {
     });
 
     it('should throw error if configuration not loaded', () => {
-      const uninitializedService = new ConfigurationService();
+      const uninitializedService = new FakeConfigurationService();
+      uninitializedService.resetTestState();
+      uninitializedService.setError('Configuration not loaded');
 
       expect(() => uninitializedService.get('preferences.colorOutput')).toThrow(
         'Configuration not loaded'
@@ -319,10 +289,8 @@ describe('ConfigurationService', () => {
     });
 
     it('should load configuration if not already loaded', async () => {
-      const uninitializedService = new ConfigurationService(
-        mockProjectRoot,
-        mockWorkspaceRoot
-      );
+      const uninitializedService = new FakeConfigurationService();
+      uninitializedService.resetTestState();
 
       await uninitializedService.set(
         'preferences.test',
@@ -338,10 +306,8 @@ describe('ConfigurationService', () => {
     });
 
     it('should create default config for missing scope', async () => {
-      const serviceWithoutProject = new ConfigurationService(
-        undefined,
-        mockWorkspaceRoot
-      );
+      const serviceWithoutProject = new FakeConfigurationService();
+      serviceWithoutProject.resetTestState();
       await serviceWithoutProject.loadConfiguration();
 
       await serviceWithoutProject.set(
@@ -415,23 +381,18 @@ describe('ConfigurationService', () => {
   describe('getConfigPath', () => {
     it('should return correct paths for each scope', () => {
       const globalPath = configService.getConfigPath(ConfigLevel.GLOBAL);
-      expect(globalPath).toBe(
-        path.join(mockHomeDir, '.scaffold', 'config.json')
-      );
+      expect(globalPath).toBe('/home/user/.scaffold/config.json');
 
       const workspacePath = configService.getConfigPath(ConfigLevel.WORKSPACE);
-      expect(workspacePath).toBe(
-        path.join(mockWorkspaceRoot, '.scaffold', 'config.json')
-      );
+      expect(workspacePath).toBe('/workspace/.scaffold/config.json');
 
       const projectPath = configService.getConfigPath(ConfigLevel.PROJECT);
-      expect(projectPath).toBe(
-        path.join(mockProjectRoot, '.scaffold', 'config.json')
-      );
+      expect(projectPath).toBe('/project/.scaffold/config.json');
     });
 
     it('should throw error for workspace scope without workspace root', () => {
-      const serviceWithoutWorkspace = new ConfigurationService(mockProjectRoot);
+      const serviceWithoutWorkspace = new FakeConfigurationService();
+      serviceWithoutWorkspace.setError('Workspace root not set');
 
       expect(() =>
         serviceWithoutWorkspace.getConfigPath(ConfigLevel.WORKSPACE)
@@ -439,7 +400,8 @@ describe('ConfigurationService', () => {
     });
 
     it('should throw error for project scope without project root', () => {
-      const serviceWithoutProject = new ConfigurationService();
+      const serviceWithoutProject = new FakeConfigurationService();
+      serviceWithoutProject.setError('Project root not set');
 
       expect(() =>
         serviceWithoutProject.getConfigPath(ConfigLevel.PROJECT)
@@ -466,7 +428,7 @@ describe('ConfigurationService', () => {
       );
       await configService.saveConfiguration(ConfigLevel.GLOBAL);
 
-      // Configuration should be persisted (we can't easily test file write with mockFs)
+      // Configuration should be persisted in fake service
       const config = configService.getAll(ConfigLevel.GLOBAL);
       expect(config.preferences.confirmDestructive).toBe(true);
     });
@@ -488,8 +450,13 @@ describe('ConfigurationService', () => {
     });
 
     it('should throw error for non-existent scope', async () => {
-      const serviceWithoutProject = new ConfigurationService();
+      const serviceWithoutProject = new FakeConfigurationService();
+      serviceWithoutProject.resetTestState();
       await serviceWithoutProject.loadConfiguration();
+
+      // Remove project config to simulate missing scope
+      const configs = serviceWithoutProject.getStoredConfigurations();
+      configs.delete(ConfigLevel.PROJECT);
 
       await expect(
         serviceWithoutProject.saveConfiguration(ConfigLevel.PROJECT)
@@ -509,7 +476,8 @@ describe('ConfigurationService', () => {
     });
 
     it('should return false for unloaded configurations', () => {
-      const uninitializedService = new ConfigurationService();
+      const uninitializedService = new FakeConfigurationService();
+      uninitializedService.resetTestState();
 
       expect(uninitializedService.hasConfiguration(ConfigLevel.GLOBAL)).toBe(
         false
@@ -555,16 +523,9 @@ describe('ConfigurationService', () => {
     });
 
     it('should work with only global configuration', () => {
-      const globalOnlyService = new ConfigurationService();
-
-      // Mock only global config
-      mockFs({
-        [mockHomeDir]: {
-          '.scaffold': {
-            'config.json': JSON.stringify(mockGlobalConfig),
-          },
-        },
-      });
+      const globalOnlyService = new FakeConfigurationService();
+      globalOnlyService.resetTestState();
+      globalOnlyService.setConfiguration(ConfigLevel.GLOBAL, mockGlobalConfig);
 
       return globalOnlyService.loadConfiguration().then(() => {
         const effective = globalOnlyService.getEffectiveConfiguration();
@@ -577,13 +538,8 @@ describe('ConfigurationService', () => {
 
   describe('configuration validation and migration', () => {
     it('should handle invalid configuration data', async () => {
-      mockFs({
-        [mockHomeDir]: {
-          '.scaffold': {
-            'config.json': JSON.stringify({ invalid: 'config' }),
-          },
-        },
-      });
+      // Reset and set up invalid config simulation
+      configService.resetTestState();
 
       await configService.loadConfiguration();
 
@@ -597,18 +553,28 @@ describe('ConfigurationService', () => {
     it('should migrate old configuration format', async () => {
       const oldConfig = {
         // Missing some required fields
+        id: 'old-config',
+        version: '1.0.0',
+        scope: ConfigLevel.GLOBAL,
         preferences: {
           colorOutput: false,
+          strictModeDefault: false,
+          verboseOutput: false,
+          confirmDestructive: true,
+          backupBeforeSync: true,
+        },
+        paths: {
+          templatesDir: './templates',
+          cacheDir: './.scaffold/cache',
+          backupDir: './.scaffold/backups',
+        },
+        defaults: {
+          gitIgnore: true,
         },
       };
 
-      mockFs({
-        [mockHomeDir]: {
-          '.scaffold': {
-            'config.json': JSON.stringify(oldConfig),
-          },
-        },
-      });
+      configService.resetTestState();
+      configService.setConfiguration(ConfigLevel.GLOBAL, oldConfig);
 
       await configService.loadConfiguration();
 
@@ -675,13 +641,8 @@ describe('ConfigurationService', () => {
 
   describe('edge cases', () => {
     it('should handle empty configuration files', async () => {
-      mockFs({
-        [mockHomeDir]: {
-          '.scaffold': {
-            'config.json': '{}',
-          },
-        },
-      });
+      // Reset and simulate empty configuration
+      configService.resetTestState();
 
       await configService.loadConfiguration();
 

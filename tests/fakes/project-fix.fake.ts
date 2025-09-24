@@ -3,14 +3,14 @@ import type {
 } from '@/services/project-fix.service';
 import type {
   ValidationReport,
-  FixReport,
 } from '@/models';
 
 export class FakeProjectFixService implements IProjectFixService {
-  private fixReports: Map<string, FixReport> = new Map();
+  private fixReports: Map<string, ValidationReport> = new Map();
   private shouldThrowError: string | null = null;
   private nextReturnValue: any = null;
   private fixedProjects: string[] = [];
+  private dryRunProjects: string[] = [];
 
   reset(): void {
     this.fixReports.clear();
@@ -27,7 +27,7 @@ export class FakeProjectFixService implements IProjectFixService {
     this.nextReturnValue = value;
   }
 
-  setFixReport(projectPath: string, report: FixReport): void {
+  setFixReport(projectPath: string, report: ValidationReport): void {
     this.fixReports.set(projectPath, report);
   }
 
@@ -50,42 +50,41 @@ export class FakeProjectFixService implements IProjectFixService {
 
   async fixProject(
     projectPath: string,
-    validationReport: ValidationReport,
-    autoOnly?: boolean
-  ): Promise<FixReport> {
+    dryRun?: boolean
+  ): Promise<ValidationReport> {
     this.checkError();
     const returnValue = this.checkReturnValue();
     if (returnValue) return returnValue;
 
-    this.fixedProjects.push(projectPath);
+    if (dryRun) {
+      this.dryRunProjects.push(projectPath);
+    } else {
+      this.fixedProjects.push(projectPath);
+    }
 
     if (this.fixReports.has(projectPath)) {
       return this.fixReports.get(projectPath)!;
     }
 
-    // Return a default successful fix report
+    // Return a default successful validation report after fixing
     return {
-      id: 'fix-' + Date.now(),
+      id: 'validation-' + Date.now(),
       timestamp: new Date().toISOString(),
       projectPath,
-      validationReportId: validationReport.id,
-      fixes: validationReport.errors.filter(e => e.autoFixable || !autoOnly).map(error => ({
-        path: error.path,
-        action: 'fixed',
-        description: `Fixed: ${error.message}`,
-        success: true,
-      })),
-      skipped: autoOnly ? validationReport.errors.filter(e => !e.autoFixable).map(error => ({
-        path: error.path,
-        reason: 'Manual fix required',
-      })) : [],
-      failed: [],
+      valid: true,
+      errors: [],
+      warnings: [],
       stats: {
-        totalIssues: validationReport.errors.length,
-        fixedIssues: validationReport.errors.filter(e => e.autoFixable || !autoOnly).length,
-        skippedIssues: autoOnly ? validationReport.errors.filter(e => !e.autoFixable).length : 0,
-        failedFixes: 0,
-        duration: 50,
+        filesChecked: 10,
+        foldersChecked: 5,
+        templatesChecked: 1,
+        errorsFound: 0,
+        warningsFound: 0,
+        executionTime: 100,
+        rulesEvaluated: 10,
+        errorCount: 0,
+        warningCount: 0,
+        duration: 100,
       },
     };
   }
@@ -95,7 +94,11 @@ export class FakeProjectFixService implements IProjectFixService {
     return this.fixedProjects;
   }
 
-  getStoredReports(): FixReport[] {
+  getDryRunProjects(): string[] {
+    return this.dryRunProjects;
+  }
+
+  getStoredReports(): ValidationReport[] {
     return Array.from(this.fixReports.values());
   }
 }

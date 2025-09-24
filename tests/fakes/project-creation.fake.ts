@@ -61,20 +61,28 @@ export class FakeProjectCreationService implements IProjectCreationService {
     this.createdProjects.push({ projectName, templateIds, targetPath, variables });
 
     const manifest: ProjectManifest = {
+      id: 'project-' + Date.now(),
       version: '1.0.0',
       projectName,
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
       templates: templateIds.map(id => ({
-        templateId: id,
+        templateSha: id,
+        name: 'Template Name',
+        version: '1.0.0',
+        rootFolder: projectName,
         appliedAt: new Date().toISOString(),
-        variables: variables || {},
+        status: 'active' as const,
+        conflicts: [],
       })),
       variables: variables || {},
       history: [
         {
+          id: 'history-' + Date.now(),
           action: 'create',
           timestamp: new Date().toISOString(),
-          templateIds,
-          description: `Created project with templates: ${templateIds.join(', ')}`,
+          templates: templateIds,
+          changes: [],
         },
       ],
     };
@@ -92,22 +100,30 @@ export class FakeProjectCreationService implements IProjectCreationService {
     if (returnValue) return returnValue;
 
     return {
+      id: 'project-' + Date.now(),
       version: '1.0.0',
       projectName,
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
       templates: [
         {
-          templateId: templateSha,
+          templateSha: templateSha,
+          name: 'Template Name',
+          version: '1.0.0',
+          rootFolder: projectName,
           appliedAt: new Date().toISOString(),
-          variables: {},
+          status: 'active' as const,
+          conflicts: [],
         },
       ],
       variables: {},
       history: [
         {
+          id: 'history-' + Date.now(),
           action: 'create',
           timestamp: new Date().toISOString(),
-          templateIds: [templateSha],
-          description: `Initialized project with template ${templateSha}`,
+          templates: [templateSha],
+          changes: [],
         },
       ],
     };

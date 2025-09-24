@@ -7,6 +7,7 @@ export class FakeFileSystemService implements IFileSystemService {
   private directories: Set<string> = new Set();
   private shouldThrowError: string | null = null;
   private nextReturnValue: any = null;
+  private _isDryRun = false;
 
   reset(): void {
     this.files.clear();
@@ -102,7 +103,9 @@ export class FakeFileSystemService implements IFileSystemService {
     const returnValue = this.checkReturnValue();
     if (returnValue !== null) return;
 
-    this.setDirectory(dirPath);
+    if (!this.isDryRun) {
+      this.setDirectory(dirPath);
+    }
   }
 
   async remove(path: string): Promise<void> {
@@ -222,6 +225,103 @@ export class FakeFileSystemService implements IFileSystemService {
     }
 
     return results;
+  }
+
+  get isDryRun(): boolean {
+    return this._isDryRun;
+  }
+
+  setDryRun(enabled: boolean): void {
+    this._isDryRun = enabled;
+  }
+
+  async createFile(filePath: string, content: string, options?: any): Promise<void> {
+    this.checkError();
+    if (!this.isDryRun) {
+      this.setFile(filePath, content);
+    }
+  }
+
+  async copyPath(source: string, dest: string, options?: any): Promise<void> {
+    this.checkError();
+    const content = this.files.get(source);
+    if (content !== undefined && !this.isDryRun) {
+      this.setFile(dest, content);
+    }
+  }
+
+  async deletePath(targetPath: string, options?: any): Promise<void> {
+    this.checkError();
+    if (!this.isDryRun) {
+      this.files.delete(targetPath);
+      this.directories.delete(targetPath);
+    }
+  }
+
+  existsSync(targetPath: string): boolean {
+    return this.files.has(targetPath) || this.directories.has(targetPath);
+  }
+
+  async readJson<T = any>(filePath: string): Promise<T> {
+    const content = await this.readFile(filePath);
+    return JSON.parse(content);
+  }
+
+  async writeJson(filePath: string, data: any, options?: any): Promise<void> {
+    this.checkError();
+    if (!this.isDryRun) {
+      this.setFile(filePath, JSON.stringify(data, null, 2));
+    }
+  }
+
+  async stat(targetPath: string): Promise<any> {
+    this.checkError();
+    if (this.files.has(targetPath)) {
+      return { isFile: () => true, isDirectory: () => false };
+    } else if (this.directories.has(targetPath)) {
+      return { isFile: () => false, isDirectory: () => true };
+    }
+    throw new Error(`Path not found: ${targetPath}`);
+  }
+
+  async isSymlink(targetPath: string): Promise<boolean> {
+    return false; // Simplified for testing
+  }
+
+  async backup(paths: string[], description?: string): Promise<string> {
+    return 'backup-id-123'; // Simplified for testing
+  }
+
+  async restore(backupId: string): Promise<void> {
+    // Simplified for testing
+  }
+
+  async listBackups(): Promise<any[]> {
+    return []; // Simplified for testing
+  }
+
+  async deleteBackup(backupId: string): Promise<void> {
+    // Simplified for testing
+  }
+
+  resolvePath(...pathSegments: string[]): string {
+    return pathSegments.join('/');
+  }
+
+  relativePath(from: string, to: string): string {
+    // Simplified implementation
+    return to.startsWith(from) ? to.slice(from.length + 1) : to;
+  }
+
+  normalizePath(targetPath: string): string {
+    return targetPath.replace(/\\/g, '/');
+  }
+
+  async ensureDirectory(dirPath: string): Promise<void> {
+    this.checkError();
+    if (!this.isDryRun) {
+      this.setDirectory(dirPath);
+    }
   }
 
   // Test helpers

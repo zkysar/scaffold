@@ -5,7 +5,9 @@
 
 import { createFixCommand } from '../../../../src/cli/commands/fix.command';
 import {
-  ProjectService,
+  ProjectFixService,
+  ProjectValidationService,
+  ProjectManifestService,
   TemplateService,
   FileSystemService,
 } from '../../../../src/services';
@@ -20,10 +22,40 @@ jest.mock('fs', () => ({
   existsSync: jest.fn(),
 }));
 
-const mockProjectService = ProjectService as jest.MockedClass<typeof ProjectService>;
+const mockProjectFixService = ProjectFixService as jest.MockedClass<typeof ProjectFixService>;
+const mockProjectValidationService = ProjectValidationService as jest.MockedClass<typeof ProjectValidationService>;
+const mockProjectManifestService = ProjectManifestService as jest.MockedClass<typeof ProjectManifestService>;
 const mockTemplateService = TemplateService as jest.MockedClass<typeof TemplateService>;
 const mockFileSystemService = FileSystemService as jest.MockedClass<typeof FileSystemService>;
 const mockExistsSync = existsSync as jest.MockedFunction<typeof existsSync>;
+
+// Global service instances for cross-test access
+let mockTemplateServiceInstance: any;
+let mockFileSystemServiceInstance: any;
+let mockProjectManifestServiceInstance: any;
+let mockProjectValidationServiceInstance: any;
+let mockProjectFixServiceInstance: any;
+
+// Helper to setup service mocks for tests
+function setupServiceMocks() {
+  mockTemplateServiceInstance = {} as any;
+  mockFileSystemServiceInstance = {} as any;
+  mockProjectManifestServiceInstance = {
+    loadProjectManifest: jest.fn(),
+    getProjectManifest: jest.fn(),
+    updateProjectManifest: jest.fn(),
+  } as any;
+  mockProjectValidationServiceInstance = {} as any;
+  mockProjectFixServiceInstance = {
+    fixProject: jest.fn(),
+  } as any;
+
+  mockTemplateService.mockImplementation(() => mockTemplateServiceInstance);
+  mockFileSystemService.mockImplementation(() => mockFileSystemServiceInstance);
+  mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance);
+  mockProjectValidationService.mockImplementation(() => mockProjectValidationServiceInstance);
+  mockProjectFixService.mockImplementation(() => mockProjectFixServiceInstance);
+}
 
 // Helper to execute command and capture results
 async function executeCommand(args: string[], mockServices = true): Promise<{
@@ -56,17 +88,7 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
     const command = createFixCommand();
 
     if (mockServices) {
-      // Set up default service mocks
-      const mockTemplateServiceInstance = {} as any;
-      const mockProjectServiceInstance = {
-        loadProjectManifest: jest.fn(),
-        fixProject: jest.fn(),
-      } as any;
-      const mockFileSystemServiceInstance = {} as any;
-
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance);
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance);
-      mockFileSystemService.mockImplementation(() => mockFileSystemServiceInstance);
+      setupServiceMocks();
     }
 
     await command.parseAsync(args, { from: 'user' });
@@ -87,6 +109,7 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
 describe('scaffold fix command unit tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    setupServiceMocks();
   });
 
   afterEach(() => {
@@ -139,12 +162,11 @@ describe('scaffold fix command unit tests', () => {
       const cwdSpy = jest.spyOn(process, 'cwd').mockReturnValue('/current/directory');
       mockExistsSync.mockReturnValue(true);
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(null),
-        fixProject: jest.fn(),
-      };
+              };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand([]);
 
@@ -155,32 +177,30 @@ describe('scaffold fix command unit tests', () => {
     it('should use provided project path', async () => {
       mockExistsSync.mockReturnValue(true);
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(null),
-        fixProject: jest.fn(),
-      };
+              };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       await executeCommand(['/specified/path']);
 
-      expect(mockProjectServiceInstance.loadProjectManifest).toHaveBeenCalledWith('/specified/path');
+      expect(mockProjectManifestServiceInstance.loadProjectManifest).toHaveBeenCalledWith('/specified/path');
     });
 
     it('should handle relative paths correctly', async () => {
       const cwdSpy = jest.spyOn(process, 'cwd').mockReturnValue('/current/directory');
       mockExistsSync.mockReturnValue(true);
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(null),
-        fixProject: jest.fn(),
-      };
+              };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       await executeCommand(['./relative/path']);
 
-      expect(mockProjectServiceInstance.loadProjectManifest).toHaveBeenCalledWith('/current/directory/relative/path');
+      expect(mockProjectManifestServiceInstance.loadProjectManifest).toHaveBeenCalledWith('/current/directory/relative/path');
       cwdSpy.mockRestore();
     });
   });
@@ -198,12 +218,11 @@ describe('scaffold fix command unit tests', () => {
     it('should proceed when target directory exists', async () => {
       mockExistsSync.mockReturnValue(true);
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(null),
-        fixProject: jest.fn(),
-      };
+              };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/existing/path']);
 
@@ -216,12 +235,11 @@ describe('scaffold fix command unit tests', () => {
     it('should handle non-scaffold-managed projects gracefully', async () => {
       mockExistsSync.mockReturnValue(true);
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(null),
-        fixProject: jest.fn(),
-      };
+              };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/regular/project']);
 
@@ -277,12 +295,12 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project']);
 
@@ -347,12 +365,12 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project', '--verbose']);
 
@@ -398,12 +416,12 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project']);
 
@@ -475,12 +493,12 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project']);
 
@@ -538,12 +556,12 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project']);
 
@@ -590,16 +608,16 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       await executeCommand(['/scaffold/project', '--dry-run']);
 
-      expect(mockProjectServiceInstance.fixProject).toHaveBeenCalledWith('/scaffold/project', true);
+      expect(mockProjectFixServiceInstance.fixProject).toHaveBeenCalledWith('/scaffold/project', true);
     });
   });
 
@@ -639,18 +657,18 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project', '--verbose', '--dry-run', '--force', '--backup']);
 
       expect(result.stdout).toContain('Fixing project: /scaffold/project');
       expect(result.stdout).toContain('Project Fix Report');
-      expect(mockProjectServiceInstance.fixProject).toHaveBeenCalledWith('/scaffold/project', true);
+      expect(mockProjectFixServiceInstance.fixProject).toHaveBeenCalledWith('/scaffold/project', true);
     });
 
     it('should handle --no-backup option', async () => {
@@ -688,16 +706,16 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       await executeCommand(['/scaffold/project', '--no-backup']);
 
-      expect(mockProjectServiceInstance.fixProject).toHaveBeenCalled();
+      expect(mockProjectFixServiceInstance.fixProject).toHaveBeenCalled();
     });
   });
 
@@ -705,12 +723,11 @@ describe('scaffold fix command unit tests', () => {
     it('should handle service errors gracefully', async () => {
       mockExistsSync.mockReturnValue(true);
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockRejectedValue(new Error('Failed to load manifest')),
-        fixProject: jest.fn(),
-      };
+              };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project']);
 
@@ -732,12 +749,12 @@ describe('scaffold fix command unit tests', () => {
         history: [],
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockRejectedValue(new Error('Fix operation failed')),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project']);
 
@@ -748,14 +765,13 @@ describe('scaffold fix command unit tests', () => {
     it('should handle unexpected errors', async () => {
       mockExistsSync.mockReturnValue(true);
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockImplementation(() => {
           throw new Error('Unexpected error');
         }),
-        fixProject: jest.fn(),
-      };
+              };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project']);
 
@@ -800,12 +816,12 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project']);
 
@@ -856,12 +872,12 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project']);
 
@@ -908,12 +924,12 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
-      const mockProjectServiceInstance = {
+      const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
         fixProject: jest.fn().mockResolvedValue(mockReport),
       };
 
-      mockProjectService.mockImplementation(() => mockProjectServiceInstance as any);
+      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
 
       const result = await executeCommand(['/scaffold/project']);
 
