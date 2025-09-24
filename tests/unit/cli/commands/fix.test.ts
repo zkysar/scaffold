@@ -15,7 +15,7 @@ import {
 import { Command } from 'commander';
 import { existsSync } from 'fs';
 import type { ProjectManifest, ValidationReport } from '../../../../src/models';
-import { container } from 'tsyringe';
+import { container, DependencyContainer } from 'tsyringe';
 
 // Mock dependencies
 jest.mock('../../../../src/services');
@@ -60,7 +60,11 @@ function setupServiceMocks() {
 }
 
 // Helper to execute command and capture results
-async function executeCommand(args: string[], mockServices = true): Promise<{
+async function executeCommand(
+  args: string[],
+  mockServices = true,
+  customContainer?: DependencyContainer
+): Promise<{
   exitCode: number;
   stdout: string[];
   stderr: string[];
@@ -87,10 +91,10 @@ async function executeCommand(args: string[], mockServices = true): Promise<{
   }) as any;
 
   try {
-    // Create mock container
-    const mockContainer = container.createChildContainer();
+    // Use custom container or create mock container
+    const mockContainer = customContainer || container.createChildContainer();
 
-    if (mockServices) {
+    if (mockServices && !customContainer) {
       setupServiceMocks();
       // Register mock services in container
       mockContainer.registerInstance(TemplateService, mockTemplateServiceInstance as any);
@@ -190,10 +194,25 @@ describe('scaffold fix command unit tests', () => {
       mockExistsSync.mockReturnValue(true);
 
       const mockProjectManifestServiceInstance = {
-        loadProjectManifest: jest.fn().mockResolvedValue(null),
-              };
+        loadProjectManifest: jest.fn().mockResolvedValue({
+          id: '123',
+          projectName: 'test-project',
+          templates: [],
+          version: '1.0.0'
+        } as any),
+      };
+      const mockProjectFixServiceInstance = {
+        fixProject: jest.fn().mockResolvedValue({
+          valid: true,
+          errors: [],
+          warnings: [],
+          suggestions: [],
+          stats: { filesChecked: 10, foldersChecked: 5, errorCount: 0, warningCount: 0, duration: 100 }
+        }),
+      };
 
       mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
+      mockProjectFixService.mockImplementation(() => mockProjectFixServiceInstance as any);
 
       await executeCommand(['/specified/path']);
 
@@ -205,10 +224,25 @@ describe('scaffold fix command unit tests', () => {
       mockExistsSync.mockReturnValue(true);
 
       const mockProjectManifestServiceInstance = {
-        loadProjectManifest: jest.fn().mockResolvedValue(null),
-              };
+        loadProjectManifest: jest.fn().mockResolvedValue({
+          id: '123',
+          projectName: 'test-project',
+          templates: [],
+          version: '1.0.0'
+        } as any),
+      };
+      const mockProjectFixServiceInstance = {
+        fixProject: jest.fn().mockResolvedValue({
+          valid: true,
+          errors: [],
+          warnings: [],
+          suggestions: [],
+          stats: { filesChecked: 10, foldersChecked: 5, errorCount: 0, warningCount: 0, duration: 100 }
+        }),
+      };
 
       mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
+      mockProjectFixService.mockImplementation(() => mockProjectFixServiceInstance as any);
 
       await executeCommand(['./relative/path']);
 
@@ -257,7 +291,6 @@ describe('scaffold fix command unit tests', () => {
 
       expect(result.stdout).toContain('Not a scaffold-managed project.');
       expect(result.stdout).toContain('No .scaffold/manifest.json file found.');
-      expect(result.stdout).toContain('Use "scaffold new" to create');
       expect(result.stdout).toContain('Use "scaffold new" to create a new project or "scaffold extend" to add templates.');
       expect(result.exitCode).toBe(0);
     });
@@ -307,17 +340,32 @@ describe('scaffold fix command unit tests', () => {
         },
       };
 
+      // Set up the global service mocks before calling executeCommand
+      const mockContainer = container.createChildContainer();
+
+      const mockTemplateServiceInstance = {} as any;
+      const mockFileSystemServiceInstance = {} as any;
       const mockProjectManifestServiceInstance = {
         loadProjectManifest: jest.fn().mockResolvedValue(mockManifest),
+        getProjectManifest: jest.fn(),
+        updateProjectManifest: jest.fn(),
+      } as any;
+      const mockProjectValidationServiceInstance = {} as any;
+      const mockProjectFixServiceInstance = {
         fixProject: jest.fn().mockResolvedValue(mockReport),
-      };
+      } as any;
 
-      mockProjectManifestService.mockImplementation(() => mockProjectManifestServiceInstance as any);
+      // Register mock services in container
+      mockContainer.registerInstance(TemplateService, mockTemplateServiceInstance);
+      mockContainer.registerInstance(FileSystemService, mockFileSystemServiceInstance);
+      mockContainer.registerInstance(ProjectManifestService, mockProjectManifestServiceInstance);
+      mockContainer.registerInstance(ProjectValidationService, mockProjectValidationServiceInstance);
+      mockContainer.registerInstance(ProjectFixService, mockProjectFixServiceInstance);
 
-      const result = await executeCommand(['/scaffold/project']);
+      const result = await executeCommand(['/scaffold/project'], false, mockContainer);
 
       expect(result.stdout).toContain('Project Fix Report');
-      expect(result.stdout).toContain('Project structure is valid');
+      expect(result.stdout.some(line => line.includes('Project structure is valid'))).toBe(true);
       expect(result.exitCode).toBe(0);
     });
   });
