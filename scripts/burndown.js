@@ -36,22 +36,103 @@ function testFile(filePath) {
   }
 }
 
+// Get actual test statistics by running Jest
+function getActualTestStats() {
+  let output;
+  try {
+    output = execSync('npm test', { encoding: 'utf8', stdio: 'pipe' });
+  } catch (error) {
+    // Tests might fail but we can still parse the output
+    output = error.stdout + error.stderr || '';
+  }
+
+  try {
+
+    // Parse the Jest output for test statistics
+    const lines = output.split('\n');
+    let totalTests = 0;
+    let passingTests = 0;
+    let failingTests = 0;
+
+    // Look for the summary line like "Tests:       174 failed, 180 passed, 354 total"
+    for (const line of lines) {
+      // Trim the line to normalize whitespace
+      const trimmedLine = line.trim();
+
+      const testSummaryMatch = trimmedLine.match(/Tests:\s+(\d+)\s+failed,\s+(\d+)\s+passed,\s+(\d+)\s+total/);
+      if (testSummaryMatch) {
+        failingTests = parseInt(testSummaryMatch[1], 10);
+        passingTests = parseInt(testSummaryMatch[2], 10);
+        totalTests = parseInt(testSummaryMatch[3], 10);
+        break;
+      }
+
+      // Alternative format: "Tests:       124 passed, 230 failed, 354 total"
+      const altTestSummaryMatch = trimmedLine.match(/Tests:\s+(\d+)\s+passed,\s+(\d+)\s+failed,\s+(\d+)\s+total/);
+      if (altTestSummaryMatch) {
+        passingTests = parseInt(altTestSummaryMatch[1], 10);
+        failingTests = parseInt(altTestSummaryMatch[2], 10);
+        totalTests = parseInt(altTestSummaryMatch[3], 10);
+        break;
+      }
+
+      // Format with only passing: "Tests:       354 passed, 354 total"
+      const passingOnlyMatch = trimmedLine.match(/Tests:\s+(\d+)\s+passed,\s+(\d+)\s+total/);
+      if (passingOnlyMatch) {
+        passingTests = parseInt(passingOnlyMatch[1], 10);
+        totalTests = parseInt(passingOnlyMatch[2], 10);
+        failingTests = totalTests - passingTests;
+        break;
+      }
+
+      // Format with only failing: "Tests:       230 failed, 354 total"
+      const failingOnlyMatch = trimmedLine.match(/Tests:\s+(\d+)\s+failed,\s+(\d+)\s+total/);
+      if (failingOnlyMatch) {
+        failingTests = parseInt(failingOnlyMatch[1], 10);
+        totalTests = parseInt(failingOnlyMatch[2], 10);
+        passingTests = totalTests - failingTests;
+        break;
+      }
+    }
+
+    if (totalTests > 0) {
+      return { totalTests, passingTests, failingTests };
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.warn('Warning: Could not get actual test statistics, using cached values');
+    return null;
+  }
+}
+
 // Commands
 const commands = {
   // Show current burndown status
   status: () => {
     const blocklist = loadBlocklist();
+
+    // Get actual test statistics from Jest
+    const actualStats = getActualTestStats();
+    const stats = actualStats || blocklist.statistics;
+
     console.log('\n📊 Burndown Status:');
     console.log('─'.repeat(50));
-    console.log(`Total Tests: ${blocklist.statistics.totalTests}`);
-    console.log(`Passing Tests: ${blocklist.statistics.passingTests}`);
-    console.log(`Failing Tests: ${blocklist.statistics.failingTests}`);
+    console.log(`Total Tests: ${stats.totalTests}`);
+    console.log(`Passing Tests: ${stats.passingTests}`);
+    console.log(`Failing Tests: ${stats.failingTests}`);
     console.log(`\nBlocked Test Files: ${blocklist.tests.blocked.length}`);
     console.log(`Passing Test Files: ${blocklist.statistics.passingTestFiles}`);
     console.log('─'.repeat(50));
 
-    const percentage = Math.round((blocklist.statistics.passingTests / blocklist.statistics.totalTests) * 100);
+    const percentage = Math.round((stats.passingTests / stats.totalTests) * 100);
     console.log(`\n✅ Progress: ${percentage}% tests passing`);
+
+    if (actualStats) {
+      console.log('\n📈 Statistics refreshed from live test run');
+    } else {
+      console.log('\n⚠️  Using cached statistics (run tests to refresh)');
+    }
   },
 
   // List all blocked test files
@@ -172,6 +253,29 @@ const commands = {
     } catch (error) {
       process.exit(error.status);
     }
+  },
+
+  // Update cached statistics with actual test results
+  refresh: () => {
+    console.log('\n🔄 Refreshing statistics from test results...\n');
+
+    const actualStats = getActualTestStats();
+    if (!actualStats) {
+      console.error('❌ Failed to get actual test statistics');
+      process.exit(1);
+    }
+
+    const blocklist = loadBlocklist();
+    blocklist.statistics.totalTests = actualStats.totalTests;
+    blocklist.statistics.passingTests = actualStats.passingTests;
+    blocklist.statistics.failingTests = actualStats.failingTests;
+
+    saveBlocklist(blocklist);
+
+    console.log('✅ Statistics updated successfully:');
+    console.log(`   Total Tests: ${actualStats.totalTests}`);
+    console.log(`   Passing Tests: ${actualStats.passingTests}`);
+    console.log(`   Failing Tests: ${actualStats.failingTests}`);
   }
 };
 
@@ -190,12 +294,14 @@ Commands:
   scan                Scan all blocked tests to find passing ones
   test                Run tests with burndown configuration
   lint                Run ESLint with burndown configuration
+  refresh             Update cached statistics with actual test results
 
 Examples:
   node scripts/burndown.js status
   node scripts/burndown.js check tests/unit/services/template-service.test.ts
   node scripts/burndown.js remove tests/unit/services/template-service.test.ts
   node scripts/burndown.js scan
+  node scripts/burndown.js refresh
 `);
 }
 
