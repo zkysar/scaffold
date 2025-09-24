@@ -17,6 +17,7 @@ import { existsSync } from 'fs';
 import mockFs from 'mock-fs';
 import type { ProjectManifest, TemplateLibrary, Template } from '@/models';
 import { container, DependencyContainer } from 'tsyringe';
+import { selectTemplates } from '@/cli/utils/template-selector';
 
 // Mock dependencies
 jest.mock('@/services');
@@ -25,6 +26,7 @@ jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
   existsSync: jest.fn(),
 }));
+jest.mock('@/cli/utils/template-selector');
 
 const mockProjectCreationService = ProjectCreationService as jest.MockedClass<typeof ProjectCreationService>;
 const mockProjectManifestService = ProjectManifestService as jest.MockedClass<typeof ProjectManifestService>;
@@ -32,6 +34,7 @@ const mockTemplateService = TemplateService as jest.MockedClass<typeof TemplateS
 const mockFileSystemService = FileSystemService as jest.MockedClass<typeof FileSystemService>;
 const mockInquirer = inquirer as jest.Mocked<typeof inquirer>;
 const mockExistsSync = existsSync as jest.MockedFunction<typeof existsSync>;
+const mockSelectTemplates = selectTemplates as jest.MockedFunction<typeof selectTemplates>;
 
 // Helper function to create a command with mock container
 function createMockCommand(): Command {
@@ -135,6 +138,7 @@ describe('scaffold new command unit tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFs.restore();
+    mockSelectTemplates.mockReset();
   });
 
   afterEach(() => {
@@ -188,6 +192,7 @@ describe('scaffold new command unit tests', () => {
 
   describe('argument validation', () => {
     it('should handle missing project name with interactive prompt', async () => {
+
       // Setup mocks to avoid early exit
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn().mockResolvedValue({
@@ -208,9 +213,9 @@ describe('scaffold new command unit tests', () => {
 
       mockInquirer.prompt
         .mockResolvedValueOnce({ name: 'test-project' })
-        .mockResolvedValueOnce({ useCurrentDir: true })
-        .mockResolvedValueOnce({ selectedTemplates: ['default'] });
+        .mockResolvedValueOnce({ useCurrentDir: true });
 
+      mockSelectTemplates.mockResolvedValue(['default']);
       mockExistsSync.mockReturnValue(false);
 
       // Create mock container with proper services
@@ -222,8 +227,9 @@ describe('scaffold new command unit tests', () => {
 
       const result = await executeCommand([], false, mockContainer); // Pass custom container
 
-      // First call should be for project name prompt
-      expect(mockInquirer.prompt).toHaveBeenCalledTimes(3);
+
+      // Should prompt for project name and directory confirmation, then use selectTemplates utility
+      expect(mockInquirer.prompt).toHaveBeenCalledTimes(2);
       expect(mockInquirer.prompt).toHaveBeenNthCalledWith(1, [
         expect.objectContaining({
           type: 'input',
@@ -233,7 +239,6 @@ describe('scaffold new command unit tests', () => {
         }),
       ]);
 
-      // Second call should be for directory confirmation
       expect(mockInquirer.prompt).toHaveBeenNthCalledWith(2, [
         expect.objectContaining({
           type: 'confirm',
@@ -243,14 +248,11 @@ describe('scaffold new command unit tests', () => {
         }),
       ]);
 
-      // Third call should be for template selection
-      expect(mockInquirer.prompt).toHaveBeenNthCalledWith(3, [
-        expect.objectContaining({
-          type: 'checkbox',
-          name: 'selectedTemplates',
-          message: expect.stringContaining('Select templates to apply'),
-        }),
-      ]);
+      // selectTemplates utility should be called
+      expect(mockSelectTemplates).toHaveBeenCalledWith(
+        mockTemplateServiceInstance,
+        { verbose: false }
+      );
 
       expect(result.exitCode).toBe(0);
     });
@@ -384,22 +386,43 @@ describe('scaffold new command unit tests', () => {
     });
 
     it('should prompt for custom path when current directory declined', async () => {
-      mockInquirer.prompt
-        .mockResolvedValueOnce({ useCurrentDir: false })
-        .mockResolvedValueOnce({ customPath: '/custom/path' })
-        .mockResolvedValueOnce({ selectedTemplates: ['template1'] });
-
-      mockExistsSync.mockReturnValue(false);
-
+      // Setup mocks with a default template to avoid early exit
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn().mockResolvedValue({
-          templates: [{ id: 'template1', name: 'Template 1', description: 'Test template' }]
+          templates: [{ id: 'default', name: 'default', description: 'Default template' }]
         } as TemplateLibrary),
       };
+      const mockProjectCreationServiceInstance = {
+        createProject: jest.fn().mockResolvedValue({
+          id: 'project-123',
+          version: '1.0.0',
+          projectName: 'test-project',
+          created: '2023-01-01T00:00:00.000Z',
+          updated: '2023-01-01T00:00:00.000Z',
+          templates: [{ name: 'default', version: '1.0.0' } as any],
+          variables: {},
+          history: []
+        } as ProjectManifest),
+      };
+      const mockProjectManifestServiceInstance = {
+        updateProjectManifest: jest.fn(),
+      };
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      mockInquirer.prompt
+        .mockResolvedValueOnce({ useCurrentDir: false })
+        .mockResolvedValueOnce({ customPath: '/custom/path' });
 
-      await executeCommand(['test-project']);
+      mockSelectTemplates.mockResolvedValue(['default']);
+      mockExistsSync.mockReturnValue(false);
+
+      // Create mock container with proper services
+      const mockContainer = container.createChildContainer();
+      mockContainer.registerInstance(TemplateService, mockTemplateServiceInstance as any);
+      mockContainer.registerInstance(ProjectCreationService, mockProjectCreationServiceInstance as any);
+      mockContainer.registerInstance(ProjectManifestService, mockProjectManifestServiceInstance as any);
+      mockContainer.registerInstance(FileSystemService, {} as any);
+
+      await executeCommand(['test-project'], false, mockContainer);
 
       expect(mockInquirer.prompt).toHaveBeenCalledWith([
         expect.objectContaining({
@@ -433,22 +456,43 @@ describe('scaffold new command unit tests', () => {
 
   describe('directory existence handling', () => {
     it('should prompt for overwrite when target directory exists', async () => {
-      mockInquirer.prompt
-        .mockResolvedValueOnce({ useCurrentDir: true })
-        .mockResolvedValueOnce({ overwrite: true })
-        .mockResolvedValueOnce({ selectedTemplates: ['template1'] });
-
-      mockExistsSync.mockReturnValue(true);
-
+      // Setup mocks to avoid early exit - include a 'default' template
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn().mockResolvedValue({
-          templates: [{ id: 'template1', name: 'Template 1', description: 'Test template' }]
+          templates: [{ id: 'default', name: 'default', description: 'Default template' }]
         } as TemplateLibrary),
       };
+      const mockProjectCreationServiceInstance = {
+        createProject: jest.fn().mockResolvedValue({
+          id: 'project-123',
+          version: '1.0.0',
+          projectName: 'test-project',
+          created: '2023-01-01T00:00:00.000Z',
+          updated: '2023-01-01T00:00:00.000Z',
+          templates: [{ name: 'default', version: '1.0.0' } as any],
+          variables: {},
+          history: []
+        } as ProjectManifest),
+      };
+      const mockProjectManifestServiceInstance = {
+        updateProjectManifest: jest.fn(),
+      };
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      mockInquirer.prompt
+        .mockResolvedValueOnce({ useCurrentDir: true })
+        .mockResolvedValueOnce({ overwrite: true });
 
-      await executeCommand(['test-project']);
+      mockSelectTemplates.mockResolvedValue(['default']);
+      mockExistsSync.mockReturnValue(true);
+
+      // Create mock container with proper services
+      const mockContainer = container.createChildContainer();
+      mockContainer.registerInstance(TemplateService, mockTemplateServiceInstance as any);
+      mockContainer.registerInstance(ProjectCreationService, mockProjectCreationServiceInstance as any);
+      mockContainer.registerInstance(ProjectManifestService, mockProjectManifestServiceInstance as any);
+      mockContainer.registerInstance(FileSystemService, {} as any);
+
+      await executeCommand(['test-project'], false, mockContainer);
 
       expect(mockInquirer.prompt).toHaveBeenCalledWith([
         expect.objectContaining({
@@ -460,13 +504,42 @@ describe('scaffold new command unit tests', () => {
     });
 
     it('should cancel operation when overwrite declined', async () => {
+      // Setup mocks to avoid early exit - include a 'default' template
+      const mockTemplateServiceInstance = {
+        loadTemplates: jest.fn().mockResolvedValue({
+          templates: [{ id: 'default', name: 'default', description: 'Default template' }]
+        } as TemplateLibrary),
+      };
+      const mockProjectCreationServiceInstance = {
+        createProject: jest.fn().mockResolvedValue({
+          id: 'project-123',
+          version: '1.0.0',
+          projectName: 'test-project',
+          created: '2023-01-01T00:00:00.000Z',
+          updated: '2023-01-01T00:00:00.000Z',
+          templates: [{ name: 'default', version: '1.0.0' } as any],
+          variables: {},
+          history: []
+        } as ProjectManifest),
+      };
+      const mockProjectManifestServiceInstance = {
+        updateProjectManifest: jest.fn(),
+      };
+
       mockInquirer.prompt
         .mockResolvedValueOnce({ useCurrentDir: true })
         .mockResolvedValueOnce({ overwrite: false });
 
       mockExistsSync.mockReturnValue(true);
 
-      const result = await executeCommand(['test-project']);
+      // Create mock container with proper services
+      const mockContainer = container.createChildContainer();
+      mockContainer.registerInstance(TemplateService, mockTemplateServiceInstance as any);
+      mockContainer.registerInstance(ProjectCreationService, mockProjectCreationServiceInstance as any);
+      mockContainer.registerInstance(ProjectManifestService, mockProjectManifestServiceInstance as any);
+      mockContainer.registerInstance(FileSystemService, {} as any);
+
+      const result = await executeCommand(['test-project'], false, mockContainer);
 
       expect(result.stdout).toContain('Operation cancelled.');
     });
@@ -504,6 +577,7 @@ describe('scaffold new command unit tests', () => {
 
     it('should prompt for template selection when none provided', async () => {
       const mockTemplates = [
+        { id: 'default', name: 'default', description: 'Default template' },
         { id: 'template1', name: 'Template 1', description: 'First template' },
         { id: 'template2', name: 'Template 2', description: 'Second template' },
       ];
@@ -519,10 +593,26 @@ describe('scaffold new command unit tests', () => {
           templates: mockTemplates
         } as TemplateLibrary),
       };
+      const mockProjectCreationServiceInstance = {
+        createProject: jest.fn().mockResolvedValue({
+          projectName: 'test-project',
+          templates: [{ name: 'Template 1', version: '1.0.0' }],
+          id: 'project-123',
+          created: '2023-01-01T00:00:00.000Z'
+        } as ProjectManifest),
+      };
+      const mockProjectManifestServiceInstance = {
+        updateProjectManifest: jest.fn(),
+      };
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      // Create mock container with proper services
+      const mockContainer = container.createChildContainer();
+      mockContainer.registerInstance(TemplateService, mockTemplateServiceInstance as any);
+      mockContainer.registerInstance(ProjectCreationService, mockProjectCreationServiceInstance as any);
+      mockContainer.registerInstance(ProjectManifestService, mockProjectManifestServiceInstance as any);
+      mockContainer.registerInstance(FileSystemService, {} as any);
 
-      await executeCommand(['test-project']);
+      await executeCommand(['test-project'], false, mockContainer);
 
       expect(mockInquirer.prompt).toHaveBeenCalledWith([
         expect.objectContaining({
@@ -530,6 +620,10 @@ describe('scaffold new command unit tests', () => {
           name: 'selectedTemplates',
           message: expect.stringContaining('Select templates to apply'),
           choices: expect.arrayContaining([
+            expect.objectContaining({
+              name: 'default - Default template',
+              value: 'default',
+            }),
             expect.objectContaining({
               name: 'Template 1 - First template',
               value: 'template1',
@@ -544,9 +638,7 @@ describe('scaffold new command unit tests', () => {
     });
 
     it('should handle no templates available', async () => {
-      mockInquirer.prompt.mockResolvedValueOnce({ useCurrentDir: true });
-      mockExistsSync.mockReturnValue(false);
-
+      // Setup empty templates array to trigger the "no templates" scenario
       const mockTemplateServiceInstance = {
         loadTemplates: jest.fn().mockResolvedValue({
           sources: [],
@@ -555,16 +647,26 @@ describe('scaffold new command unit tests', () => {
         } as TemplateLibrary),
       };
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      mockInquirer.prompt.mockResolvedValueOnce({ useCurrentDir: true });
+      mockExistsSync.mockReturnValue(false);
 
-      const result = await executeCommand(['test-project']);
+      // Create mock container with proper services
+      const mockContainer = container.createChildContainer();
+      mockContainer.registerInstance(TemplateService, mockTemplateServiceInstance as any);
+      mockContainer.registerInstance(ProjectCreationService, { createProject: jest.fn() } as any);
+      mockContainer.registerInstance(ProjectManifestService, { updateProjectManifest: jest.fn() } as any);
+      mockContainer.registerInstance(FileSystemService, {} as any);
 
-      expect(result.stdout).toContain('No template specified and no templates found in library.');
-      expect(result.stdout).toContain('scaffold template create');
+      const result = await executeCommand(['test-project'], false, mockContainer);
+
+      // The command exits early when no default template is found
+      expect(result.stdout).toContain('No template specified. Use --template option to specify a template.');
     });
 
     it('should validate template selection requires at least one', async () => {
+      // Include a default template so the command doesn't exit early
       const mockTemplates = [
+        { id: 'default', name: 'default', description: 'Default template' },
         { id: 'template1', name: 'Template 1', description: 'First template' },
       ];
 
@@ -577,19 +679,26 @@ describe('scaffold new command unit tests', () => {
         } as TemplateLibrary),
       };
 
-      mockTemplateService.mockImplementation(() => mockTemplateServiceInstance as any);
+      // Create mock container with proper services
+      const mockContainer = container.createChildContainer();
+      mockContainer.registerInstance(TemplateService, mockTemplateServiceInstance as any);
+      mockContainer.registerInstance(ProjectCreationService, { createProject: jest.fn() } as any);
+      mockContainer.registerInstance(ProjectManifestService, { updateProjectManifest: jest.fn() } as any);
+      mockContainer.registerInstance(FileSystemService, {} as any);
 
       // Extract the validator function from the prompt configuration
       let validatorFunction: Function | undefined;
       const mockPrompt = jest.fn().mockImplementation((questions) => {
         const templatesQuestion = questions.find((q: any) => q.name === 'selectedTemplates');
-        validatorFunction = templatesQuestion?.validate;
+        if (templatesQuestion) {
+          validatorFunction = templatesQuestion.validate;
+        }
         return Promise.resolve({ selectedTemplates: ['template1'] });
       });
 
       mockInquirer.prompt = mockPrompt as any;
 
-      await executeCommand(['test-project']);
+      await executeCommand(['test-project'], false, mockContainer);
 
       expect(validatorFunction).toBeDefined();
 
