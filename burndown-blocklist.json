@@ -52,9 +52,9 @@
     }
   },
   "statistics": {
-    "totalTests": 892,
-    "passingTests": 533,
-    "failingTests": 358,
+    "totalTests": 354,
+    "passingTests": 180,
+    "failingTests": 174,
     "blockedTestFiles": 34,
     "passingTestFiles": 6
   }
