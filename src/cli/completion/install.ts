@@ -3,12 +3,13 @@
  * Install shell completion for the scaffold CLI
  */
 
-import { Command } from 'commander';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
-import { CompletionService } from '@/services';
-import { ShellType } from '@/models';
+
 import { logger } from '@/lib/logger';
+import { ShellType } from '@/models';
+import { CompletionService } from '@/services';
 
 interface InstallCommandOptions {
   shell?: ShellType;

@@ -6,6 +6,8 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 import { execSync } from 'child_process';
 
+
+import { logger } from '@/lib/logger';
 /**
  * Create a temporary directory for testing
  */
@@ -28,7 +30,7 @@ export function cleanupTempDir(tempDir: string): void {
       fs.removeSync(tempDir);
     }
   } catch (error) {
-    console.warn(`Failed to cleanup temp directory: ${tempDir}`, error);
+    logger.warn(`Failed to cleanup temp directory: ${tempDir}`, error);
   }
 }
 

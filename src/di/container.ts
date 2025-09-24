@@ -1,20 +1,20 @@
 import 'reflect-metadata';
 import { container, DependencyContainer } from 'tsyringe';
 
-import { FileSystemService } from '@/services/file-system.service';
-import { ConfigurationService } from '@/services/configuration.service';
-import { TemplateIdentifierService } from '@/services/template-identifier-service';
-import { VariableSubstitutionService } from '@/services/variable-substitution.service';
-import { ProjectManifestService } from '@/services/project-manifest.service';
-import { TemplateService } from '@/services/template-service';
-import { ProjectCreationService } from '@/services/project-creation.service';
-import { ProjectValidationService } from '@/services/project-validation.service';
-import { ProjectFixService } from '@/services/project-fix.service';
-import { ProjectExtensionService } from '@/services/project-extension.service';
 import { CompletionService } from '@/services/completion-service';
 import { FileCompletionProvider } from '@/services/completion-providers/file-completion-provider';
 import { ProjectCompletionProvider } from '@/services/completion-providers/project-completion-provider';
 import { TemplateCompletionProvider } from '@/services/completion-providers/template-completion-provider';
+import { ConfigurationService } from '@/services/configuration.service';
+import { FileSystemService } from '@/services/file-system.service';
+import { ProjectCreationService } from '@/services/project-creation.service';
+import { ProjectExtensionService } from '@/services/project-extension.service';
+import { ProjectFixService } from '@/services/project-fix.service';
+import { ProjectManifestService } from '@/services/project-manifest.service';
+import { ProjectValidationService } from '@/services/project-validation.service';
+import { TemplateIdentifierService } from '@/services/template-identifier-service';
+import { TemplateService } from '@/services/template-service';
+import { VariableSubstitutionService } from '@/services/variable-substitution.service';
 
 // Import fake services for testing
 import {

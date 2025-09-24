@@ -3,23 +3,21 @@
  */
 
 import { randomUUID } from 'crypto';
+
 import { injectable, inject } from 'tsyringe';
+
 import type {
   ProjectManifest,
   Template,
   AppliedTemplate,
   HistoryEntry,
 } from '@/models';
-import type { ITemplateService } from '@/services/template-service';
-import { TemplateService } from '@/services/template-service';
-import type { IFileSystemService } from '@/services/file-system.service';
-import { FileSystemService } from '@/services/file-system.service';
-import type { IVariableSubstitutionService } from '@/services/variable-substitution.service';
-import { VariableSubstitutionService } from '@/services/variable-substitution.service';
 import type { IProjectManifestService } from '@/services/project-manifest.service';
 import { ProjectManifestService } from '@/services/project-manifest.service';
-import type { IProjectValidationService } from '@/services/project-validation.service';
-import { ProjectValidationService } from '@/services/project-validation.service';
+import type { ITemplateService } from '@/services/template-service';
+import { TemplateService } from '@/services/template-service';
+import type { IProjectCreationService } from '@/services/project-creation.service';
+import { ProjectCreationService } from '@/services/project-creation.service';
 
 export interface IProjectExtensionService {
   /**

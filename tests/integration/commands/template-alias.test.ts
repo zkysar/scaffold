@@ -9,6 +9,8 @@ import * as path from 'path';
 import { TemplateService, TemplateIdentifierService } from '@/services';
 import { Template } from '@/models';
 
+
+import { logger } from '@/lib/logger';
 describe('scaffold template alias command (integration)', () => {
   let tempDir: string;
   let originalCwd: string;
@@ -39,7 +41,7 @@ describe('scaffold template alias command (integration)', () => {
       files: [
         {
           path: 'index.js',
-          content: 'console.log("test");',
+          content: 'logger.info("test");',
           permissions: '644'
         }
       ],

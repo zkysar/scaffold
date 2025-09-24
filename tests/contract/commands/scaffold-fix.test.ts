@@ -5,6 +5,7 @@
 
 import { createFixCommand } from '@/cli/commands/fix.command';
 import { createTestContainer } from '@/di/container';
+import { logger } from '@/lib/logger';
 import {
   createMockFileSystem,
   createMockConsole,
@@ -15,7 +16,6 @@ import { Command } from 'commander';
 import { FileSystemService } from '@/services';
 import { FakeFileSystemService } from '../../fakes';
 import { homedir } from 'os';
-import { logger } from '@/lib/logger';
 
 // Helper function to execute command and capture result
 async function executeCommand(
@@ -396,7 +396,7 @@ describe('scaffold fix command contract', () => {
         '/regular-project': {
           'package.json': '{"name": "regular-project"}',
           src: {
-            'index.js': 'console.log("hello");',
+            'index.js': 'logger.info("hello");',
           },
         },
       });
@@ -622,7 +622,7 @@ describe('scaffold fix command contract', () => {
             }),
           },
           src: {
-            'index.js': 'console.log("hello");',
+            'index.js': 'logger.info("hello");',
           },
           'package.json': '{"name": "valid-project"}',
         },
