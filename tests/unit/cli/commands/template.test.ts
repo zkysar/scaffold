@@ -4,19 +4,19 @@
  */
 
 import 'reflect-metadata';
-import { createTemplateCommand } from '../../../../src/cli/commands/template.command';
+import { createTemplateCommand } from '@/cli/commands/template.command';
 import {
   TemplateService,
-} from '../../../../src/services';
-import { TemplateIdentifierService } from '../../../../src/services/template-identifier-service';
+} from '@/services';
+import { TemplateIdentifierService } from '@/services/template-identifier-service';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
-import type { Template, TemplateLibrary, TemplateSummary } from '../../../../src/models';
+import type { Template, TemplateLibrary, TemplateSummary } from '@/models';
 import { container, DependencyContainer } from 'tsyringe';
 
 // Mock dependencies
-jest.mock('../../../../src/services');
-jest.mock('../../../../src/services/template-identifier-service');
+jest.mock('@/services');
+jest.mock('@/services/template-identifier-service');
 jest.mock('inquirer');
 
 const mockTemplateService = TemplateService as jest.MockedClass<typeof TemplateService>;
