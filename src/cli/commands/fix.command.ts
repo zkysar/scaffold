@@ -8,14 +8,14 @@ import { resolve } from 'path';
 import { existsSync } from 'fs';
 import chalk from 'chalk';
 import { DependencyContainer } from 'tsyringe';
-import { logger } from '../../lib/logger';
+import { logger } from '@/lib/logger';
 import {
   ProjectFixService,
-  ProjectValidationService,
   ProjectManifestService,
+  ProjectValidationService,
   TemplateService,
   FileSystemService,
-} from '../../services';
+} from '@/services';
 import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 
 interface FixCommandOptions {
@@ -44,7 +44,7 @@ export function createFixCommand(container: DependencyContainer): Command {
         await handleFixCommand(projectPath, options, container);
       } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
-        
+
         // Handle specific error types
         if (error instanceof Error) {
           // Handle our custom error codes first

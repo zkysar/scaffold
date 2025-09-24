@@ -12,6 +12,8 @@ import type {
   ProjectManifest,
   ValidationReport,
 } from '../../../src/models';
+import type { IVariableSubstitutionService } from '../../../src/services/variable-substitution.service';
+import type { IProjectManifestService } from '../../../src/services/project-manifest.service';
 import {
   createMockImplementation,
   assertDefined,
@@ -22,8 +24,8 @@ describe('ProjectFixService', () => {
   let mockTemplateService: jest.Mocked<ITemplateService>;
   let mockFileService: jest.Mocked<IFileSystemService>;
   let mockValidationService: jest.Mocked<IProjectValidationService>;
-  let mockGetProjectManifest: jest.Mock;
-  let mockUpdateProjectManifest: jest.Mock;
+  let mockVariableService: jest.Mocked<IVariableSubstitutionService>;
+  let mockManifestService: jest.Mocked<IProjectManifestService>;
 
   const mockTemplate: Template = {
     id: 'test-template-123',
@@ -194,16 +196,31 @@ describe('ProjectFixService', () => {
       }
     );
 
-    mockGetProjectManifest = jest.fn();
-    mockUpdateProjectManifest = jest.fn();
+    mockVariableService = createMockImplementation<IVariableSubstitutionService>({
+      substituteVariables: jest.fn(),
+      substituteInFile: jest.fn(),
+      substituteInPath: jest.fn(),
+      validateRequiredVariables: jest.fn(),
+      extractVariables: jest.fn(),
+      applyTransformation: jest.fn(),
+      createContext: jest.fn(),
+    });
+
+    mockManifestService = createMockImplementation<IProjectManifestService>({
+      loadProjectManifest: jest.fn(),
+      getProjectManifest: jest.fn(),
+      saveProjectManifest: jest.fn(),
+      updateProjectManifest: jest.fn(),
+      findNearestManifest: jest.fn(),
+    });
 
     // Create service instance
     fixService = new ProjectFixService(
       mockTemplateService,
       mockFileService,
       mockValidationService,
-      mockGetProjectManifest,
-      mockUpdateProjectManifest
+      mockVariableService,
+      mockManifestService
     );
 
     // Setup mock-fs
@@ -232,7 +249,7 @@ describe('ProjectFixService', () => {
         manifestPath: '/test-project/.scaffold/manifest.json',
         projectPath: '/test-project',
       });
-      mockGetProjectManifest.mockResolvedValue(mockManifest);
+      mockManifestService.getProjectManifest.mockResolvedValue(mockManifest);
       mockTemplateService.getTemplate.mockResolvedValue(mockTemplate);
       mockFileService.resolvePath.mockImplementation((...paths) =>
         paths.join('/')
@@ -243,7 +260,11 @@ describe('ProjectFixService', () => {
         '{"name": "{{PROJECT_NAME}}"}'
       );
       mockFileService.exists.mockResolvedValue(true);
-      mockUpdateProjectManifest.mockResolvedValue(undefined);
+      mockManifestService.updateProjectManifest.mockResolvedValue(undefined);
+      mockVariableService.substituteInPath.mockImplementation((path) => path);
+      mockVariableService.substituteVariables.mockImplementation((content) =>
+        content.replace('{{PROJECT_NAME}}', 'Test Project')
+      );
     });
 
     it('should return validation report if project is already valid', async () => {
@@ -292,7 +313,7 @@ describe('ProjectFixService', () => {
       expect(result.suggestions).toContain(
         'This was a dry run - no changes were made'
       );
-      expect(mockUpdateProjectManifest).not.toHaveBeenCalled();
+      expect(mockManifestService.updateProjectManifest).not.toHaveBeenCalled();
     });
 
     it('should restore original dry run mode after completion', async () => {
@@ -351,7 +372,7 @@ describe('ProjectFixService', () => {
     it('should update project manifest with fix history', async () => {
       await fixService.fixProject('/test-project');
 
-      expect(mockUpdateProjectManifest).toHaveBeenCalledWith(
+      expect(mockManifestService.updateProjectManifest).toHaveBeenCalledWith(
         '/test-project',
         expect.objectContaining({
           history: expect.arrayContaining([
@@ -372,11 +393,11 @@ describe('ProjectFixService', () => {
     it('should not update manifest in dry run mode', async () => {
       await fixService.fixProject('/test-project', true);
 
-      expect(mockUpdateProjectManifest).not.toHaveBeenCalled();
+      expect(mockManifestService.updateProjectManifest).not.toHaveBeenCalled();
     });
 
     it('should throw error when no manifest is found', async () => {
-      mockGetProjectManifest.mockResolvedValue(null);
+      mockManifestService.getProjectManifest.mockResolvedValue(null);
 
       await expect(fixService.fixProject('/test-project')).rejects.toThrow(
         'No project manifest found'
@@ -411,8 +432,31 @@ describe('ProjectFixService', () => {
       await fixService.fixProject('/test-project');
 
       expect(mockFileService.readFile).toHaveBeenCalledWith(
-        '/home/user/.scaffold/templates/test-template-123/files/package.json.template'
+        expect.stringContaining('/templates/test-template-123/files/package.json.template')
       );
+    });
+
+    it('should handle manifest write failures gracefully', async () => {
+      mockManifestService.updateProjectManifest.mockRejectedValue(
+        new Error('Failed to write project manifest: Permission denied')
+      );
+
+      const result = await fixService.fixProject('/test-project');
+
+      // Should complete successfully but add a warning about manifest failure
+      expect(result.valid).toBe(true); // Files were still fixed
+      expect(result.warnings.some(w =>
+        w.message.includes('Failed to update project manifest') &&
+        w.path === '.scaffold/manifest.json'
+      )).toBe(true);
+    });
+
+    it('should not attempt manifest write in dry-run mode', async () => {
+      const result = await fixService.fixProject('/test-project', true);
+
+      expect(mockFileService.setDryRun).toHaveBeenCalledWith(true);
+      expect(mockManifestService.updateProjectManifest).not.toHaveBeenCalled();
+      expect(result.suggestions && result.suggestions.includes('This was a dry run - no changes were made')).toBe(true);
     });
   });
 });

@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import mockFs from 'mock-fs';
 
 // Global test setup
