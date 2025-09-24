@@ -113,6 +113,8 @@ export class VariableSubstitutionService
         break;
       }
 
+      // Reset processedVars for the next iteration
+      processedVars.clear();
       depth++;
     }
 
@@ -372,14 +374,33 @@ export class VariableSubstitutionService
     processedVars: Set<string>,
     options: VariableSubstitutionOptions
   ): string {
-    const parts = variable.split('|');
-    const varName = parts[0].trim();
-    const defaultValue = parts[1]?.trim();
-    const transform =
-      parts[2]?.trim() ||
-      (parts.length === 2 && !defaultValue?.includes(' ')
-        ? defaultValue
-        : undefined);
+    // Parse variable syntax: varName | defaultValue || transform
+    // Or: varName || transform (no default value)
+    // Or: varName | defaultValue (no transform)
+
+    const doublePipeIndex = variable.indexOf('||');
+    let varWithDefault: string;
+    let transform: string | undefined;
+
+    if (doublePipeIndex !== -1) {
+      varWithDefault = variable.substring(0, doublePipeIndex).trim();
+      transform = variable.substring(doublePipeIndex + 2).trim();
+    } else {
+      varWithDefault = variable.trim();
+      transform = undefined;
+    }
+
+    const singlePipeIndex = varWithDefault.indexOf('|');
+    let varName: string;
+    let defaultValue: string | undefined;
+
+    if (singlePipeIndex !== -1) {
+      varName = varWithDefault.substring(0, singlePipeIndex).trim();
+      defaultValue = varWithDefault.substring(singlePipeIndex + 1).trim();
+    } else {
+      varName = varWithDefault;
+      defaultValue = undefined;
+    }
 
     // Check for circular references
     if (processedVars.has(varName) && !options.allowCircular) {
