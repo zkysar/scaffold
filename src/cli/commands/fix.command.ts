@@ -12,7 +12,11 @@ import { logger } from '@/lib/logger';
 import {
   ProjectFixService,
   ProjectManifestService,
+  ProjectValidationService,
+  TemplateService,
+  FileSystemService,
 } from '@/services';
+import { ExitCode, exitWithCode } from '../../constants/exit-codes';
 
 interface FixCommandOptions {
   verbose?: boolean;
@@ -40,7 +44,23 @@ export function createFixCommand(container: DependencyContainer): Command {
         await handleFixCommand(projectPath, options, container);
       } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
-        process.exit(1);
+
+        // Handle specific error types
+        if (error instanceof Error) {
+          // Handle our custom error codes first
+          if (error.message.startsWith('INVALID_MANIFEST:')) {
+            logger.error(error.message.replace('INVALID_MANIFEST: ', ''));
+            exitWithCode(ExitCode.USER_ERROR);
+          } else if (error.message.includes('permission') ||
+                     error.message.includes('EACCES') ||
+                     error.message.includes('EPERM')) {
+            exitWithCode(ExitCode.SYSTEM_ERROR);
+          } else {
+            exitWithCode(ExitCode.USER_ERROR);
+          }
+        } else {
+          exitWithCode(ExitCode.USER_ERROR);
+        }
       }
     });
 
@@ -68,15 +88,57 @@ async function handleFixCommand(
   // Check if target directory exists
   if (!existsSync(targetPath)) {
     logger.error(`Directory "${targetPath}" does not exist`);
-    process.exit(1);
+    exitWithCode(ExitCode.USER_ERROR);
   }
 
   // Resolve services from DI container
-  const fixService = container.resolve(ProjectFixService);
+  const fileSystemService = container.resolve(FileSystemService);
+  const templateService = container.resolve(TemplateService);
   const manifestService = container.resolve(ProjectManifestService);
+  const validationService = container.resolve(ProjectValidationService);
+  const fixService = container.resolve(ProjectFixService);
 
   // Check if this is a scaffold-managed project
-  const manifest = await manifestService.loadProjectManifest(targetPath);
+  let manifest;
+  try {
+    manifest = await manifestService.loadProjectManifest(targetPath);
+  } catch (manifestError) {
+    // Handle JSON parsing or file read errors
+    if (manifestError instanceof Error) {
+      const errorMessage = manifestError.message.toLowerCase();
+      if (verbose) {
+        logger.gray('Manifest error details: ' + manifestError.message);
+      }
+
+      // Check for malformed JSON specifically
+      // Error message: "Failed to read JSON file: ... Ensure the file exists and contains valid JSON."
+      if ((errorMessage.includes('json') && errorMessage.includes('parse')) ||
+          errorMessage.includes('syntax') ||
+          errorMessage.includes('unexpected') ||
+          errorMessage.includes('invalid json') ||
+          errorMessage.includes('unexpected token') ||
+          errorMessage.includes('malformed') ||
+          (errorMessage.includes('json') && errorMessage.includes('valid')) ||
+          (errorMessage.includes('failed to read json file') && errorMessage.includes('valid json'))) {
+        // Throw error to be caught by outer catch block for proper exit code handling
+        throw new Error('INVALID_MANIFEST: Invalid or corrupted project manifest file');
+      }
+
+      // For file not found or read errors, treat as non-scaffold project
+      // This includes cases where the service can't read the file properly
+      if (errorMessage.includes('file') ||
+          errorMessage.includes('read') ||
+          errorMessage.includes('enoent')) {
+        manifest = null; // Will be handled as non-scaffold project below
+      } else {
+        // For other unknown errors, re-throw
+        throw manifestError;
+      }
+    } else {
+      // For non-Error objects, re-throw
+      throw manifestError;
+    }
+  }
 
   if (!manifest) {
     logger.yellow('Not a scaffold-managed project.');
@@ -95,21 +157,7 @@ async function handleFixCommand(
   }
 
   // Fix the project
-  let report;
-  try {
-    report = await fixService.fixProject(targetPath, dryRun);
-
-    // Additional validation for the report
-    if (!report) {
-      throw new Error('Fix service returned invalid report');
-    }
-  } catch (fixError) {
-    logger.error('Failed to fix project');
-    if (fixError instanceof Error) {
-      logger.error(fixError.message);
-    }
-    process.exit(1);
-  }
+  const report = await fixService.fixProject(targetPath, dryRun);
 
   // Display results
   logger.bold('Project Fix Report');
@@ -162,8 +210,8 @@ async function handleFixCommand(
 
   // Set exit code based on results
   if (report.stats.errorCount > 0) {
-    process.exit(1);
-  } else if (report.stats.warningCount > 0) {
-    process.exit(2);
+    exitWithCode(ExitCode.USER_ERROR);
+  } else {
+    exitWithCode(ExitCode.SUCCESS);
   }
 }

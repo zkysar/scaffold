@@ -3,14 +3,21 @@
  * Tests file/directory completions and path resolution
  */
 
+import 'reflect-metadata';
+import * as fs from 'fs';
+
+// Mock fs-extra BEFORE importing other modules
+const mockFsExtra = {
+  access: jest.fn(),
+  readdir: jest.fn(),
+  stat: jest.fn(),
+};
+
+jest.mock('fs-extra', () => mockFsExtra);
+
 import * as path from 'path';
 import { FileCompletionProvider } from '@/services/completion-providers/file-completion-provider';
 import { CompletionContext, CompletionItem } from '@/models';
-
-// Mock fs-extra
-jest.mock('fs-extra');
-import * as fs from 'fs-extra';
-const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('FileCompletionProvider', () => {
   let provider: FileCompletionProvider;
@@ -32,9 +39,9 @@ describe('FileCompletionProvider', () => {
     jest.clearAllMocks();
 
     // Setup default mock behaviors
-    mockFs.access.mockResolvedValue(undefined);
-    mockFs.readdir.mockResolvedValue([]);
-    mockFs.stat.mockResolvedValue({ size: 1024 } as any);
+    mockFsExtra.access.mockResolvedValue(undefined);
+    mockFsExtra.readdir.mockResolvedValue([]);
+    mockFsExtra.stat.mockResolvedValue({ size: 1024 });
   });
 
   afterEach(() => {
@@ -49,7 +56,7 @@ describe('FileCompletionProvider', () => {
         { name: 'subdir', isDirectory: () => true, isFile: () => false },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
@@ -83,7 +90,7 @@ describe('FileCompletionProvider', () => {
         { name: 'other.txt', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
@@ -99,12 +106,12 @@ describe('FileCompletionProvider', () => {
         { name: 'file2.ts', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
       expect(result).toHaveLength(2);
-      expect(mockFs.readdir).toHaveBeenCalledWith(
+      expect(mockFsExtra.readdir).toHaveBeenCalledWith(
         path.resolve('/test/workspace', 'src'),
         { withFileTypes: true }
       );
@@ -119,7 +126,7 @@ describe('FileCompletionProvider', () => {
         { name: 'visible-file', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
@@ -135,7 +142,7 @@ describe('FileCompletionProvider', () => {
         { name: 'file1.txt', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
@@ -144,37 +151,37 @@ describe('FileCompletionProvider', () => {
     });
 
     it('should use cache for subsequent calls', async () => {
-      mockFs.readdir.mockResolvedValue([]);
+      mockFsExtra.readdir.mockResolvedValue([]);
 
       // First call
       await provider.getFileCompletions(context);
-      expect(mockFs.readdir).toHaveBeenCalledTimes(1);
+      expect(mockFsExtra.readdir).toHaveBeenCalledTimes(1);
 
       // Second call should use cache
       await provider.getFileCompletions(context);
-      expect(mockFs.readdir).toHaveBeenCalledTimes(1);
+      expect(mockFsExtra.readdir).toHaveBeenCalledTimes(1);
     });
 
     it('should refresh cache after expiry', async () => {
       // Mock short cache expiry
       (provider as any).cacheExpiry = 1; // 1ms
 
-      mockFs.readdir.mockResolvedValue([]);
+      mockFsExtra.readdir.mockResolvedValue([]);
 
       // First call
       await provider.getFileCompletions(context);
-      expect(mockFs.readdir).toHaveBeenCalledTimes(1);
+      expect(mockFsExtra.readdir).toHaveBeenCalledTimes(1);
 
       // Wait for cache to expire
       await new Promise(resolve => setTimeout(resolve, 2));
 
       // Second call should reload
       await provider.getFileCompletions(context);
-      expect(mockFs.readdir).toHaveBeenCalledTimes(2);
+      expect(mockFsExtra.readdir).toHaveBeenCalledTimes(2);
     });
 
     it('should handle nonexistent directory gracefully', async () => {
-      mockFs.access.mockRejectedValue(new Error('Directory not found'));
+      mockFsExtra.access.mockRejectedValue(new Error('Directory not found'));
 
       const result = await provider.getFileCompletions(context);
 
@@ -183,7 +190,7 @@ describe('FileCompletionProvider', () => {
 
     it('should handle filesystem errors gracefully', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      mockFs.readdir.mockRejectedValue(new Error('Permission denied'));
+      mockFsExtra.readdir.mockRejectedValue(new Error('Permission denied'));
 
       const result = await provider.getFileCompletions(context);
 
@@ -202,7 +209,7 @@ describe('FileCompletionProvider', () => {
         isFile: () => true,
       })) as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
@@ -216,7 +223,7 @@ describe('FileCompletionProvider', () => {
         { name: 'beta.js', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
@@ -234,7 +241,7 @@ describe('FileCompletionProvider', () => {
         { name: 'dir2', isDirectory: () => true, isFile: () => false },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getDirectoryCompletions(context);
 
@@ -251,7 +258,7 @@ describe('FileCompletionProvider', () => {
         { name: 'dist', isDirectory: () => true, isFile: () => false },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getDirectoryCompletions(context);
 
@@ -267,32 +274,32 @@ describe('FileCompletionProvider', () => {
         { name: 'compiler', isDirectory: () => true, isFile: () => false },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getDirectoryCompletions(context);
 
       expect(result).toHaveLength(2);
-      expect(mockFs.readdir).toHaveBeenCalledWith(
+      expect(mockFsExtra.readdir).toHaveBeenCalledWith(
         path.resolve('/test/workspace', 'src'),
         { withFileTypes: true }
       );
     });
 
     it('should use cache for directory completions', async () => {
-      mockFs.readdir.mockResolvedValue([]);
+      mockFsExtra.readdir.mockResolvedValue([]);
 
       // First call
       await provider.getDirectoryCompletions(context);
-      expect(mockFs.readdir).toHaveBeenCalledTimes(1);
+      expect(mockFsExtra.readdir).toHaveBeenCalledTimes(1);
 
       // Second call should use cache
       await provider.getDirectoryCompletions(context);
-      expect(mockFs.readdir).toHaveBeenCalledTimes(1);
+      expect(mockFsExtra.readdir).toHaveBeenCalledTimes(1);
     });
 
     it('should handle errors in directory scanning', async () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      mockFs.readdir.mockRejectedValue(new Error('Access denied'));
+      mockFsExtra.readdir.mockRejectedValue(new Error('Access denied'));
 
       const result = await provider.getDirectoryCompletions(context);
 
@@ -312,7 +319,7 @@ describe('FileCompletionProvider', () => {
         { name: 'file4.txt', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
     });
 
     it('should filter files by extension', async () => {
@@ -348,7 +355,7 @@ describe('FileCompletionProvider', () => {
         { name: 'file2.Ts', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletionsByExtension(context, ['.js', '.ts']);
 
@@ -362,7 +369,7 @@ describe('FileCompletionProvider', () => {
         { name: 'file.txt', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getRelativePathCompletions(context);
 
@@ -378,7 +385,7 @@ describe('FileCompletionProvider', () => {
         { name: 'index.js', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getRelativePathCompletions(context);
 
@@ -398,7 +405,7 @@ describe('FileCompletionProvider', () => {
         { name: 'readme.txt', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
     });
 
     it('should return config file completions', async () => {
@@ -418,16 +425,16 @@ describe('FileCompletionProvider', () => {
 
   describe('pathExists', () => {
     it('should return true for existing path', async () => {
-      mockFs.access.mockResolvedValue(undefined);
+      mockFsExtra.access.mockResolvedValue(undefined);
 
       const result = await provider.pathExists('/test/file.txt');
 
       expect(result).toBe(true);
-      expect(mockFs.access).toHaveBeenCalledWith('/test/file.txt');
+      expect(mockFsExtra.access).toHaveBeenCalledWith('/test/file.txt');
     });
 
     it('should return false for non-existing path', async () => {
-      mockFs.access.mockRejectedValue(new Error('File not found'));
+      mockFsExtra.access.mockRejectedValue(new Error('File not found'));
 
       const result = await provider.pathExists('/test/nonexistent.txt');
 
@@ -437,18 +444,18 @@ describe('FileCompletionProvider', () => {
 
   describe('clearCache', () => {
     it('should clear file completion cache', async () => {
-      mockFs.readdir.mockResolvedValue([]);
+      mockFsExtra.readdir.mockResolvedValue([]);
 
       // First call to populate cache
       await provider.getFileCompletions(context);
-      expect(mockFs.readdir).toHaveBeenCalledTimes(1);
+      expect(mockFsExtra.readdir).toHaveBeenCalledTimes(1);
 
       // Clear cache
       provider.clearCache();
 
       // Next call should reload
       await provider.getFileCompletions(context);
-      expect(mockFs.readdir).toHaveBeenCalledTimes(2);
+      expect(mockFsExtra.readdir).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -470,7 +477,7 @@ describe('FileCompletionProvider', () => {
         { name: '.hidden', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await (provider as any).scanDirectory('/test/dir', '', true, true);
 
@@ -495,8 +502,8 @@ describe('FileCompletionProvider', () => {
         { name: 'file.txt', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
-      mockFs.stat.mockRejectedValue(new Error('Stat failed'));
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.stat.mockRejectedValue(new Error('Stat failed'));
 
       // Should still complete without throwing
       const result = await provider.getFileCompletions(context);
@@ -508,7 +515,7 @@ describe('FileCompletionProvider', () => {
 
   describe('edge cases', () => {
     it('should handle empty directory', async () => {
-      mockFs.readdir.mockResolvedValue([]);
+      mockFsExtra.readdir.mockResolvedValue([]);
 
       const result = await provider.getFileCompletions(context);
 
@@ -521,7 +528,7 @@ describe('FileCompletionProvider', () => {
         { name: '.hidden2', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
@@ -534,7 +541,7 @@ describe('FileCompletionProvider', () => {
         { name: 'README', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletionsByExtension(context, ['.txt']);
 
@@ -547,7 +554,7 @@ describe('FileCompletionProvider', () => {
         { name: longFileName, isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
@@ -561,7 +568,7 @@ describe('FileCompletionProvider', () => {
         { name: specialFileName, isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
@@ -570,7 +577,7 @@ describe('FileCompletionProvider', () => {
     });
 
     it('should handle concurrent cache requests', async () => {
-      mockFs.readdir.mockResolvedValue([]);
+      mockFsExtra.readdir.mockResolvedValue([]);
 
       // Make multiple concurrent requests
       const promises = [
@@ -586,7 +593,7 @@ describe('FileCompletionProvider', () => {
       expect(results[1]).toEqual(results[2]);
 
       // FileSystem should only be called once due to caching
-      expect(mockFs.readdir).toHaveBeenCalledTimes(1);
+      expect(mockFsExtra.readdir).toHaveBeenCalledTimes(1);
     });
 
     it('should handle deep nested paths', async () => {
@@ -596,11 +603,11 @@ describe('FileCompletionProvider', () => {
         { name: 'file.txt', isDirectory: () => false, isFile: () => true },
       ] as fs.Dirent[];
 
-      mockFs.readdir.mockResolvedValue(mockEntries);
+      mockFsExtra.readdir.mockResolvedValue(mockEntries);
 
       const result = await provider.getFileCompletions(context);
 
-      expect(mockFs.readdir).toHaveBeenCalledWith(
+      expect(mockFsExtra.readdir).toHaveBeenCalledWith(
         path.resolve('/test/workspace', 'very/deep/nested/path'),
         { withFileTypes: true }
       );

@@ -7,10 +7,11 @@
 import 'module-alias/register';
 import 'reflect-metadata';
 import chalk from 'chalk';
-import { createProgram } from './program';
+
 import { CommandRegistry } from './completion/command-registry';
-import { logger } from '../lib/logger';
+import { createProgram } from './program';
 import { configureContainer } from '../di/container';
+import { logger } from '../lib/logger';
 
 // Initialize DI container
 const container = configureContainer();

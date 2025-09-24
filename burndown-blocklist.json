@@ -24,6 +24,7 @@
       "tests/integration/cli/completion/script.test.ts",
       "tests/integration/cli/completion/status.test.ts",
       "tests/integration/cli/completion/uninstall.test.ts",
+      "tests/integration/commands/extend.test.ts",
       "tests/integration/commands/fix.test.ts",
       "tests/integration/commands/new.test.ts",
       "tests/integration/commands/template-alias.test.ts",

@@ -5,7 +5,8 @@
 
 import { createNewCommand } from '@/cli/commands/new.command';
 import {
-  ProjectService,
+  ProjectCreationService,
+  ProjectManifestService,
   TemplateService,
   FileSystemService,
 } from '@/services';
@@ -23,7 +24,8 @@ jest.mock('fs', () => ({
   existsSync: jest.fn(),
 }));
 
-const mockProjectService = ProjectService as jest.MockedClass<typeof ProjectService>;
+const mockProjectCreationService = ProjectCreationService as jest.MockedClass<typeof ProjectCreationService>;
+const mockProjectManifestService = ProjectManifestService as jest.MockedClass<typeof ProjectManifestService>;
 const mockTemplateService = TemplateService as jest.MockedClass<typeof TemplateService>;
 const mockFileSystemService = FileSystemService as jest.MockedClass<typeof FileSystemService>;
 const mockInquirer = inquirer as jest.Mocked<typeof inquirer>;
