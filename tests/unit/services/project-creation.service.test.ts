@@ -2,13 +2,13 @@
  * Unit tests for ProjectCreationService
  */
 
-import { ProjectCreationService } from '../../../src/services/project-creation.service';
-import type { Template } from '../../../src/models';
+import { ProjectCreationService } from '@/services/project-creation.service';
+import type { Template } from '@/models';
 import {
   FakeTemplateService,
   FakeFileSystemService,
-} from '../../fakes';
-import { FakeVariableSubstitutionService } from '../../fakes/variable-substitution.fake';
+} from '@tests/fakes';
+import { FakeVariableSubstitutionService } from '@tests/fakes/variable-substitution.fake';
 
 describe('ProjectCreationService', () => {
   let creationService: ProjectCreationService;

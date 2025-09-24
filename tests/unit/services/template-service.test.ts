@@ -3,17 +3,17 @@
  */
 
 import * as path from 'path';
-import { TemplateService } from '../../../src/services/template-service';
+import { TemplateService } from '@/services/template-service';
 import type {
   Template,
   TemplateLibrary,
   TemplateSummary,
-} from '../../../src/models';
+} from '@/models';
 import {
   createMockImplementation,
   assertDefined,
-} from '../../helpers/test-utils';
-import { FakeTemplateIdentifierService } from '../../fakes/identifier-service.fake';
+} from '@tests/helpers/test-utils';
+import { FakeTemplateIdentifierService } from '@tests/fakes/identifier-service.fake';
 
 // Mock fs-extra with manual implementation
 jest.mock('fs-extra');

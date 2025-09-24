@@ -2,11 +2,11 @@
  * Unit tests for ProjectManifestService
  */
 
-import { ProjectManifestService } from '../../../src/services/project-manifest.service';
-import type { ProjectManifest } from '../../../src/models';
+import { ProjectManifestService } from '@/services/project-manifest.service';
+import type { ProjectManifest } from '@/models';
 import {
   FakeFileSystemService,
-} from '../../fakes';
+} from '@tests/fakes';
 
 describe('ProjectManifestService', () => {
   let manifestService: ProjectManifestService;

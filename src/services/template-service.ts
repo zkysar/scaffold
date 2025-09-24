@@ -13,9 +13,9 @@ import type {
   TemplateLibrary,
   TemplateSummary,
   TemplateSource,
-} from '../models';
-import { TemplateIdentifierService } from './template-identifier-service';
-import { shortSHA, isValidSHA } from '../lib/sha';
+} from '@/models';
+import { TemplateIdentifierService } from '@/services/template-identifier-service';
+import { shortSHA, isValidSHA } from '@/lib/sha';
 
 export interface ITemplateService {
   /**

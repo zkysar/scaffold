@@ -32,6 +32,9 @@
       "tests/contract/import-conventions.test.ts",
       "tests/unit/cli/commands/template.test.ts",
       "tests/unit/services/configuration.service.test.ts",
+      "tests/unit/services/project-manifest.service.test.ts",
+      "tests/unit/services/project-validation.service.test.ts",
+      "tests/unit/services/template-identifier.service.test.ts",
       "tests/unit/services/variable-substitution-service.test.ts"
     ]
   },
