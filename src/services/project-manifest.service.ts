@@ -3,8 +3,12 @@
  */
 
 import * as path from 'path';
+
 import { injectable, inject } from 'tsyringe';
-import type { ProjectManifest } from '../models';
+
+import { logger } from '@/lib/logger';
+import type { ProjectManifest } from '@/models';
+
 import type { IFileSystemService } from './file-system.service';
 import { FileSystemService } from './file-system.service';
 
@@ -118,6 +122,12 @@ export class ProjectManifestService implements IProjectManifestService {
       throw new Error('Manifest must be a valid object');
     }
 
+    // Skip manifest writes in dry-run mode
+    if (this.fileService.isDryRun) {
+      logger.info(`[DRY RUN] Would update project manifest in: ${projectPath}`);
+      return;
+    }
+
     // Use the actual project root where the manifest exists
     // This ensures we update the correct manifest location
     const nearestManifest = await this.findNearestManifest(projectPath);
@@ -129,10 +139,21 @@ export class ProjectManifestService implements IProjectManifestService {
     );
 
     try {
+      // Ensure the .scaffold directory exists
+      await this.fileService.ensureDirectory(
+        this.fileService.resolvePath(actualProjectPath, '.scaffold')
+      );
+
+      // Validate manifest structure before writing
+      if (!manifest.version || !manifest.projectName) {
+        throw new Error('Manifest missing required fields: version, projectName');
+      }
+
       await this.fileService.writeJson(manifestPath, manifest, {
         spaces: 2,
         atomic: true,
         createParentDirs: true,
+        overwrite: true,
       });
     } catch (error) {
       throw new Error(

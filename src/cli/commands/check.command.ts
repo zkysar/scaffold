@@ -3,19 +3,21 @@
  * Validate project structure against applied templates
  */
 
-import { Command } from 'commander';
-import { resolve } from 'path';
 import { existsSync } from 'fs';
-import chalk from 'chalk';
+import { resolve } from 'path';
+
+import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
+
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
+import { createLogger, logger } from '@/lib/logger';
+import type { ValidationReport } from '@/models';
 import {
   ProjectValidationService,
   ProjectManifestService,
   TemplateService,
   FileSystemService,
 } from '@/services';
-import type { ValidationReport } from '@/models';
-import { createLogger, logger } from '@/lib/logger';
 
 interface CheckCommandOptions {
   verbose?: boolean;
@@ -46,7 +48,16 @@ export function createCheckCommand(container: DependencyContainer): Command {
         await handleCheckCommand(projectPath, options, container);
       } catch (error) {
         logger.error(error instanceof Error ? error.message : String(error));
-        process.exit(1);
+        // Determine exit code based on error type
+        if (
+          (error instanceof Error && error.message.includes('permission')) ||
+          (error instanceof Error && error.message.includes('EACCES')) ||
+          (error instanceof Error && error.message.includes('EPERM'))
+        ) {
+          exitWithCode(ExitCode.SYSTEM_ERROR);
+        } else {
+          exitWithCode(ExitCode.USER_ERROR);
+        }
       }
     });
 
@@ -76,19 +87,68 @@ async function handleCheckCommand(
 
   // Check if target directory exists
   if (!existsSync(targetPath)) {
-    logger.error(`Directory "${targetPath}" does not exist`);
-    process.exit(1);
+    exitWithCode(
+      ExitCode.USER_ERROR,
+      `Error: Directory "${targetPath}" does not exist`
+    );
   }
 
   // Resolve services from DI container
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const fileSystemService = container.resolve(FileSystemService);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const templateService = container.resolve(TemplateService);
   const manifestService = container.resolve(ProjectManifestService);
   const validationService = container.resolve(ProjectValidationService);
 
   try {
     // Check if this is a scaffold-managed project
-    const manifest = await manifestService.loadProjectManifest(targetPath);
+    let manifest;
+    try {
+      manifest = await manifestService.loadProjectManifest(targetPath);
+    } catch (manifestError) {
+      // Handle JSON parsing or file read errors
+      if (manifestError instanceof Error) {
+        const errorMessage = manifestError.message.toLowerCase();
+
+        // Log error details for debugging
+        if (verbose) {
+          logger.gray(
+            `Manifest error details: ${manifestError.message}`
+          );
+        }
+
+        // Check for any manifest-related errors that indicate invalid project data
+        if (
+          errorMessage.includes('json') ||
+          errorMessage.includes('parse') ||
+          errorMessage.includes('syntax') ||
+          errorMessage.includes('manifest') ||
+          errorMessage.includes('invalid') ||
+          errorMessage.includes('unexpected')
+        ) {
+          // Throw error to be caught by outer catch block for synchronous exit
+          throw new Error(
+            'INVALID_MANIFEST: Invalid or corrupted project manifest file'
+          );
+        }
+
+        // For file not found errors, treat as non-scaffold project
+        if (
+          errorMessage.includes('does not exist') ||
+          errorMessage.includes('no such file') ||
+          errorMessage.includes('enoent')
+        ) {
+          manifest = null;
+        } else {
+          // For other unknown errors, treat as USER_ERROR since it's project-related
+          throw new Error('MANIFEST_ERROR: Failed to read project manifest');
+        }
+      } else {
+        // For non-Error objects, treat as USER_ERROR
+        throw new Error('MANIFEST_ERROR: Failed to read project manifest');
+      }
+    }
 
     if (!manifest) {
       logger.yellow('Not a scaffold-managed project.');
@@ -127,12 +187,41 @@ async function handleCheckCommand(
 
     // Set exit code based on validation results
     if (report.stats.errorCount > 0) {
-      process.exit(1);
-    } else if (report.stats.warningCount > 0) {
-      process.exit(2);
+      process.exit(ExitCode.USER_ERROR);
     }
+    // Note: Warnings don't cause non-zero exit code as per specification
   } catch (error) {
-    throw error;
+    // Handle specific error cases
+    if (error instanceof Error) {
+      // Handle our custom error codes
+      if (error.message.startsWith('INVALID_MANIFEST:')) {
+        exitWithCode(
+          ExitCode.USER_ERROR,
+          `Error: ${error.message.replace('INVALID_MANIFEST: ', '')}`
+        );
+      } else if (error.message.startsWith('MANIFEST_ERROR:')) {
+        exitWithCode(
+          ExitCode.USER_ERROR,
+          `Error: ${error.message.replace('MANIFEST_ERROR: ', '')}`
+        );
+      } else if (
+        error.message.includes('permission') ||
+        error.message.includes('EACCES') ||
+        error.message.includes('EPERM')
+      ) {
+        exitWithCode(ExitCode.SYSTEM_ERROR, error.message);
+      } else if (
+        error.message.includes('JSON') ||
+        error.message.includes('manifest') ||
+        error.message.includes('parse')
+      ) {
+        exitWithCode(ExitCode.USER_ERROR, error.message);
+      } else {
+        exitWithCode(ExitCode.USER_ERROR, error.message);
+      }
+    } else {
+      exitWithCode(ExitCode.USER_ERROR, String(error));
+    }
   }
 }
 
@@ -152,10 +241,10 @@ function displaySummary(report: ValidationReport): void {
     }
   }
 
-  console.log(chalk.gray(`Files checked: ${report.stats.filesChecked}`));
-  console.log(chalk.gray(`Folders checked: ${report.stats.foldersChecked}`));
-  console.log(chalk.gray(`Rules evaluated: ${report.stats.rulesEvaluated}`));
-  console.log(chalk.gray(`Duration: ${report.stats.duration}ms`));
+  logger.gray(`Files checked: ${report.stats.filesChecked}`);
+  logger.gray(`Folders checked: ${report.stats.foldersChecked}`);
+  logger.gray(`Rules evaluated: ${report.stats.rulesEvaluated}`);
+  logger.gray(`Duration: ${report.stats.duration}ms`);
 }
 
 function displayTable(report: ValidationReport, verbose: boolean): void {
@@ -165,83 +254,81 @@ function displayTable(report: ValidationReport, verbose: boolean): void {
 
   // Display errors
   if (report.errors.length > 0) {
-    console.log(chalk.red('Errors:'));
+    logger.red('Errors:');
     for (const error of report.errors) {
-      console.log(chalk.red('  ✗'), error.message);
+      logger.red(`  ✗ ${error.message}`);
       if (error.file) {
-        console.log(chalk.gray(`    File: ${error.file}`));
+        logger.gray(`    File: ${error.file}`);
       }
       if (error.rule) {
-        console.log(chalk.gray(`    Rule: ${error.rule}`));
+        logger.gray(`    Rule: ${error.rule}`);
       }
       if (verbose && error.suggestion) {
-        console.log(chalk.gray(`    Suggestion: ${error.suggestion}`));
+        logger.gray(`    Suggestion: ${error.suggestion}`);
       }
     }
-    console.log('');
+    logger.newLine();
   }
 
   // Display warnings
   if (report.warnings.length > 0) {
-    console.log(chalk.yellow('Warnings:'));
+    logger.yellow('Warnings:');
     for (const warning of report.warnings) {
-      console.log(chalk.yellow('  ⚠'), warning.message);
+      logger.yellow(`  ⚠ ${warning.message}`);
       if (warning.file) {
-        console.log(chalk.gray(`    File: ${warning.file}`));
+        logger.gray(`    File: ${warning.file}`);
       }
       if (warning.rule) {
-        console.log(chalk.gray(`    Rule: ${warning.rule}`));
+        logger.gray(`    Rule: ${warning.rule}`);
       }
       if (verbose && warning.suggestion) {
-        console.log(chalk.gray(`    Suggestion: ${warning.suggestion}`));
+        logger.gray(`    Suggestion: ${warning.suggestion}`);
       }
     }
-    console.log('');
+    logger.newLine();
   }
 
   // Display success message if no issues
   if (report.errors.length === 0 && report.warnings.length === 0) {
-    console.log(chalk.green('✓ All validation checks passed'));
-    console.log('');
+    logger.green('✓ All validation checks passed');
+    logger.newLine();
   }
 
   // Display stats
-  console.log(chalk.blue('Statistics:'));
-  console.log(chalk.gray(`  Files checked: ${report.stats.filesChecked}`));
-  console.log(chalk.gray(`  Folders checked: ${report.stats.foldersChecked}`));
-  console.log(chalk.gray(`  Rules evaluated: ${report.stats.rulesEvaluated}`));
-  console.log(chalk.gray(`  Errors: ${report.stats.errorCount}`));
-  console.log(chalk.gray(`  Warnings: ${report.stats.warningCount}`));
-  console.log(chalk.gray(`  Duration: ${report.stats.duration}ms`));
+  logger.infoBlue('Statistics:');
+  logger.gray(`  Files checked: ${report.stats.filesChecked}`);
+  logger.gray(`  Folders checked: ${report.stats.foldersChecked}`);
+  logger.gray(`  Rules evaluated: ${report.stats.rulesEvaluated}`);
+  logger.gray(`  Errors: ${report.stats.errorCount}`);
+  logger.gray(`  Warnings: ${report.stats.warningCount}`);
+  logger.gray(`  Duration: ${report.stats.duration}ms`);
 
   if (verbose) {
-    console.log('');
-    console.log(chalk.blue('Passed Rules:'));
+    logger.newLine();
+    logger.infoBlue('Passed Rules:');
     if (report.passedRules && report.passedRules.length > 0) {
-      for (const rule of report.passedRules!) {
-        console.log(chalk.green('  ✓'), rule);
+      for (const rule of report.passedRules) {
+        logger.green(`  ✓ ${rule}`);
       }
     } else {
-      console.log(chalk.gray('  None'));
+      logger.gray('  None');
     }
 
     if (report.skippedRules && report.skippedRules.length > 0) {
-      console.log('');
-      console.log(chalk.blue('Skipped Rules:'));
-      for (const rule of report.skippedRules!) {
-        console.log(chalk.gray('  -'), rule);
+      logger.newLine();
+      logger.infoBlue('Skipped Rules:');
+      for (const rule of report.skippedRules) {
+        logger.gray(`  - ${rule}`);
       }
     }
   }
 
-  console.log('');
+  logger.newLine();
 
   // Display suggestions for next steps
   if (report.errors.length > 0) {
-    console.log(chalk.yellow('Next steps:'));
-    console.log(
-      chalk.gray('  • Run "scaffold fix" to automatically fix issues')
-    );
-    console.log(chalk.gray('  • Use --verbose for detailed error information'));
+    logger.yellow('Next steps:');
+    logger.gray('  • Run "scaffold fix" to automatically fix issues');
+    logger.gray('  • Use --verbose for detailed error information');
   }
 }

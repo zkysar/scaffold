@@ -3,25 +3,27 @@
  */
 
 import { randomUUID } from 'crypto';
+
 import { injectable, inject } from 'tsyringe';
+
 import type {
   ValidationReport,
   ValidationError,
   ValidationWarning,
   ValidationStats,
-  ProjectManifest,
   HistoryEntry,
-} from '../models';
-import type { ITemplateService } from './template-service';
-import { TemplateService } from './template-service';
+} from '@/models';
+
 import type { IFileSystemService } from './file-system.service';
 import { FileSystemService } from './file-system.service';
-import type { IProjectValidationService } from './project-validation.service';
-import { ProjectValidationService } from './project-validation.service';
-import type { IVariableSubstitutionService } from './variable-substitution.service';
-import { VariableSubstitutionService } from './variable-substitution.service';
 import type { IProjectManifestService } from './project-manifest.service';
 import { ProjectManifestService } from './project-manifest.service';
+import type { IProjectValidationService } from './project-validation.service';
+import { ProjectValidationService } from './project-validation.service';
+import type { ITemplateService } from './template-service';
+import { TemplateService } from './template-service';
+import type { IVariableSubstitutionService } from './variable-substitution.service';
+import { VariableSubstitutionService } from './variable-substitution.service';
 
 export interface IProjectFixService {
   /**
@@ -191,27 +193,39 @@ export class ProjectFixService implements IProjectFixService {
         }
 
         // Update project manifest with fix history
+        // Only update manifest if not in dry-run mode and there were actual fixes
         if (
           !dryRun &&
           (fixedErrors.length > 0 ||
             remainingErrors.length !== validationReport.errors.length)
         ) {
-          const historyEntry: HistoryEntry = {
-            id: randomUUID(),
-            timestamp: new Date().toISOString(),
-            action: 'check',
-            user: process.env.USER || 'unknown',
-            changes: fixedErrors.map(error => ({
+          try {
+            const historyEntry: HistoryEntry = {
               id: randomUUID(),
-              type: 'added' as const,
-              path: error.path,
-              reason: `Fixed: ${error.message}`,
-            })),
-          };
+              timestamp: new Date().toISOString(),
+              action: 'check',
+              user: process.env.USER || 'unknown',
+              changes: fixedErrors.map(error => ({
+                id: randomUUID(),
+                type: 'added' as const,
+                path: error.path,
+                reason: `Fixed: ${error.message}`,
+              })),
+            };
 
-          manifest.history.push(historyEntry);
-          manifest.updated = new Date().toISOString();
-          await this.manifestService.updateProjectManifest(actualProjectPath, manifest);
+            manifest.history.push(historyEntry);
+            manifest.updated = new Date().toISOString();
+            await this.manifestService.updateProjectManifest(actualProjectPath, manifest);
+          } catch (manifestError) {
+            // If manifest update fails, add it as a warning but don't fail the entire fix operation
+            warnings.push({
+              id: randomUUID(),
+              template: 'fix',
+              path: '.scaffold/manifest.json',
+              message: `Failed to update project manifest: ${manifestError instanceof Error ? manifestError.message : 'Unknown error'}`,
+              suggestion: 'Check file permissions for .scaffold/manifest.json',
+            });
+          }
         }
 
         const executionTime = Date.now() - startTime;

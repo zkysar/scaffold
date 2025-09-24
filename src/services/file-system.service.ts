@@ -2,11 +2,15 @@
  * File system service for abstracting all file operations with comprehensive error handling
  */
 
-import * as fs from 'fs-extra';
-import * as path from 'path';
 import { randomUUID } from 'crypto';
+import { accessSync } from 'fs';
+import * as path from 'path';
+
+import * as fs from 'fs-extra';
 import { injectable } from 'tsyringe';
-import { enhanceError } from '../lib';
+
+import { enhanceError } from '@/lib/error-utils';
+import { logger } from '@/lib/logger';
 
 export interface BackupInfo {
   id: string;
@@ -37,7 +41,7 @@ export interface DeleteOptions {
 
 export interface JsonWriteOptions extends FileOperationOptions {
   spaces?: number;
-  replacer?: (key: string, value: any) => any;
+  replacer?: (key: string, value: unknown) => unknown;
 }
 
 export interface IFileSystemService {
@@ -91,14 +95,14 @@ export interface IFileSystemService {
   /**
    * Read JSON file with proper error handling
    */
-  readJson<T = any>(filePath: string): Promise<T>;
+  readJson<T = unknown>(filePath: string): Promise<T>;
 
   /**
    * Write JSON file with atomic operation
    */
   writeJson(
     filePath: string,
-    data: any,
+    data: unknown,
     options?: JsonWriteOptions
   ): Promise<void>;
 
@@ -218,7 +222,7 @@ export class FileSystemService implements IFileSystemService {
     const resolvedPath = this.resolvePath(filePath);
 
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would create file: ${resolvedPath}`);
+      logger.dryRun(`Would create file: ${resolvedPath}`);
       return;
     }
 
@@ -264,7 +268,7 @@ export class FileSystemService implements IFileSystemService {
     const resolvedPath = this.resolvePath(dirPath);
 
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would create directory: ${resolvedPath}`);
+      logger.dryRun(`Would create directory: ${resolvedPath}`);
       return;
     }
 
@@ -293,7 +297,7 @@ export class FileSystemService implements IFileSystemService {
     const resolvedDest = this.resolvePath(dest);
 
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would copy: ${resolvedSource} -> ${resolvedDest}`);
+      logger.dryRun(`Would copy: ${resolvedSource} -> ${resolvedDest}`);
       return;
     }
 
@@ -337,7 +341,7 @@ export class FileSystemService implements IFileSystemService {
     const resolvedPath = this.resolvePath(targetPath);
 
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would delete: ${resolvedPath}`);
+      logger.dryRun(`Would delete: ${resolvedPath}`);
       return;
     }
 
@@ -398,14 +402,14 @@ export class FileSystemService implements IFileSystemService {
 
   existsSync(targetPath: string): boolean {
     try {
-      fs.accessSync(this.resolvePath(targetPath));
+      accessSync(this.resolvePath(targetPath));
       return true;
     } catch {
       return false;
     }
   }
 
-  async readJson<T = any>(filePath: string): Promise<T> {
+  async readJson<T = unknown>(filePath: string): Promise<T> {
     const resolvedPath = this.resolvePath(filePath);
 
     // Check file exists before try-catch to avoid enhanced error wrapping
@@ -426,13 +430,13 @@ export class FileSystemService implements IFileSystemService {
 
   async writeJson(
     filePath: string,
-    data: any,
+    data: unknown,
     options: JsonWriteOptions = {}
   ): Promise<void> {
     const resolvedPath = this.resolvePath(filePath);
 
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would write JSON to: ${resolvedPath}`);
+      logger.dryRun(`Would write JSON to: ${resolvedPath}`);
       return;
     }
 
@@ -454,7 +458,7 @@ export class FileSystemService implements IFileSystemService {
       };
 
       if (options.atomic) {
-        const tempPath = `${resolvedPath}.tmp.${Date.now()}`;
+        const tempPath = `${resolvedPath}.tmp.${Date.now()}.${Math.random().toString(36).substr(2, 9)}`;
         try {
           await fs.writeJson(tempPath, data, jsonOptions);
           await fs.move(tempPath, resolvedPath);
@@ -470,9 +474,23 @@ export class FileSystemService implements IFileSystemService {
         await fs.chmod(resolvedPath, options.mode);
       }
     } catch (error) {
+      // Provide more specific error messages based on error type
+      let suggestion = 'Ensure the parent directory exists and you have write permissions.';
+
+      if (error instanceof Error) {
+        if (error.message.includes('ENOENT')) {
+          suggestion = 'Parent directory does not exist. Try creating the directory structure first.';
+        } else if (error.message.includes('EACCES') || error.message.includes('EPERM')) {
+          suggestion = 'Permission denied. Check file/directory permissions and ownership.';
+        } else if (error.message.includes('ENOSPC')) {
+          suggestion = 'No space left on device. Free up disk space and try again.';
+        } else if (error.message.includes('EISDIR')) {
+          suggestion = 'Target path is a directory, not a file. Check the path is correct.';
+        }
+      }
+
       throw enhanceError(error, `Failed to write JSON file: ${resolvedPath}`, {
-        suggestion:
-          'Ensure the parent directory exists and you have write permissions.',
+        suggestion,
         path: resolvedPath,
         operation: 'writeJson',
       });
@@ -509,7 +527,7 @@ export class FileSystemService implements IFileSystemService {
     const resolvedPath = this.resolvePath(filePath);
 
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would write file: ${resolvedPath}`);
+      logger.dryRun(`Would write file: ${resolvedPath}`);
       return;
     }
 
@@ -619,8 +637,8 @@ export class FileSystemService implements IFileSystemService {
     const backupPath = path.join(this.backupDir, backupId);
 
     if (this._isDryRun) {
-      console.log(
-        `[DRY RUN] Would create backup: ${backupId} for paths: ${paths.join(', ')}`
+      logger.dryRun(
+        `Would create backup: ${backupId} for paths: ${paths.join(', ')}`
       );
       return backupId;
     }
@@ -677,7 +695,7 @@ export class FileSystemService implements IFileSystemService {
     const backupPath = path.join(this.backupDir, backupId);
 
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would restore from backup: ${backupId}`);
+      logger.dryRun(`Would restore from backup: ${backupId}`);
       return;
     }
 
@@ -751,7 +769,7 @@ export class FileSystemService implements IFileSystemService {
     const backupPath = path.join(this.backupDir, backupId);
 
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would delete backup: ${backupId}`);
+      logger.dryRun(`Would delete backup: ${backupId}`);
       return;
     }
 
@@ -784,7 +802,7 @@ export class FileSystemService implements IFileSystemService {
 
   async ensureDirectory(dirPath: string): Promise<void> {
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would ensure directory: ${dirPath}`);
+      logger.dryRun(`Would ensure directory: ${dirPath}`);
       return;
     }
 
@@ -809,7 +827,7 @@ export class FileSystemService implements IFileSystemService {
     const resolvedDest = this.resolvePath(dest);
 
     if (this._isDryRun) {
-      console.log(`[DRY RUN] Would move: ${resolvedSource} -> ${resolvedDest}`);
+      logger.dryRun(`Would move: ${resolvedSource} -> ${resolvedDest}`);
       return;
     }
 

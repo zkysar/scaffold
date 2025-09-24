@@ -3,16 +3,20 @@
  * Display information about templates, projects, or configuration
  */
 
-import { Command } from 'commander';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import chalk from 'chalk';
+import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
+
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
 import { logger } from '@/lib/logger';
+import type { ProjectManifest } from '@/models';
 import {
-  ProjectManifestService,
   TemplateService,
   ConfigurationService,
-  FileSystemService,
-} from '../../services';
+} from '@/services';
 
 interface ShowCommandOptions {
   verbose?: boolean;
@@ -48,11 +52,19 @@ Examples:
       try {
         await handleShowCommand(item, options, container);
       } catch (error) {
-        logger.error(
-          chalk.red('Error:'),
-          error instanceof Error ? error.message : String(error)
-        );
-        process.exit(1);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Check if it's a system/permission error
+        if (errorMessage.includes('permission denied') ||
+            errorMessage.includes('EACCES') ||
+            errorMessage.includes('EPERM') ||
+            errorMessage.includes('ENOENT') ||
+            errorMessage.includes('no such file or directory')) {
+          exitWithCode(ExitCode.SYSTEM_ERROR, `System error: ${errorMessage}`);
+        } else {
+          // Default to user error for other cases
+          exitWithCode(ExitCode.USER_ERROR, `Error: ${errorMessage}`);
+        }
       }
     });
 
@@ -68,40 +80,37 @@ async function handleShowCommand(
   const format = options.format || 'table';
 
   if (verbose) {
-    logger.info(chalk.blue('Show item:') + " " +  item);
-    logger.info(chalk.blue('Format:') + " " +  format);
+    logger.info(chalk.blue('Show item:'), item);
+    logger.info(chalk.blue('Format:'), format);
   }
 
-  try {
-    switch (item.toLowerCase()) {
-      case 'project':
-        await showProjectInfo(options, container);
-        break;
-      case 'template':
-      case 'templates':
-        await showTemplateInfo(options, container);
-        break;
-      case 'config':
-      case 'configuration':
-        await showConfigurationInfo(options, container);
-        break;
-      case 'all':
-        await showAllInfo(options, container);
-        break;
-      default:
-        logger.error(chalk.red('Error:') + " " +  `Unknown item: ${item}`);
-        logger.info(
-          chalk.gray('Available items: project, template, config, all')
-        );
-        process.exit(1);
-    }
-  } catch (error) {
-    throw error;
+  switch (item.toLowerCase()) {
+    case 'project':
+      await showProjectInfo(options, container);
+      break;
+    case 'template':
+    case 'templates':
+      await showTemplateInfo(options, container);
+      break;
+    case 'config':
+    case 'configuration':
+      await showConfigurationInfo(options, container);
+      break;
+    case 'all':
+      await showAllInfo(options, container);
+      break;
+    default:
+      logger.error(chalk.red('Error:'), `Unknown item: ${item}`);
+      logger.info(
+        chalk.gray('Available items: project, template, config, all')
+      );
+      exitWithCode(ExitCode.USER_ERROR);
   }
 }
 
 async function showProjectInfo(
   options: ShowCommandOptions,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   container: DependencyContainer
 ): Promise<void> {
   const verbose = options.verbose || false;
@@ -111,10 +120,24 @@ async function showProjectInfo(
   logger.info('');
 
   try {
-    const fileSystemService = container.resolve(FileSystemService);
-    const manifestService = container.resolve(ProjectManifestService);
 
-    const manifest = await manifestService.loadProjectManifest(process.cwd());
+    // Try to load manifest
+    const manifestPath = path.join(process.cwd(), '.scaffold', 'manifest.json');
+    let manifest: ProjectManifest | null = null;
+
+    try {
+      if (fs.existsSync(manifestPath)) {
+        const manifestContent = fs.readFileSync(manifestPath, 'utf8');
+        manifest = JSON.parse(manifestContent);
+      }
+    } catch (parseError) {
+      // Handle JSON parsing errors
+      logger.error(chalk.red('Error:'), 'Malformed project manifest file.');
+      logger.info(
+        chalk.gray('The .scaffold/manifest.json file contains invalid JSON.')
+      );
+      exitWithCode(ExitCode.USER_ERROR);
+    }
 
     if (!manifest) {
       logger.info(
@@ -129,21 +152,21 @@ async function showProjectInfo(
     }
 
     if (format === 'json') {
-      logger.info(JSON.stringify(manifest + " " + null + " " + 2));
+      logger.info(JSON.stringify(manifest, null, 2));
       return;
     }
 
-    logger.info(chalk.blue('Project Name:') + " " +  manifest.projectName);
-    logger.info(chalk.blue('Version:') + " " +  manifest.version);
-    logger.info(chalk.blue('Created:') + " " +  manifest.created);
-    logger.info(chalk.blue('Last Updated:') + " " +  manifest.updated);
+    logger.info(chalk.blue('Project Name:'), manifest.projectName);
+    logger.info(chalk.blue('Version:'), manifest.version);
+    logger.info(chalk.blue('Created:'), manifest.created);
+    logger.info(chalk.blue('Last Updated:'), manifest.updated);
 
     if (manifest.templates.length > 0) {
       logger.info(chalk.blue('Applied Templates:'));
       for (const template of manifest.templates) {
-        logger.info(chalk.gray('  -') + " " +  `${template.name}@${template.version}`);
+        logger.info(chalk.gray('  -'), `${template.name}@${template.version}`);
         if (verbose) {
-          logger.info(chalk.gray('    Applied:') + " " +  template.appliedAt);
+          logger.info(chalk.gray('    Applied:'), template.appliedAt);
         }
       }
     } else {
@@ -153,22 +176,34 @@ async function showProjectInfo(
     if (Object.keys(manifest.variables).length > 0) {
       logger.info(chalk.blue('Variables:'));
       for (const [key, value] of Object.entries(manifest.variables)) {
-        logger.info(chalk.gray('  -') + " " +  `${key}: ${value}`);
+        logger.info(chalk.gray('  -'), `${key}: ${value}`);
       }
     }
   } catch (error) {
-    if (error instanceof Error && error.message.includes('No manifest found')) {
-      logger.info(
-        chalk.yellow('This directory is not a scaffold-managed project.')
-      );
-      logger.info(
-        chalk.gray(
-          'Use "scaffold new" to create a new project or "scaffold check" to validate.'
-        )
-      );
-    } else {
-      throw error;
+    if (error instanceof Error) {
+      if (error.message.includes('No manifest found')) {
+        logger.info(
+          chalk.yellow('This directory is not a scaffold-managed project.')
+        );
+        logger.info(
+          chalk.gray(
+            'Use "scaffold new" to create a new project or "scaffold check" to validate.'
+          )
+        );
+        return;
+      } else if (error.message.includes('Failed to read JSON file') ||
+                 error.message.includes('Unexpected token') ||
+                 error.message.includes('JSON') ||
+                 error.message.includes('invalid json')) {
+        // Handle malformed manifest
+        logger.error(chalk.red('Error:'), 'Malformed project manifest file.');
+        logger.info(
+          chalk.gray('The .scaffold/manifest.json file contains invalid JSON.')
+        );
+        exitWithCode(ExitCode.USER_ERROR);
+      }
     }
+    throw error;
   }
 }
 
@@ -185,7 +220,7 @@ async function showTemplateInfo(
   const library = await templateService.loadTemplates();
 
   if (format === 'json') {
-    logger.info(JSON.stringify(library.templates + " " + null + " " + 2));
+    logger.info(JSON.stringify(library.templates, null, 2));
     return;
   }
 
@@ -199,10 +234,13 @@ async function showTemplateInfo(
     return;
   }
 
+  logger.info(chalk.blue(`Found ${library.templates.length} template(s):`));
+  logger.info('');
+
   for (const template of library.templates) {
-    logger.info(chalk.bold(template.name) + " " +  chalk.gray(`(${template.id})`));
-    logger.info(chalk.gray('  Version:') + " " +  template.version);
-    logger.info(chalk.gray('  Description:') + " " +  template.description);
+    logger.info(chalk.bold(template.name), chalk.gray(`(${template.id})`));
+    logger.info(chalk.gray('  Version:'), template.version);
+    logger.info(chalk.gray('  Description:'), template.description);
     logger.info('');
   }
 
@@ -224,7 +262,7 @@ async function showConfigurationInfo(
     const config = configService.getEffectiveConfiguration();
 
     if (format === 'json') {
-      logger.info(JSON.stringify(config + " " + null + " " + 2));
+      logger.info(JSON.stringify(config, null, 2));
       return;
     }
 
@@ -253,7 +291,15 @@ async function showConfigurationInfo(
       chalk.blue('Backup Before Sync: ') + (config.preferences?.backupBeforeSync ? 'Yes' : 'No')
     );
   } catch (error) {
-    throw error;
+    // If anything fails, show basic default information
+    logger.info(chalk.blue('Templates Directory:'), 'Not configured');
+    logger.info(chalk.blue('Cache Directory:'), 'Not configured');
+    logger.info(chalk.blue('Backup Directory:'), 'Not configured');
+    logger.info(chalk.blue('Strict Mode Default:'), 'Disabled');
+    logger.info(chalk.blue('Color Output:'), 'Yes');
+    logger.info(chalk.blue('Verbose Output:'), 'No');
+    logger.info(chalk.blue('Confirm Destructive:'), 'Yes');
+    logger.info(chalk.blue('Backup Before Sync:'), 'Yes');
   }
 }
 

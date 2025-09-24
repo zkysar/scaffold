@@ -3,17 +3,19 @@
  */
 
 import { randomUUID } from 'crypto';
+
 import { injectable, inject } from 'tsyringe';
+
 import type {
   ProjectManifest,
   Template,
   AppliedTemplate,
   HistoryEntry,
-} from '../models';
-import type { ITemplateService } from './template-service';
-import { TemplateService } from './template-service';
+} from '@/models';
 import type { IFileSystemService } from './file-system.service';
 import { FileSystemService } from './file-system.service';
+import type { ITemplateService } from './template-service';
+import { TemplateService } from './template-service';
 import type { IVariableSubstitutionService } from './variable-substitution.service';
 import { VariableSubstitutionService } from './variable-substitution.service';
 
@@ -25,7 +27,8 @@ export interface IProjectCreationService {
     projectName: string,
     templateIds: string[],
     targetPath: string,
-    variables?: Record<string, string>
+    variables?: Record<string, string>,
+    dryRun?: boolean
   ): Promise<ProjectManifest>;
 
   /**
@@ -54,7 +57,8 @@ export class ProjectCreationService implements IProjectCreationService {
     projectName: string,
     templateIds: string[],
     targetPath: string,
-    variables?: Record<string, string>
+    variables?: Record<string, string>,
+    dryRun?: boolean
   ): Promise<ProjectManifest> {
     if (!projectName || typeof projectName !== 'string') {
       throw new Error('Project name must be a non-empty string');
@@ -70,6 +74,12 @@ export class ProjectCreationService implements IProjectCreationService {
 
     const projectPath = targetPath;
     const allVariables = { ...(variables || {}), PROJECT_NAME: projectName };
+
+    // Set dry-run mode on file service
+    const originalDryRun = this.fileService.isDryRun;
+    if (dryRun) {
+      this.fileService.setDryRun(true);
+    }
 
     try {
       // Validate all templates exist and collect them
@@ -179,6 +189,9 @@ export class ProjectCreationService implements IProjectCreationService {
       throw new Error(
         `Failed to create project '${projectName}': ${error instanceof Error ? error.message : 'Unknown error'}`
       );
+    } finally {
+      // Restore original dry-run mode
+      this.fileService.setDryRun(originalDryRun);
     }
   }
 
