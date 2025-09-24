@@ -7,8 +7,8 @@ import * as path from 'path';
 import * as os from 'os';
 import { injectable } from 'tsyringe';
 import { IdentifierService } from './identifier-service';
-import { generateSHAFromObject } from '../lib/sha';
-import type { Template } from '../models';
+import { generateSHAFromObject } from '@/lib/sha';
+import type { Template } from '@/models';
 
 /**
  * Service for managing template identifiers (SHAs and aliases)
@@ -17,19 +17,32 @@ import type { Template } from '../models';
 export class TemplateIdentifierService extends IdentifierService {
   private static instance: TemplateIdentifierService | null = null;
 
-  constructor(aliasFilePath?: string) {
+  constructor() {
     const defaultPath = path.join(os.homedir(), '.scaffold', 'templates', 'aliases.json');
-    super(aliasFilePath ?? defaultPath);
+    super(defaultPath);
   }
 
   /**
-   * Get singleton instance with optional custom alias file path
+   * Get singleton instance - always uses default path for DI compatibility
    */
-  static getInstance(aliasFilePath?: string): TemplateIdentifierService {
-    if (!TemplateIdentifierService.instance || aliasFilePath) {
-      TemplateIdentifierService.instance = new TemplateIdentifierService(aliasFilePath);
+  static getInstance(): TemplateIdentifierService {
+    if (!TemplateIdentifierService.instance) {
+      TemplateIdentifierService.instance = new TemplateIdentifierService();
     }
     return TemplateIdentifierService.instance;
+  }
+
+  /**
+   * Create instance with custom alias file path (non-DI usage)
+   */
+  static createWithPath(aliasFilePath: string): TemplateIdentifierService {
+    // Create a temporary class that extends the base with custom path
+    class CustomTemplateIdentifierService extends IdentifierService {
+      constructor() {
+        super(aliasFilePath);
+      }
+    }
+    return new CustomTemplateIdentifierService() as TemplateIdentifierService;
   }
 
   /**
@@ -71,7 +84,7 @@ export class TemplateIdentifierService extends IdentifierService {
       ...template,
       id: sha,
       // Remove aliases from the template itself (managed separately)
-      aliases: undefined as any
+      aliases: undefined
     };
 
     return migratedTemplate;

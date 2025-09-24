@@ -3,7 +3,8 @@
  * Tests MUST fail initially as no implementation exists yet (TDD)
  */
 
-import { createExtendCommand } from '../../../src/cli/commands/extend.command';
+import { createExtendCommand } from '@/cli/commands/extend.command';
+import { createTestContainer } from '@/di/container';
 import {
   createMockFileSystem,
   createMockConsole,
@@ -105,7 +106,8 @@ describe('scaffold extend command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, ['--template', 'react']);
 
       // Assert
@@ -151,7 +153,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--template',
@@ -190,7 +193,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--template',
@@ -230,7 +234,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--template',
@@ -272,7 +277,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--template',
@@ -316,7 +322,8 @@ describe('scaffold extend command contract', () => {
       });
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--template',
@@ -340,7 +347,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/nonexistent-project',
         '--template',
@@ -366,7 +374,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/regular-project',
         '--template',
@@ -402,7 +411,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, ['/test-project']);
 
       // Assert
@@ -432,7 +442,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--template',
@@ -459,7 +470,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/broken-project',
         '--template',
@@ -494,7 +506,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/readonly-project',
         '--template',
@@ -531,7 +544,8 @@ describe('scaffold extend command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         './project',
         '--template',
@@ -563,7 +577,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/empty-project',
         '--template',
@@ -603,7 +618,8 @@ describe('scaffold extend command contract', () => {
       const variables = JSON.stringify({ author: 'Jane Doe' });
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--template',
@@ -642,7 +658,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--template',
@@ -674,7 +691,8 @@ describe('scaffold extend command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--template',
@@ -716,7 +734,8 @@ describe('scaffold extend command contract', () => {
       });
 
       // Act
-      const command = createExtendCommand();
+      const container = createTestContainer();
+      const command = createExtendCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--template',

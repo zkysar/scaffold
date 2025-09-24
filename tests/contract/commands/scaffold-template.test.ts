@@ -3,7 +3,8 @@
  * Tests MUST fail initially as no implementation exists yet (TDD)
  */
 
-import { createTemplateCommand } from '../../../src/cli/commands/template.command';
+import { createTemplateCommand } from '@/cli/commands/template.command';
+import { createTestContainer } from '@/di/container';
 import {
   createMockFileSystem,
   createMockConsole,
@@ -78,7 +79,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['list']);
 
       // Assert
@@ -100,7 +102,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['list']);
 
       // Assert
@@ -116,7 +119,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['list']);
 
       // Assert
@@ -159,7 +163,8 @@ describe('scaffold template command contract', () => {
       jest.doMock('inquirer', () => ({ prompt: mockPrompt }));
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['create', 'my-template']);
 
       // Assert
@@ -180,7 +185,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, [
         'create',
         'existing-template',
@@ -193,7 +199,8 @@ describe('scaffold template command contract', () => {
 
     it('should validate template name format', async () => {
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['create', 'Invalid Name!']);
 
       // Assert
@@ -232,7 +239,8 @@ describe('scaffold template command contract', () => {
       jest.doMock('inquirer', () => ({ prompt: mockPrompt }));
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['update', 'my-template']);
 
       // Assert
@@ -248,7 +256,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, [
         'update',
         'nonexistent-template',
@@ -278,7 +287,8 @@ describe('scaffold template command contract', () => {
       jest.doMock('inquirer', () => ({ prompt: mockPrompt }));
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['delete', 'deleteme']);
 
       // Assert
@@ -299,7 +309,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, [
         'delete',
         'deleteme',
@@ -319,7 +330,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['delete', 'nonexistent']);
 
       // Assert
@@ -344,7 +356,8 @@ describe('scaffold template command contract', () => {
       jest.doMock('inquirer', () => ({ prompt: mockPrompt }));
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['delete', 'keepme']);
 
       // Assert
@@ -366,7 +379,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, [
         'delete',
         'builtin-template',
@@ -411,7 +425,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['show', 'react-app']);
 
       // Assert
@@ -438,7 +453,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['show', 'simple-template']);
 
       // Assert
@@ -454,7 +470,8 @@ describe('scaffold template command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createTemplateCommand();
+      const container = createTestContainer();
+      const command = createTemplateCommand(container);
       const result = await executeCommand(command, ['show', 'nonexistent']);
 
       // Assert

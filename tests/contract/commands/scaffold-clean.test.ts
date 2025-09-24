@@ -3,7 +3,8 @@
  * Tests MUST fail initially as no implementation exists yet (TDD)
  */
 
-import { createCleanCommand } from '../../../src/cli/commands/clean.command';
+import { createCleanCommand } from '@/cli/commands/clean.command';
+import { createTestContainer } from '@/di/container';
 import {
   createMockFileSystem,
   createMockConsole,
@@ -77,7 +78,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, []);
 
       // Assert
@@ -105,7 +107,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--cache']);
 
       // Assert
@@ -128,7 +131,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--temp']);
 
       // Assert
@@ -155,7 +159,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--all']);
 
       // Assert
@@ -180,7 +185,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--verbose']);
 
       // Assert
@@ -206,7 +212,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--all', '--dry-run']);
 
       // Assert
@@ -240,7 +247,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--temp', '--cache']);
 
       // Assert
@@ -264,7 +272,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, []);
 
       // Assert
@@ -288,7 +297,8 @@ describe('scaffold clean command contract', () => {
       jest.useFakeTimers();
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, []);
 
       // Assert
@@ -310,7 +320,8 @@ describe('scaffold clean command contract', () => {
       jest.useFakeTimers();
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--all']);
 
       // Assert
@@ -333,7 +344,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, [
         '--verbose',
         '--dry-run',
@@ -362,7 +374,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, [
         '--all',
         '--verbose',
@@ -386,7 +399,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act - Using both --all and specific --temp and --cache options
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, [
         '--all',
         '--temp',
@@ -412,7 +426,8 @@ describe('scaffold clean command contract', () => {
       jest.useFakeTimers();
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--all']);
 
       // Assert
@@ -436,7 +451,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--temp']);
 
       // Assert - Should still complete, even if some files can't be cleaned
@@ -459,7 +475,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--temp']);
 
       // Assert
@@ -496,7 +513,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--all']);
 
       // Assert
@@ -518,7 +536,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, ['--temp', '--verbose']);
 
       // Assert
@@ -546,7 +565,8 @@ describe('scaffold clean command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCleanCommand();
+      const container = createTestContainer();
+      const command = createCleanCommand(container);
       const result = await executeCommand(command, [
         '--temp',
         '--cache',
@@ -605,7 +625,8 @@ describe('scaffold clean command contract', () => {
         mockFs(mockFileSystem);
 
         // Act
-        const command = createCleanCommand();
+        const container = createTestContainer();
+      const command = createCleanCommand(container);
         const result = await executeCommand(command, scenario.options);
 
         // Assert

@@ -3,7 +3,8 @@
  * Tests MUST fail initially as no implementation exists yet (TDD)
  */
 
-import { createConfigCommand } from '../../../src/cli/commands/config.command';
+import { createConfigCommand } from '@/cli/commands/config.command';
+import { createTestContainer } from '@/di/container';
 import {
   createMockFileSystem,
   createMockConsole,
@@ -77,7 +78,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['list']);
 
       // Assert
@@ -92,7 +94,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['list', '--verbose']);
 
       // Assert
@@ -113,7 +116,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'get',
         'paths.templatesDir',
@@ -131,7 +135,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['get']);
 
       // Assert
@@ -151,7 +156,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'get',
         'preferences.strictMode',
@@ -172,7 +178,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'get',
         'paths.templates.directory',
@@ -195,7 +202,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'preferences.strictMode',
@@ -217,7 +225,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['set']);
 
       // Assert
@@ -237,7 +246,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'preferences.strictMode',
@@ -257,7 +267,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'paths.templatesDir',
@@ -279,7 +290,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'preferences.colorOutput',
@@ -303,7 +315,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'preferences.strictMode',
@@ -321,7 +334,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'performance.maxConcurrency',
@@ -339,7 +353,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'meta.description',
@@ -365,7 +380,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'reset',
         'preferences.strictMode',
@@ -389,7 +405,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['reset']);
 
       // Assert
@@ -404,7 +421,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'reset',
         'preferences.strictMode',
@@ -426,7 +444,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['reset', '--dry-run']);
 
       // Assert
@@ -443,7 +462,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'preferences.strictMode',
@@ -462,7 +482,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'preferences.strictMode',
@@ -481,7 +502,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'get',
         'preferences.strictMode',
@@ -501,7 +523,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'list',
         '--global',
@@ -522,7 +545,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['unknown-action']);
 
       // Assert
@@ -542,7 +566,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['list']);
 
       // Assert
@@ -558,7 +583,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['list']);
 
       // Assert
@@ -581,7 +607,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'preferences.strictMode',
@@ -601,7 +628,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['LIST']);
 
       // Assert
@@ -615,7 +643,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['list', '--verbose']);
 
       // Assert
@@ -629,7 +658,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'test.key',
@@ -652,7 +682,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'get',
         'paths.templates.react.components.directory',
@@ -671,7 +702,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'paths.templatesDir',
@@ -692,7 +724,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'meta.settings',
@@ -725,7 +758,8 @@ describe('scaffold config command contract', () => {
 
       for (const scopeFlags of scopes) {
         // Act
-        const command = createConfigCommand();
+        const container = createTestContainer();
+      const command = createConfigCommand(container);
         const result = await executeCommand(command, ['list', ...scopeFlags]);
 
         // Assert
@@ -740,7 +774,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, ['get', '']);
 
       // Assert
@@ -756,7 +791,8 @@ describe('scaffold config command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createConfigCommand();
+      const container = createTestContainer();
+      const command = createConfigCommand(container);
       const result = await executeCommand(command, [
         'set',
         'test.key',

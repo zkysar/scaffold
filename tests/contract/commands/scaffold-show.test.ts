@@ -3,7 +3,8 @@
  * Tests MUST fail initially as no implementation exists yet (TDD)
  */
 
-import { createShowCommand } from '../../../src/cli/commands/show.command';
+import { createShowCommand } from '@/cli/commands/show.command';
+import { createTestContainer } from '@/di/container';
 import {
   createMockFileSystem,
   createMockConsole,
@@ -96,7 +97,8 @@ describe('scaffold show command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, []);
 
       // Assert
@@ -136,7 +138,8 @@ describe('scaffold show command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['project']);
 
       // Assert
@@ -161,7 +164,8 @@ describe('scaffold show command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['project']);
 
       // Assert
@@ -195,7 +199,8 @@ describe('scaffold show command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, [
         'project',
         '--format',
@@ -239,7 +244,8 @@ describe('scaffold show command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['project', '--verbose']);
 
       // Assert
@@ -280,7 +286,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['template']);
 
       // Assert
@@ -305,7 +312,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['templates']);
 
       // Assert
@@ -333,7 +341,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, [
         'template',
         '--format',
@@ -369,7 +378,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['config']);
 
       // Assert
@@ -391,7 +401,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['configuration']);
 
       // Assert
@@ -407,7 +418,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, [
         'config',
         '--format',
@@ -425,7 +437,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['config']);
 
       // Assert
@@ -478,7 +491,8 @@ describe('scaffold show command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['all']);
 
       // Assert
@@ -516,7 +530,8 @@ describe('scaffold show command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['all', '--verbose']);
 
       // Assert
@@ -529,7 +544,8 @@ describe('scaffold show command contract', () => {
   describe('error scenarios', () => {
     it('should fail with unknown item (exit code 1)', async () => {
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['unknown-item']);
 
       // Assert
@@ -558,7 +574,8 @@ describe('scaffold show command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['project']);
 
       // Assert
@@ -572,7 +589,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['template']);
 
       // Assert
@@ -588,7 +606,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['--verbose']);
 
       // Assert
@@ -629,7 +648,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['PROJECT']);
 
       // Assert
@@ -662,7 +682,8 @@ describe('scaffold show command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['project']);
 
       // Assert
@@ -699,7 +720,8 @@ describe('scaffold show command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, ['project']);
 
       // Assert
@@ -716,7 +738,8 @@ describe('scaffold show command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createShowCommand();
+      const container = createTestContainer();
+      const command = createShowCommand(container);
       const result = await executeCommand(command, [
         'config',
         '--verbose',

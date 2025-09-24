@@ -61,8 +61,8 @@ export class Logger {
   /**
    * Log an info message
    */
-  info(message: string): void {
-    console.log(message);
+  info(...args: unknown[]): void {
+    console.log(args.join(' '));
   }
 
   /**
@@ -200,7 +200,7 @@ export const log = {
   error: (message: string, error?: Error | string): void => logger.error(message, error),
   warn: (message: string): void => logger.warn(message),
   success: (message: string): void => logger.success(message),
-  info: (message: string): void => logger.info(message),
+  info: (...args: unknown[]): void => logger.info(...args),
   infoBlue: (message: string): void => logger.infoBlue(message),
   gray: (message: string): void => logger.gray(message),
   bold: (message: string): void => logger.bold(message),

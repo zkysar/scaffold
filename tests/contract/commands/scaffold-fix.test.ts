@@ -3,7 +3,8 @@
  * Tests MUST fail initially as no implementation exists yet (TDD)
  */
 
-import { createFixCommand } from '../../../src/cli/commands/fix.command';
+import { createFixCommand } from '@/cli/commands/fix.command';
+import { createTestContainer } from '@/di/container';
 import {
   createMockFileSystem,
   createMockConsole,
@@ -90,7 +91,8 @@ describe('scaffold fix command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, []);
 
       // Assert
@@ -124,7 +126,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/test-project']);
 
       // Assert
@@ -158,7 +161,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--verbose',
@@ -199,7 +203,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--dry-run',
@@ -236,7 +241,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--force',
@@ -273,7 +279,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--backup',
@@ -310,7 +317,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--no-backup',
@@ -329,7 +337,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/nonexistent-project']);
 
       // Assert
@@ -351,7 +360,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/regular-project']);
 
       // Assert
@@ -385,7 +395,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/readonly-project']);
 
       // Assert - Should fail due to write permissions
@@ -404,7 +415,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/broken-project']);
 
       // Assert
@@ -438,7 +450,8 @@ describe('scaffold fix command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['./project']);
 
       // Assert
@@ -454,7 +467,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/empty-project']);
 
       // Assert
@@ -490,7 +504,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, [
         '/test-project',
         '--verbose',
@@ -531,7 +546,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/test-project']);
 
       // Assert
@@ -571,7 +587,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/valid-project']);
 
       // Assert
@@ -607,7 +624,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/project-with-errors']);
 
       // Assert - Currently exits 0 due to mock implementation showing "valid"
@@ -643,7 +661,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/project-with-warnings']);
 
       // Assert - Currently exits 0 due to mock implementation showing "valid"
@@ -679,7 +698,8 @@ describe('scaffold fix command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createFixCommand();
+      const container = createTestContainer();
+      const command = createFixCommand(container);
       const result = await executeCommand(command, ['/test-project']);
 
       // Assert
