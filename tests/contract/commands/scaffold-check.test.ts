@@ -4,6 +4,7 @@
  */
 
 import { createCheckCommand } from '@/cli/commands/check.command';
+import { logger } from '@/lib/logger';
 import {
   createMockFileSystem,
   createMockConsole,
@@ -319,7 +320,7 @@ describe('scaffold check command contract', () => {
         '/regular-project': {
           'package.json': '{"name": "regular-project"}',
           src: {
-            'index.js': 'console.log("hello");',
+            'index.js': 'logger.info("hello");',
           },
         },
       });
@@ -598,7 +599,7 @@ describe('scaffold check command contract', () => {
             }),
           },
           src: {
-            'index.js': 'console.log("hello");',
+            'index.js': 'logger.info("hello");',
           },
           'package.json': '{"name": "valid-project"}',
         },

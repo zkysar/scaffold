@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Standard exit codes for CLI commands
  * Following Unix/POSIX conventions
@@ -15,9 +17,9 @@ export enum ExitCode {
 export function exitWithCode(code: ExitCode, message?: string): never {
   if (message) {
     if (code === ExitCode.SUCCESS) {
-      console.log(message);
+      logger.info(message);
     } else {
-      console.error(message);
+      logger.error(message);
     }
   }
   process.exit(code);
