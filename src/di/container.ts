@@ -1,9 +1,6 @@
 import 'reflect-metadata';
 import { container, DependencyContainer } from 'tsyringe';
 
-import { FileCompletionProvider } from '@/services/completion-providers/file-completion-provider';
-import { ProjectCompletionProvider } from '@/services/completion-providers/project-completion-provider';
-import { TemplateCompletionProvider } from '@/services/completion-providers/template-completion-provider';
 import { CompletionService } from '@/services/completion-service';
 import { ConfigurationService } from '@/services/configuration.service';
 import { FileSystemService } from '@/services/file-system.service';
@@ -15,6 +12,9 @@ import { ProjectValidationService } from '@/services/project-validation.service'
 import { TemplateIdentifierService } from '@/services/template-identifier-service';
 import { TemplateService } from '@/services/template-service';
 import { VariableSubstitutionService } from '@/services/variable-substitution.service';
+import { FileCompletionProvider } from '@/services/completion-providers/file-completion-provider';
+import { ProjectCompletionProvider } from '@/services/completion-providers/project-completion-provider';
+import { TemplateCompletionProvider } from '@/services/completion-providers/template-completion-provider';
 
 export function configureContainer(): DependencyContainer {
   // Phase 1: Core Services (no dependencies)
