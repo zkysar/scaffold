@@ -3,16 +3,17 @@
  * Template management operations
  */
 
-import { Command } from 'commander';
 import chalk from 'chalk';
+import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
-import { TemplateService } from '@/services';
-import { TemplateIdentifierService } from '@/services/template-identifier-service';
+
+import { ExitCode, exitWithCode } from '@/constants/exit-codes';
+import { logger } from '@/lib/logger';
 import { shortSHA } from '@/lib/sha';
 import type { Template } from '@/models';
-import { logger } from '@/lib/logger';
-import { ExitCode, exitWithCode } from '@/constants/exit-codes';
+import { TemplateService } from '@/services';
+import { TemplateIdentifierService } from '@/services/template-identifier-service';
 
 interface TemplateCommandOptions {
   verbose?: boolean;

@@ -3,11 +3,15 @@
  */
 
 import * as path from 'path';
+
 import * as fs from 'fs-extra';
 import { injectable, inject } from 'tsyringe';
+
+import { logger } from '@/lib/logger';
 import type { CompletionContext, CompletionItem, ProjectManifest } from '@/models';
 import type { IProjectManifestService } from '@/services/project-manifest.service';
 import { ProjectManifestService } from '@/services/project-manifest.service';
+
 
 export interface IProjectCompletionProvider {
   /**
@@ -59,7 +63,7 @@ export class ProjectCompletionProvider implements IProjectCompletionProvider {
 
       return this.filterCompletions(completions, context.currentWord);
     } catch (error) {
-      console.error('Failed to scan for projects:', error);
+      logger.error('Failed to scan for projects:', error);
       return [];
     }
   }
@@ -87,7 +91,7 @@ export class ProjectCompletionProvider implements IProjectCompletionProvider {
 
       return this.filterCompletions(completions, context.currentWord);
     } catch (error) {
-      console.error(`Failed to scan directory ${directory} for projects:`, error);
+      logger.error(`Failed to scan directory ${directory} for projects:`, error);
       return [];
     }
   }
@@ -173,7 +177,7 @@ export class ProjectCompletionProvider implements IProjectCompletionProvider {
 
       return completions;
     } catch (error) {
-      console.error(`Error scanning directory ${directory}:`, error);
+      logger.error(`Error scanning directory ${directory}:`, error);
       return [];
     }
   }
