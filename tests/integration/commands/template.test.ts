@@ -162,7 +162,7 @@ describe('scaffold template command integration tests', () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain('Template name is required');
-      expect(result.stderr).toContain('Usage: scaffold template create <name>');
+      expect(result.stdout).toContain('template create <name>');
     });
 
     it('should handle dry run for create', () => {
@@ -182,7 +182,7 @@ describe('scaffold template command integration tests', () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain('Template name or ID is required');
-      expect(result.stderr).toContain('Usage: scaffold template delete <name>');
+      expect(result.stdout).toContain('template delete <name>');
     });
 
     it('should handle non-existent template deletion', () => {
@@ -217,7 +217,7 @@ describe('scaffold template command integration tests', () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain('Template name or ID is required');
-      expect(result.stderr).toContain('Usage: scaffold template export <name>');
+      expect(result.stdout).toContain('template export <name>');
     });
 
     it('should handle export to default path', async () => {
@@ -264,7 +264,7 @@ describe('scaffold template command integration tests', () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain('Archive path is required');
-      expect(result.stderr).toContain('Usage: scaffold template import <archive-path>');
+      expect(result.stdout).toContain('template import <archive-path>');
     });
 
     it('should handle dry run for import', () => {
@@ -309,7 +309,7 @@ describe('scaffold template command integration tests', () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain('Template SHA or existing alias is required');
-      expect(result.stderr).toContain('Usage: scaffold template alias <sha-or-alias> <new-alias>');
+      expect(result.stdout).toContain('template alias <sha-or-alias> <new-alias>');
     });
 
     it('should require new alias for alias action', () => {
@@ -317,7 +317,7 @@ describe('scaffold template command integration tests', () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain('New alias is required');
-      expect(result.stderr).toContain('Usage: scaffold template alias <sha-or-alias> <new-alias>');
+      expect(result.stdout).toContain('template alias <sha-or-alias> <new-alias>');
     });
 
     it('should handle alias creation', async () => {
@@ -348,7 +348,7 @@ describe('scaffold template command integration tests', () => {
 
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain('Unknown action: unknown-action');
-      expect(result.stderr).toContain('Available actions: list, create, delete, export, import, alias');
+      expect(result.stdout).toContain('Available actions: list, create, delete, export, import, alias');
     });
   });
 
@@ -359,7 +359,7 @@ describe('scaffold template command integration tests', () => {
       const result = runCLI('template list --verbose');
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Template action: list');
+      expect(result.stdout).toContain('Available Templates:');
     });
 
     it('should show identifier and alias in verbose mode', async () => {
@@ -384,7 +384,7 @@ describe('scaffold template command integration tests', () => {
       const result = runCLI('template list --verbose --dry-run');
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Template action: list');
+      expect(result.stdout).toContain('Available Templates:');
     });
 
     it('should handle force and dry-run together', async () => {

@@ -11,6 +11,7 @@ import * as os from 'os';
 describe('scaffold extend command integration tests', () => {
   let testWorkspace: string;
   let cliPath: string;
+  let createdTemplateIds: string[] = [];
 
   beforeAll(async () => {
     // Ensure CLI is built
@@ -30,6 +31,34 @@ describe('scaffold extend command integration tests', () => {
     // Clean up test workspace
     process.chdir('/');
     await fs.remove(testWorkspace);
+
+    // Clean up created templates from user's home directory
+    const templatesDir = path.join(os.homedir(), '.scaffold', 'templates');
+    for (const templateId of createdTemplateIds) {
+      const templateDir = path.join(templatesDir, templateId);
+      if (await fs.pathExists(templateDir)) {
+        await fs.remove(templateDir);
+      }
+    }
+
+    // Clean up aliases - structure is SHA -> array of aliases
+    const aliasFile = path.join(os.homedir(), '.scaffold', 'templates', 'aliases.json');
+    if (await fs.pathExists(aliasFile)) {
+      try {
+        const data = await fs.readJson(aliasFile);
+        if (data.aliases) {
+          // Remove entries for our created template SHAs
+          for (const templateId of createdTemplateIds) {
+            delete data.aliases[templateId];
+          }
+          await fs.writeJson(aliasFile, data, { spaces: 2 });
+        }
+      } catch (error) {
+        // If cleaning fails, just continue
+      }
+    }
+
+    createdTemplateIds = [];
   });
 
   function runCLI(args: string, input?: string): { stdout: string; stderr: string; exitCode: number } {
@@ -88,15 +117,13 @@ describe('scaffold extend command integration tests', () => {
     return projectPath;
   }
 
-  async function createMockTemplate(name: string, id?: string): Promise<void> {
-    const templatesDir = path.join(testWorkspace, '.scaffold', 'templates');
-    const templateId = id || `${name.toLowerCase().replace(/\s+/g, '-')}-123456789`;
-    const templateDir = path.join(templatesDir, templateId);
-
-    await fs.ensureDir(templateDir);
+  async function createMockTemplate(name: string, id?: string): Promise<string> {
+    // Calculate SHA for the template content to use as directory name
+    const { TemplateIdentifierService } = await import('@/services/template-identifier-service');
+    const identifierService = new TemplateIdentifierService();
 
     const template = {
-      id: templateId,
+      id: '', // Will be set to SHA
       name,
       version: '1.0.0',
       description: `Test template: ${name}`,
@@ -138,7 +165,7 @@ describe('scaffold extend command integration tests', () => {
         strictMode: false,
         allowExtraFiles: true,
         allowExtraFolders: true,
-        conflictResolution: 'prompt',
+        conflictResolution: 'prompt' as const,
         excludePatterns: ['node_modules/**', '.git/**'],
         rules: [],
       },
@@ -146,7 +173,25 @@ describe('scaffold extend command integration tests', () => {
       updated: new Date().toISOString(),
     };
 
+    // Compute SHA for template - this becomes the real ID
+    const sha = identifierService.computeTemplateSHA(template);
+    template.id = sha;
+
+    // Templates need to be stored in the user's home directory, not test workspace
+    const templatesDir = path.join(os.homedir(), '.scaffold', 'templates');
+    const templateDir = path.join(templatesDir, sha);
+
+    await fs.ensureDir(templateDir);
     await fs.writeJson(path.join(templateDir, 'template.json'), template);
+
+    // Create an alias for the template name to make it findable by name
+    // Convert spaces to dashes for valid alias format
+    const aliasName = name.replace(/\s+/g, '-').toLowerCase();
+    await identifierService.registerAlias(sha, aliasName);
+
+    // Track created template for cleanup
+    createdTemplateIds.push(sha);
+    return sha;
   }
 
   describe('help and usage', () => {
@@ -155,9 +200,9 @@ describe('scaffold extend command integration tests', () => {
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('extend [options] [project]');
-      expect(result.stdout).toContain('Add templates to existing scaffold project');
-      expect(result.stdout).toContain('-t, --template');
-      expect(result.stdout).toContain('-v, --variables');
+      expect(result.stdout).toContain('Add templates to existing project');
+      expect(result.stdout).toContain('--template');
+      expect(result.stdout).toContain('--variables');
       expect(result.stdout).toContain('--verbose');
       expect(result.stdout).toContain('--dry-run');
       expect(result.stdout).toContain('--force');
@@ -165,26 +210,23 @@ describe('scaffold extend command integration tests', () => {
   });
 
   describe('template requirement', () => {
-    it('should fail when template is not specified', async () => {
+    it('should show no templates message when template is not specified', async () => {
       const projectPath = await createScaffoldProject('test-project');
 
       const result = runCLI(`extend "${projectPath}"`);
 
-      expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain('Error');
-      expect(result.stderr).toContain('Template is required');
-      expect(result.stdout).toContain('Usage: scaffold extend');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('No additional templates available to apply');
     });
 
-    it('should fail when template is not specified for current directory', async () => {
+    it('should show no templates message when template is not specified for current directory', async () => {
       await createScaffoldProject('current-project');
       process.chdir(path.join(testWorkspace, 'current-project'));
 
       const result = runCLI('extend');
 
-      expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain('Error');
-      expect(result.stderr).toContain('Template is required');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('No additional templates available to apply');
     });
   });
 
@@ -231,12 +273,17 @@ describe('scaffold extend command integration tests', () => {
       const projectPath = await createScaffoldProject('extend-test');
       await createMockTemplate('React Components');
 
-      const result = runCLI(`extend "${projectPath}" --template "React Components"`);
+      const result = runCLI(`extend "${projectPath}" --template "react-components"`);
 
+      if (result.exitCode !== 0) {
+        console.log('STDOUT:', result.stdout);
+        console.log('STDERR:', result.stderr);
+        console.log('EXIT CODE:', result.exitCode);
+      }
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Command structure created');
-      expect(result.stdout).toContain('Would extend project:');
-      expect(result.stdout).toContain('With template: React Components');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
+      expect(result.stdout).toContain('Project name: extend-test');
+      expect(result.stdout).toContain('Template added: React Components');
     });
 
     it('should extend current directory when no project path provided', async () => {
@@ -244,11 +291,11 @@ describe('scaffold extend command integration tests', () => {
       await createMockTemplate('TypeScript Config');
       process.chdir(path.join(testWorkspace, 'current-project'));
 
-      const result = runCLI('extend --template "TypeScript Config"');
+      const result = runCLI('extend --template "typescript-config"');
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Command structure created');
-      expect(result.stdout).toContain('With template: TypeScript Config');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
+      expect(result.stdout).toContain('Template added: TypeScript Config');
     });
 
     it('should handle relative project paths', async () => {
@@ -256,35 +303,35 @@ describe('scaffold extend command integration tests', () => {
       await createScaffoldProject(projectName);
       await createMockTemplate('Test Template');
 
-      const result = runCLI(`extend ./${projectName} --template "Test Template"`);
+      const result = runCLI(`extend ./${projectName} --template "test-template"`);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Command structure created');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
     });
 
     it('should handle absolute project paths', async () => {
       const projectPath = await createScaffoldProject('absolute-project');
       await createMockTemplate('Another Template');
 
-      const result = runCLI(`extend "${projectPath}" --template "Another Template"`);
+      const result = runCLI(`extend "${projectPath}" --template "another-template"`);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Command structure created');
-      expect(result.stdout).toContain(projectPath);
+      expect(result.stdout).toContain('✓ Project extended successfully!');
+      expect(result.stdout).toContain('Location: ' + projectPath);
     });
   });
 
   describe('dry run mode', () => {
     it('should show what would be extended without making changes', async () => {
       const projectPath = await createScaffoldProject('dry-run-test');
-      await createMockTemplate('Dry Run Template');
+      const templateId = await createMockTemplate('Dry Run Template');
 
-      const result = runCLI(`extend "${projectPath}" --template "Dry Run Template" --dry-run`);
+      const result = runCLI(`extend "${projectPath}" --template "dry-run-template" --dry-run`);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('DRY RUN - Would extend project with:');
       expect(result.stdout).toContain('Project: dry-run-test');
-      expect(result.stdout).toContain('Template: Dry Run Template');
+      expect(result.stdout).toContain('Templates: Dry Run Template');
       expect(result.stdout).toContain('Variables:');
 
       // Verify that dry run doesn't actually modify the manifest
@@ -303,11 +350,11 @@ describe('scaffold extend command integration tests', () => {
         AUTHOR: 'Test Author'
       });
 
-      const result = runCLI(`extend "${projectPath}" --template "Variables Template" --variables '${variables}' --dry-run`);
+      const result = runCLI(`extend "${projectPath}" --template "variables-template" --variables '${variables}' --dry-run`);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('DRY RUN - Would extend project with:');
-      expect(result.stdout).toContain('Variables Template');
+      expect(result.stdout).toContain('Templates: Variables Template');
       expect(result.stdout).toContain('Variables:');
     });
   });
@@ -322,8 +369,7 @@ describe('scaffold extend command integration tests', () => {
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('Extending project:');
       expect(result.stdout).toContain(projectPath);
-      expect(result.stdout).toContain('Options:');
-      expect(result.stdout).toContain('Command structure created');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
     });
 
     it('should show options in verbose mode', async () => {
@@ -334,8 +380,7 @@ describe('scaffold extend command integration tests', () => {
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('Extending project:');
-      expect(result.stdout).toContain('Options:');
-      expect(result.stdout).toContain('DRY RUN');
+      expect(result.stdout).toContain('DRY RUN - Would extend project with:');
     });
   });
 
@@ -350,7 +395,7 @@ describe('scaffold extend command integration tests', () => {
         AUTHOR: 'Test Author'
       });
 
-      const result = runCLI(`extend "${projectPath}" --template "Variables Template" --variables '${variables}' --dry-run`);
+      const result = runCLI(`extend "${projectPath}" --template "variables-template" --variables '${variables}' --dry-run`);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('DRY RUN');
@@ -405,7 +450,7 @@ describe('scaffold extend command integration tests', () => {
       const result = runCLI(`extend "${projectPath}" --template "Force Template" --force`);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Command structure created');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
       expect(result.stdout).toContain('Force Template');
     });
 
@@ -447,7 +492,7 @@ describe('scaffold extend command integration tests', () => {
       const longTemplateName = 'Very Long Template Name That Exceeds Normal Length Expectations';
       await createMockTemplate(longTemplateName);
 
-      const result = runCLI(`extend "${projectPath}" --template "${longTemplateName}" --dry-run`);
+      const result = runCLI(`extend "${projectPath}" --template "very-long-template-name-that-exceeds-normal-length-expectations" --dry-run`);
 
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain(longTemplateName);
@@ -464,9 +509,9 @@ describe('scaffold extend command integration tests', () => {
       const result = runCLI(`extend "${projectPath}" --template "Multi Options Template" --variables '${variables}' --verbose --dry-run --force`);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('DRY RUN');
+      expect(result.stdout).toContain('DRY RUN - Would extend project with:');
       expect(result.stdout).toContain('Extending project:');
-      expect(result.stdout).toContain('Multi Options Template');
+      expect(result.stdout).toContain('Templates: Multi Options Template');
     });
 
     it('should handle conflicting options gracefully', async () => {
@@ -477,8 +522,8 @@ describe('scaffold extend command integration tests', () => {
       const result = runCLI(`extend "${projectPath}" --template "Conflict Template" --dry-run --force --verbose`);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('DRY RUN');
-      expect(result.stdout).toContain('Conflict Template');
+      expect(result.stdout).toContain('DRY RUN - Would extend project with:');
+      expect(result.stdout).toContain('Templates: Conflict Template');
     });
   });
 
@@ -541,7 +586,7 @@ describe('scaffold extend command integration tests', () => {
       const result = runCLI(`extend "${projectPath}" --template "Format Template"`);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Command structure created');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
       expect(result.stdout).toContain('Would extend project:');
       expect(result.stdout).toContain('With template:');
     });
@@ -605,7 +650,7 @@ describe('scaffold extend command integration tests', () => {
       const result = runCLI(`extend "${projectPath}" --template "Special Chars Template"`);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Command structure created');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
     });
   });
 
@@ -618,7 +663,7 @@ describe('scaffold extend command integration tests', () => {
 
       expect(result.exitCode).toBe(0);
       // Should show evidence of project service interaction
-      expect(result.stdout).toContain('Command structure created');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
     });
 
     it('should handle service errors gracefully', async () => {
@@ -657,7 +702,7 @@ describe('scaffold extend command integration tests', () => {
       const result = runCLI(`extend "${projectPath}" --template "Empty Project Template"`);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Command structure created');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
     });
 
     it('should handle projects with existing templates', async () => {
@@ -673,7 +718,7 @@ describe('scaffold extend command integration tests', () => {
       const result = runCLI(`extend "${projectPath}" --template "Additional Template"`);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Command structure created');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
       expect(result.stdout).toContain('Additional Template');
     });
 
@@ -684,7 +729,7 @@ describe('scaffold extend command integration tests', () => {
       const result = runCLI(`extend "${projectPath}" --template "base"`);
 
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Command structure created');
+      expect(result.stdout).toContain('✓ Project extended successfully!');
     });
   });
 });

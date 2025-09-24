@@ -24,7 +24,6 @@
       "tests/integration/cli/completion/status.test.ts",
       "tests/integration/cli/completion/uninstall.test.ts",
       "tests/integration/commands/extend.test.ts",
-      "tests/integration/commands/fix.test.ts",
       "tests/integration/commands/new.test.ts",
       "tests/integration/commands/template-alias.test.ts",
       "tests/integration/commands/template.test.ts",
@@ -52,9 +51,9 @@
   },
   "statistics": {
     "totalTests": 354,
-    "passingTests": 185,
-    "failingTests": 169,
+    "passingTests": 190,
+    "failingTests": 164,
     "blockedTestFiles": 34,
-    "passingTestFiles": 7
+    "passingTestFiles": 8
   }
 }

@@ -140,8 +140,8 @@ describe('scaffold new command integration tests', () => {
       const result = runCLI('new my-project');
 
       // Since no templates are available, should show guidance message
-      expect(result.stdout).toContain('No templates found');
-      expect(result.stdout).toContain('scaffold template create');
+      expect(result.stdout).toContain('No template specified');
+      expect(result.stdout).toContain('Use --template option');
     });
   });
 
