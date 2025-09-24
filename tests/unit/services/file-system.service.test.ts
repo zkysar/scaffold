@@ -6,8 +6,8 @@
 import mockFs from 'mock-fs';
 import * as path from 'path';
 import * as fs from 'fs-extra';
-import { FileSystemService, type BackupInfo, type FileOperationOptions, type CopyOptions, type DeleteOptions, type JsonWriteOptions } from '../../../src/services/file-system.service';
-import { createMockConsole } from '../../helpers/test-utils';
+import { FileSystemService, type BackupInfo, type FileOperationOptions, type CopyOptions, type DeleteOptions, type JsonWriteOptions } from '@/services/file-system.service';
+import { createMockConsole } from '@tests/helpers/test-utils';
 
 // Mock fs.copy at module level to avoid redefinition issues
 jest.mock('fs-extra', () => ({
