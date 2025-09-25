@@ -3,12 +3,12 @@
  * Configuration management operations
  */
 
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { Command } from 'commander';
 import { DependencyContainer } from 'tsyringe';
 
 import { logger } from '@/lib/logger';
-import { ConfigurationService } from '@/services';
+import { ConfigurationService } from '@/services/configuration.service';
 
 
 interface ConfigCommandOptions {
@@ -43,8 +43,7 @@ export function createConfigCommand(container: DependencyContainer): Command {
           await handleConfigCommand(action, key, value, options, container);
         } catch (error) {
           logger.error(
-            chalk.red('Error:'),
-            error instanceof Error ? error.message : String(error)
+            `${chalk.red('Error:')} ${error instanceof Error ? error.message : String(error)}`
           );
           process.exit(1);
         }
@@ -64,10 +63,10 @@ async function handleConfigCommand(
   const verbose = options.verbose || false;
 
   if (verbose) {
-    logger.info(chalk.blue('Config action:'), action);
-    if (key) logger.info(chalk.blue('Key:'), key);
-    if (value) logger.info(chalk.blue('Value:'), value);
-    logger.info(chalk.blue('Options:'), JSON.stringify(options, null, 2));
+    logger.info(`${chalk.blue('Config action:')} ${action}`);
+    if (key) logger.info(`${chalk.blue('Key:')} ${key}`);
+    if (value) logger.info(`${chalk.blue('Value:')} ${value}`);
+    logger.info(`${chalk.blue('Options:')} ${JSON.stringify(options, null, 2)}`);
   }
 
   const configService = container.resolve(ConfigurationService);
@@ -86,7 +85,7 @@ async function handleConfigCommand(
       await handleResetConfig(configService, key, options);
       break;
     default:
-      logger.error(chalk.red('Error:'), `Unknown action: ${action}`);
+      logger.error(`${chalk.red('Error:')} Unknown action: ${action}`);
       logger.info(chalk.gray('Available actions: list, get, set, reset'));
       process.exit(1);
   }
@@ -104,29 +103,26 @@ async function handleListConfig(): Promise<void> {
 async function handleGetConfig(_configService: ConfigurationService, key: string): Promise<void> {
   if (!key) {
     logger.error(
-      chalk.red('Error:'),
-      'Configuration key is required for get action'
+      `${chalk.red('Error:')} Configuration key is required for get action`
     );
     logger.info(chalk.gray('Usage: scaffold config get <key>'));
     process.exit(1);
   }
 
-  logger.info(chalk.blue('Key:'), key);
+  logger.info(`${chalk.blue('Key:')} ${key}`);
   logger.info(
     chalk.gray('(Implementation pending - would get configuration value)')
   );
 }
 
 async function handleSetConfig(
-  configService: ConfigurationService,
   key: string,
   value: string,
   options: ConfigCommandOptions
 ): Promise<void> {
   if (!key || !value) {
     logger.error(
-      chalk.red('Error:'),
-      'Both key and value are required for set action'
+      `${chalk.red('Error:')} Both key and value are required for set action`
     );
     logger.info(chalk.gray('Usage: scaffold config set <key> <value>'));
     process.exit(1);
@@ -134,30 +130,30 @@ async function handleSetConfig(
 
   if (options.dryRun) {
     logger.info(chalk.yellow('DRY RUN - Would set configuration:'));
-    logger.info(chalk.blue('Key:'), key);
-    logger.info(chalk.blue('Value:'), value);
+    logger.info(`${chalk.blue('Key:')} ${key}`);
+    logger.info(`${chalk.blue('Value:')} ${value}`);
     return;
   }
 
   logger.info(chalk.green('✓ Configuration updated (implementation pending)'));
-  logger.info(chalk.blue('Key:'), key);
-  logger.info(chalk.blue('Value:'), value);
+  logger.info(`${chalk.blue('Key:')} ${key}`);
+  logger.info(`${chalk.blue('Value:')} ${value}`);
 }
 
 async function handleResetConfig(
-  configService: ConfigurationService,
+  _configService: ConfigurationService,
   key: string,
   options: ConfigCommandOptions
 ): Promise<void> {
   if (options.dryRun) {
     logger.info(chalk.yellow('DRY RUN - Would reset configuration'));
-    if (key) logger.info(chalk.blue('Key:'), key);
+    if (key) logger.info(`${chalk.blue('Key:')} ${key}`);
     return;
   }
 
   logger.info(chalk.green('✓ Configuration reset (implementation pending)'));
   if (key) {
-    logger.info(chalk.blue('Reset key:'), key);
+    logger.info(`${chalk.blue('Reset key:')} ${key}`);
   } else {
     logger.info(chalk.blue('Reset all configuration'));
   }

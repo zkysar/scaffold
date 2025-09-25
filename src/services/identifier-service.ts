@@ -48,7 +48,7 @@ export abstract class IdentifierService {
         this.buildReverseMapping();
       }
     } catch (error) {
-      logger.warn(`Failed to load aliases from ${this.aliasFilePath}:`, error);
+      logger.warn(`Failed to load aliases from ${this.aliasFilePath}: ${error}`);
       this.aliasMapping = {};
       this.reverseAliasMapping = {};
     }

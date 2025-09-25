@@ -130,7 +130,7 @@ export class TemplateService implements ITemplateService {
             aliases: aliases,
           });
         } catch (error) {
-          logger.warn(`Failed to load template from ${templateDir}:`, error);
+          logger.warn(`Failed to load template from ${templateDir}: ${error}`);
         }
       }
 
