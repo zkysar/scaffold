@@ -423,7 +423,30 @@
       }
     },
     "tests/integration/commands/template-alias.test.ts": {
-      "suites": {}
+      "suites": {
+        "scaffold template alias command (integration) > successful alias operations": {
+          "should create an alias for a template using full SHA": "failed",
+          "should create an alias using short SHA": "failed",
+          "should create multiple aliases for same template": "failed",
+          "should update an existing alias to point to same template (idempotent)": "failed",
+          "should use alias to create a new project": "failed"
+        },
+        "scaffold template alias command (integration) > error scenarios": {
+          "should error when creating alias for non-existent template": "failed",
+          "should error when alias already exists for different template": "failed",
+          "should error with invalid alias format": "failed",
+          "should error with ambiguous short SHA": "failed",
+          "should error when no arguments provided": "failed"
+        },
+        "scaffold template alias command (integration) > template list with aliases": {
+          "should display aliases in template list": "failed",
+          "should show multiple aliases for same template": "failed"
+        },
+        "scaffold template alias command (integration) > using aliases in other commands": {
+          "should delete template using alias": "failed",
+          "should export template using alias": "failed"
+        }
+      }
     },
     "tests/integration/commands/template.test.ts": {
       "suites": {
@@ -648,7 +671,35 @@
       "suites": {}
     },
     "tests/unit/services/identifier-service.test.ts": {
-      "suites": {}
+      "suites": {
+        "IdentifierService > computeSHA": {
+          "should compute consistent SHA for the same template content": "passed",
+          "should produce different SHAs for different templates": "passed",
+          "should ignore id field when computing SHA": "passed",
+          "should ignore aliases field when computing SHA": "passed",
+          "should handle templates with complex nested structures": "passed"
+        },
+        "IdentifierService > canonicalize": {
+          "should produce consistent canonical form": "passed",
+          "should sort arrays consistently": "pending",
+          "should exclude computed fields": "passed"
+        },
+        "IdentifierService > resolveSHA": {
+          "should return full SHA if input is already 64 chars": "passed",
+          "should resolve short SHA to full SHA": "passed",
+          "should throw error if short SHA matches multiple templates": "passed",
+          "should throw error if SHA not found": "passed",
+          "should handle empty available SHAs list": "passed"
+        },
+        "IdentifierService > isValidSHA": {
+          "should validate full 64-char SHA": "passed",
+          "should validate short SHA (8 chars)": "passed",
+          "should reject non-hex characters": "passed",
+          "should reject empty string": "passed",
+          "should reject SHA longer than 64 chars": "passed",
+          "should accept mixed case hex": "passed"
+        }
+      }
     },
     "tests/unit/services/project-creation.service.test.ts": {
       "suites": {}
@@ -660,7 +711,35 @@
       "suites": {}
     },
     "tests/unit/services/project-manifest.service.test.ts": {
-      "suites": {}
+      "suites": {
+        "ProjectManifestService > getProjectManifest": {
+          "should throw error for invalid project path": "passed",
+          "should read manifest from direct path": "passed",
+          "should search upward for nearest manifest when not found in direct path": "passed",
+          "should return null when no manifest is found": "passed",
+          "should handle file service errors": "passed"
+        },
+        "ProjectManifestService > loadProjectManifest": {
+          "should delegate to getProjectManifest": "passed"
+        },
+        "ProjectManifestService > saveProjectManifest": {
+          "should delegate to updateProjectManifest": "passed"
+        },
+        "ProjectManifestService > updateProjectManifest": {
+          "should throw error for invalid project path": "passed",
+          "should throw error for invalid manifest": "passed",
+          "should write manifest to project directory": "passed",
+          "should use actual project path when manifest exists in parent": "passed",
+          "should handle file service errors": "failed"
+        },
+        "ProjectManifestService > findNearestManifest": {
+          "should find manifest in current directory": "passed",
+          "should find manifest in parent directory": "passed",
+          "should return null when no manifest is found": "passed",
+          "should limit search depth to prevent infinite loops": "passed",
+          "should stop at root directory": "passed"
+        }
+      }
     },
     "tests/unit/services/project-validation.service.test.ts": {
       "suites": {}
@@ -672,7 +751,39 @@
       "suites": {}
     },
     "tests/unit/services/variable-substitution-service.test.ts": {
-      "suites": {}
+      "suites": {
+        "VariableSubstitutionService > substituteVariables": {
+          "should substitute simple variables": "passed",
+          "should handle multiple variables": "passed",
+          "should handle nested variables": "failed",
+          "should detect simple circular references": "passed",
+          "should detect deep circular references": "passed",
+          "should detect self-referencing variables": "failed",
+          "should allow circular references when explicitly enabled": "passed",
+          "should handle default values": "failed",
+          "should use variable value over default when present": "failed",
+          "should handle transformations": "passed",
+          "should handle lowercase transformation": "passed",
+          "should handle camelCase transformation": "passed",
+          "should handle kebab-case transformation": "passed",
+          "should handle snake_case transformation": "passed",
+          "should handle PascalCase transformation": "passed",
+          "should handle capitalize transformation": "passed",
+          "should handle trim transformation": "passed",
+          "should handle missing variables with throwOnMissing false": "passed",
+          "should throw on missing variables with throwOnMissing true": "passed",
+          "should handle escaped variables": "passed",
+          "should handle special variables": "passed",
+          "should handle complex circular reference chain": "passed",
+          "should handle multiple circular reference patterns": "passed",
+          "should properly resolve non-circular nested references": "passed",
+          "should handle indirect circular reference through multiple paths": "failed"
+        },
+        "VariableSubstitutionService > substituteInPath": {
+          "should substitute variables in file paths": "passed",
+          "should handle path separators correctly": "passed"
+        }
+      }
     },
     "tests/unit/templates/demo-templates.test.ts": {
       "suites": {

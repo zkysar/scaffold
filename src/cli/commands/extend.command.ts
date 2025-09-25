@@ -18,7 +18,6 @@ import {
   ProjectExtensionService,
   ProjectManifestService,
   TemplateService,
-  FileSystemService,
 } from '@/services';
 
 interface ExtendCommandOptions {
@@ -100,7 +99,6 @@ async function handleExtendCommand(
   }
 
   // Resolve services from DI container
-  const fileSystemService = container.resolve(FileSystemService);
   const templateService = container.resolve(TemplateService);
   const manifestService = container.resolve(ProjectManifestService);
   const extensionService = container.resolve(ProjectExtensionService);

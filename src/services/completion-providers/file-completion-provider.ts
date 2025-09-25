@@ -10,7 +10,6 @@ import { injectable } from 'tsyringe';
 import { logger } from '@/lib/logger';
 import type { CompletionContext, CompletionItem } from '@/models';
 
-
 export interface IFileCompletionProvider {
   /**
    * Get file path completions
@@ -20,26 +19,36 @@ export interface IFileCompletionProvider {
   /**
    * Get directory completions
    */
-  getDirectoryCompletions(context: CompletionContext): Promise<CompletionItem[]>;
+  getDirectoryCompletions(
+    context: CompletionContext
+  ): Promise<CompletionItem[]>;
 
   /**
    * Get completions for specific file extensions
    */
-  getFileCompletionsByExtension(context: CompletionContext, extensions: string[]): Promise<CompletionItem[]>;
+  getFileCompletionsByExtension(
+    context: CompletionContext,
+    extensions: string[]
+  ): Promise<CompletionItem[]>;
 
   /**
    * Get relative path completions from current directory
    */
-  getRelativePathCompletions(context: CompletionContext): Promise<CompletionItem[]>;
+  getRelativePathCompletions(
+    context: CompletionContext
+  ): Promise<CompletionItem[]>;
 }
 
 @injectable()
 export class FileCompletionProvider implements IFileCompletionProvider {
   private cacheExpiry: number = 30 * 1000; // 30 seconds
-  private cache: Map<string, { data: CompletionItem[]; timestamp: number }> = new Map();
+  private cache: Map<string, { data: CompletionItem[]; timestamp: number }> =
+    new Map();
   private maxResults: number = 50; // Limit results for performance
 
-  async getFileCompletions(context: CompletionContext): Promise<CompletionItem[]> {
+  async getFileCompletions(
+    context: CompletionContext
+  ): Promise<CompletionItem[]> {
     const currentWord = context.currentWord;
     let searchDir = context.currentDirectory;
     let prefix = '';
@@ -61,7 +70,12 @@ export class FileCompletionProvider implements IFileCompletionProvider {
     }
 
     try {
-      const completions = await this.scanDirectory(searchDir, prefix, true, true);
+      const completions = await this.scanDirectory(
+        searchDir,
+        prefix,
+        true,
+        true
+      );
 
       this.cache.set(cacheKey, {
         data: completions,
@@ -70,12 +84,17 @@ export class FileCompletionProvider implements IFileCompletionProvider {
 
       return completions;
     } catch (error) {
-      logger.error('Failed to get file completions:', error);
+      logger.error(
+        'Failed to get file completions:',
+        error instanceof Error ? error.message : String(error)
+      );
       return [];
     }
   }
 
-  async getDirectoryCompletions(context: CompletionContext): Promise<CompletionItem[]> {
+  async getDirectoryCompletions(
+    context: CompletionContext
+  ): Promise<CompletionItem[]> {
     const currentWord = context.currentWord;
     let searchDir = context.currentDirectory;
     let prefix = '';
@@ -96,7 +115,12 @@ export class FileCompletionProvider implements IFileCompletionProvider {
     }
 
     try {
-      const completions = await this.scanDirectory(searchDir, prefix, false, true);
+      const completions = await this.scanDirectory(
+        searchDir,
+        prefix,
+        false,
+        true
+      );
 
       this.cache.set(cacheKey, {
         data: completions,
@@ -105,29 +129,44 @@ export class FileCompletionProvider implements IFileCompletionProvider {
 
       return completions;
     } catch (error) {
-      logger.error('Failed to get directory completions:', error);
+      logger.error(
+        'Failed to get directory completions:',
+        error instanceof Error ? error.message : String(error)
+      );
       return [];
     }
   }
 
-  async getFileCompletionsByExtension(context: CompletionContext, extensions: string[]): Promise<CompletionItem[]> {
+  async getFileCompletionsByExtension(
+    context: CompletionContext,
+    extensions: string[]
+  ): Promise<CompletionItem[]> {
     const allFiles = await this.getFileCompletions(context);
 
     return allFiles.filter(completion => {
       const ext = path.extname(completion.value).toLowerCase();
-      return extensions.some(allowedExt =>
-        ext === (allowedExt.startsWith('.') ? allowedExt : `.${allowedExt}`)
+      return extensions.some(
+        allowedExt =>
+          ext === (allowedExt.startsWith('.') ? allowedExt : `.${allowedExt}`)
       );
     });
   }
 
-  async getRelativePathCompletions(context: CompletionContext): Promise<CompletionItem[]> {
+  async getRelativePathCompletions(
+    context: CompletionContext
+  ): Promise<CompletionItem[]> {
     // This method ensures all returned paths are relative to current directory
     const completions = await this.getFileCompletions(context);
 
     return completions.map(completion => {
-      const absolutePath = path.resolve(context.currentDirectory, completion.value);
-      const relativePath = path.relative(context.currentDirectory, absolutePath);
+      const absolutePath = path.resolve(
+        context.currentDirectory,
+        completion.value
+      );
+      const relativePath = path.relative(
+        context.currentDirectory,
+        absolutePath
+      );
 
       return {
         ...completion,
@@ -146,7 +185,9 @@ export class FileCompletionProvider implements IFileCompletionProvider {
   /**
    * Get specific file types (useful for templates, configs, etc.)
    */
-  async getConfigFileCompletions(context: CompletionContext): Promise<CompletionItem[]> {
+  async getConfigFileCompletions(
+    context: CompletionContext
+  ): Promise<CompletionItem[]> {
     const configExtensions = ['.json', '.yaml', '.yml', '.toml', '.ini'];
     return this.getFileCompletionsByExtension(context, configExtensions);
   }
@@ -154,8 +195,16 @@ export class FileCompletionProvider implements IFileCompletionProvider {
   /**
    * Get template file completions
    */
-  async getTemplateFileCompletions(context: CompletionContext): Promise<CompletionItem[]> {
-    const templateExtensions = ['.mustache', '.hbs', '.handlebars', '.ejs', '.njk'];
+  async getTemplateFileCompletions(
+    context: CompletionContext
+  ): Promise<CompletionItem[]> {
+    const templateExtensions = [
+      '.mustache',
+      '.hbs',
+      '.handlebars',
+      '.ejs',
+      '.njk',
+    ];
     return this.getFileCompletionsByExtension(context, templateExtensions);
   }
 
@@ -171,7 +220,10 @@ export class FileCompletionProvider implements IFileCompletionProvider {
     }
   }
 
-  private parseFilePath(filePath: string, currentDirectory: string): { directory: string; filename: string } {
+  private parseFilePath(
+    filePath: string,
+    currentDirectory: string
+  ): { directory: string; filename: string } {
     let resolvedPath: string;
 
     if (path.isAbsolute(filePath)) {
@@ -195,7 +247,7 @@ export class FileCompletionProvider implements IFileCompletionProvider {
     const completions: CompletionItem[] = [];
 
     try {
-      if (!await this.pathExists(directory)) {
+      if (!(await this.pathExists(directory))) {
         return [];
       }
 
@@ -213,7 +265,10 @@ export class FileCompletionProvider implements IFileCompletionProvider {
         }
 
         // Filter by prefix
-        if (prefix && !entry.name.toLowerCase().startsWith(prefix.toLowerCase())) {
+        if (
+          prefix &&
+          !entry.name.toLowerCase().startsWith(prefix.toLowerCase())
+        ) {
           continue;
         }
 
@@ -250,7 +305,10 @@ export class FileCompletionProvider implements IFileCompletionProvider {
         return a.value.localeCompare(b.value);
       });
     } catch (error) {
-      logger.error(`Error scanning directory ${directory}:`, error);
+      logger.error(
+        `Error scanning directory ${directory}:`,
+        error instanceof Error ? error.message : String(error)
+      );
       return [];
     }
   }

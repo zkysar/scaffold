@@ -30,7 +30,7 @@ export function cleanupTempDir(tempDir: string): void {
       fs.removeSync(tempDir);
     }
   } catch (error) {
-    logger.warn(`Failed to cleanup temp directory: ${tempDir}`, error);
+    logger.warn(`Failed to cleanup temp directory: ${tempDir}: ${error}`);
   }
 }
 
