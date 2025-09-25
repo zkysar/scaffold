@@ -1,0 +1,742 @@
+{
+  "files": {
+    "tests/contract/commands/scaffold-check.test.ts": {
+      "suites": {}
+    },
+    "tests/contract/commands/scaffold-clean.test.ts": {
+      "suites": {}
+    },
+    "tests/contract/commands/scaffold-config.test.ts": {
+      "suites": {}
+    },
+    "tests/contract/commands/scaffold-extend.test.ts": {
+      "suites": {}
+    },
+    "tests/contract/commands/scaffold-fix.test.ts": {
+      "suites": {}
+    },
+    "tests/contract/commands/scaffold-new.test.ts": {
+      "suites": {}
+    },
+    "tests/contract/commands/scaffold-show.test.ts": {
+      "suites": {}
+    },
+    "tests/contract/commands/scaffold-template.test.ts": {
+      "suites": {}
+    },
+    "tests/contract/import-conventions.test.ts": {
+      "suites": {
+        "Import Conventions": {
+          "should not use relative parent imports in source files": "passed",
+          "should use path aliases for cross-module imports": "passed",
+          "should have consistent import ordering": "passed"
+        }
+      }
+    },
+    "tests/integration/cli/cli-commands.test.ts": {
+      "suites": {
+        "Scaffold CLI Integration Tests > scaffold --help": {
+          "should display help information": "passed"
+        },
+        "Scaffold CLI Integration Tests > scaffold --version": {
+          "should display version": "passed"
+        },
+        "Scaffold CLI Integration Tests > scaffold template list": {
+          "should list available templates": "passed"
+        },
+        "Scaffold CLI Integration Tests > scaffold new": {
+          "should show help when no project name provided": "passed",
+          "should create a new project with --dry-run": "passed"
+        },
+        "Scaffold CLI Integration Tests > scaffold check": {
+          "should check current directory": "failed",
+          "should report when not a scaffold project": "failed"
+        },
+        "Scaffold CLI Integration Tests > scaffold show": {
+          "should show items when no argument provided": "passed",
+          "should show configuration": "passed"
+        },
+        "Scaffold CLI Integration Tests > scaffold completion": {
+          "should show completion help": "passed",
+          "should check completion status": "failed"
+        },
+        "Scaffold CLI Integration Tests > scaffold config": {
+          "should list configuration": "passed",
+          "should get a config value": "passed"
+        },
+        "Scaffold CLI Integration Tests > Error handling": {
+          "should show error for invalid command": "passed",
+          "should handle missing required arguments gracefully": "failed"
+        },
+        "Scaffold CLI Integration Tests > Complex scenarios": {
+          "should handle verbose flag": "passed",
+          "should handle no-color flag": "passed",
+          "should handle dry-run flag for clean command": "passed"
+        }
+      }
+    },
+    "tests/integration/cli/completion/complete.test.ts": {
+      "suites": {
+        "scaffold completion complete (integration) > command completion": {
+          "should complete top-level commands": "failed",
+          "should complete subcommands for template": "failed",
+          "should complete subcommands for completion": "failed"
+        },
+        "scaffold completion complete (integration) > option completion": {
+          "should complete global options": "failed",
+          "should complete command-specific options": "failed",
+          "should complete completion command options": "failed"
+        },
+        "scaffold completion complete (integration) > option value completion": {
+          "should complete shell types for --shell option": "failed",
+          "should filter completions based on partial input": "failed"
+        },
+        "scaffold completion complete (integration) > error handling": {
+          "should handle invalid command line gracefully": "passed",
+          "should handle missing parameters gracefully": "passed",
+          "should handle out-of-bounds cursor position": "passed"
+        },
+        "scaffold completion complete (integration) > edge cases": {
+          "should handle completion at different cursor positions": "failed",
+          "should handle quoted arguments": "passed",
+          "should handle empty command line": "passed",
+          "should work with different working directories": "failed"
+        },
+        "scaffold completion complete (integration) > performance": {
+          "should complete within reasonable time": "failed",
+          "should handle complex command lines efficiently": "passed"
+        },
+        "scaffold completion complete (integration) > output format": {
+          "should output valid JSON for each completion": "failed",
+          "should not output sensitive information": "passed"
+        }
+      }
+    },
+    "tests/integration/cli/completion/install.test.ts": {
+      "suites": {
+        "scaffold completion install (integration) > successful installation": {
+          "should install completion for bash with auto-detection": "failed",
+          "should install completion for zsh with explicit shell option": "failed",
+          "should install completion for fish": "failed",
+          "should show verbose output when --verbose flag is used": "failed",
+          "should reinstall when --force flag is used": "failed"
+        },
+        "scaffold completion install (integration) > error scenarios": {
+          "should fail with invalid shell type": "passed",
+          "should warn when already installed without force": "failed",
+          "should handle permission errors gracefully": "passed"
+        },
+        "scaffold completion install (integration) > edge cases": {
+          "should handle missing HOME environment variable": "passed",
+          "should create necessary directories if they do not exist": "failed",
+          "should handle existing shell config files": "failed"
+        },
+        "scaffold completion install (integration) > output format validation": {
+          "should output in expected format for successful installation": "failed",
+          "should not output sensitive information": "passed"
+        }
+      }
+    },
+    "tests/integration/cli/completion/script.test.ts": {
+      "suites": {
+        "scaffold completion script (integration) > script generation for different shells": {
+          "should generate bash completion script": "failed",
+          "should generate zsh completion script": "failed",
+          "should generate fish completion script": "failed",
+          "should generate script for explicitly specified shell": "failed"
+        },
+        "scaffold completion script (integration) > script output with instructions": {
+          "should include installation instructions when --instructions flag is used": "failed",
+          "should show brief instructions in verbose mode without --instructions": "failed",
+          "should not show duplicate instructions when both --instructions and --verbose are used": "failed"
+        },
+        "scaffold completion script (integration) > error scenarios": {
+          "should fail with invalid shell type": "passed",
+          "should handle shell detection failure gracefully": "failed"
+        },
+        "scaffold completion script (integration) > script content validation": {
+          "should generate syntactically valid bash script": "failed",
+          "should include necessary completion functions for each shell": "failed",
+          "should call scaffold CLI for dynamic completions": "failed"
+        },
+        "scaffold completion script (integration) > output format validation": {
+          "should output script without extra formatting when no flags are used": "failed",
+          "should be suitable for shell redirection": "failed",
+          "should not output sensitive information": "passed"
+        },
+        "scaffold completion script (integration) > edge cases": {
+          "should handle missing HOME environment variable": "failed",
+          "should work when scaffold is not installed in completion": "failed",
+          "should handle different shell environment variables": "failed"
+        }
+      }
+    },
+    "tests/integration/cli/completion/status.test.ts": {
+      "suites": {
+        "scaffold completion status (integration) > status with completion installed": {
+          "should report installed and enabled status for bash": "failed",
+          "should report status for zsh with version information": "failed",
+          "should report status for fish": "failed"
+        },
+        "scaffold completion status (integration) > status with completion not installed": {
+          "should report not installed status": "failed",
+          "should suggest shell-specific installation command": "failed"
+        },
+        "scaffold completion status (integration) > status with verbose output": {
+          "should show detailed information when --verbose flag is used": "failed",
+          "should show file information when completion script exists": "failed",
+          "should handle missing script file gracefully in verbose mode": "failed"
+        },
+        "scaffold completion status (integration) > JSON output format": {
+          "should output valid JSON when --format json is used": "failed",
+          "should output valid JSON for not installed status": "failed"
+        },
+        "scaffold completion status (integration) > error scenarios": {
+          "should handle corrupted configuration gracefully": "failed",
+          "should handle permission errors gracefully": "passed",
+          "should handle invalid format option": "failed"
+        },
+        "scaffold completion status (integration) > edge cases": {
+          "should handle missing HOME environment variable": "passed",
+          "should detect shell correctly from environment": "failed",
+          "should show up-to-date status when version matches": "failed"
+        },
+        "scaffold completion status (integration) > output format validation": {
+          "should have consistent table formatting": "failed",
+          "should not output sensitive information": "passed",
+          "should show appropriate next steps based on status": "failed"
+        }
+      }
+    },
+    "tests/integration/cli/completion/uninstall.test.ts": {
+      "suites": {
+        "scaffold completion uninstall (integration) > successful uninstallation": {
+          "should uninstall completion for bash": "failed",
+          "should uninstall completion for zsh": "failed",
+          "should uninstall completion for fish": "failed",
+          "should show verbose output when --verbose flag is used": "failed"
+        },
+        "scaffold completion uninstall (integration) > error scenarios": {
+          "should handle when completion is not installed": "failed",
+          "should handle permission errors gracefully": "failed",
+          "should handle corrupted installation state": "passed"
+        },
+        "scaffold completion uninstall (integration) > edge cases": {
+          "should handle missing HOME environment variable": "passed",
+          "should clean up shell config even if completion file is missing": "failed",
+          "should preserve other content in shell config files": "failed"
+        },
+        "scaffold completion uninstall (integration) > output format validation": {
+          "should output in expected format for successful uninstallation": "failed",
+          "should provide shell-specific cleanup instructions": "failed",
+          "should not output sensitive information": "passed"
+        }
+      }
+    },
+    "tests/integration/commands/extend.test.ts": {
+      "suites": {
+        "scaffold extend command integration tests > help and usage": {
+          "should display help for extend command": "failed"
+        },
+        "scaffold extend command integration tests > template requirement": {
+          "should fail when template is not specified": "failed",
+          "should fail when template is not specified for current directory": "failed"
+        },
+        "scaffold extend command integration tests > project validation": {
+          "should fail when project directory does not exist": "passed",
+          "should fail when project is not scaffold-managed": "failed",
+          "should handle corrupted manifest files": "passed"
+        },
+        "scaffold extend command integration tests > successful extend scenarios": {
+          "should extend project with specified template": "failed",
+          "should extend current directory when no project path provided": "failed",
+          "should handle relative project paths": "failed",
+          "should handle absolute project paths": "failed"
+        },
+        "scaffold extend command integration tests > dry run mode": {
+          "should show what would be extended without making changes": "failed",
+          "should show variables in dry run": "failed"
+        },
+        "scaffold extend command integration tests > verbose mode": {
+          "should show detailed output in verbose mode": "failed",
+          "should show options in verbose mode": "failed"
+        },
+        "scaffold extend command integration tests > variables handling": {
+          "should accept valid JSON variables": "failed",
+          "should handle empty variables object": "failed",
+          "should fail with invalid JSON variables": "failed",
+          "should handle complex nested variables": "failed"
+        },
+        "scaffold extend command integration tests > force mode": {
+          "should handle force option without confirmation prompts": "failed",
+          "should handle force with dry run": "failed"
+        },
+        "scaffold extend command integration tests > template name validation": {
+          "should handle templates with spaces in names": "failed",
+          "should handle templates with special characters": "failed",
+          "should handle very long template names": "failed"
+        },
+        "scaffold extend command integration tests > option combinations": {
+          "should handle multiple options together": "failed",
+          "should handle conflicting options gracefully": "failed"
+        },
+        "scaffold extend command integration tests > exit codes": {
+          "should exit with code 0 for successful operations": "failed",
+          "should exit with code 0 for successful dry runs": "failed",
+          "should exit with code 1 for missing template argument": "passed",
+          "should exit with code 1 for non-existent project": "passed",
+          "should exit with code 1 for non-scaffold projects": "passed",
+          "should exit with code 1 for invalid variables": "passed"
+        },
+        "scaffold extend command integration tests > output format validation": {
+          "should produce consistent output format": "failed",
+          "should not leak sensitive information in output": "failed"
+        },
+        "scaffold extend command integration tests > error scenarios": {
+          "should handle permission errors gracefully": "passed",
+          "should handle very long project names": "passed",
+          "should handle special characters in project paths": "failed"
+        },
+        "scaffold extend command integration tests > service integration": {
+          "should integrate with project service": "failed",
+          "should handle service errors gracefully": "passed"
+        },
+        "scaffold extend command integration tests > edge cases": {
+          "should handle empty project directory with manifest": "failed",
+          "should handle projects with existing templates": "failed",
+          "should handle template names that match existing templates": "failed"
+        }
+      }
+    },
+    "tests/integration/commands/fix.test.ts": {
+      "suites": {
+        "scaffold fix command integration tests > help and usage": {
+          "should display help for fix command": "passed"
+        },
+        "scaffold fix command integration tests > non-scaffold projects": {
+          "should handle non-scaffold-managed projects gracefully": "failed",
+          "should handle current directory when not scaffold-managed": "failed"
+        },
+        "scaffold fix command integration tests > scaffold-managed projects": {
+          "should process valid scaffold projects": "failed",
+          "should process current directory when it is a scaffold project": "failed",
+          "should show project structure is valid for healthy projects": "failed"
+        },
+        "scaffold fix command integration tests > verbose mode": {
+          "should show detailed output in verbose mode": "failed",
+          "should show options in verbose mode": "failed"
+        },
+        "scaffold fix command integration tests > dry run mode": {
+          "should show what would be fixed without making changes": "failed"
+        },
+        "scaffold fix command integration tests > backup handling": {
+          "should handle backup option": "failed",
+          "should handle no-backup option": "failed"
+        },
+        "scaffold fix command integration tests > force mode": {
+          "should handle force option": "failed"
+        },
+        "scaffold fix command integration tests > path handling": {
+          "should handle absolute paths": "failed",
+          "should handle relative paths": "failed",
+          "should handle non-existent paths": "passed"
+        },
+        "scaffold fix command integration tests > malformed manifest handling": {
+          "should handle corrupted manifest files": "passed",
+          "should handle missing manifest files": "failed"
+        },
+        "scaffold fix command integration tests > exit codes": {
+          "should exit with code 0 for valid projects": "failed",
+          "should exit with code 0 for non-scaffold projects": "failed",
+          "should exit with code 1 for errors": "passed"
+        },
+        "scaffold fix command integration tests > output format validation": {
+          "should produce consistent report format": "failed",
+          "should not leak sensitive information": "failed"
+        },
+        "scaffold fix command integration tests > option combinations": {
+          "should handle multiple options together": "failed",
+          "should handle conflicting backup options": "failed"
+        },
+        "scaffold fix command integration tests > error scenarios": {
+          "should handle permission errors gracefully": "passed",
+          "should handle very long paths": "passed",
+          "should handle special characters in paths": "failed"
+        },
+        "scaffold fix command integration tests > service integration": {
+          "should integrate with project service": "failed",
+          "should handle service errors gracefully": "passed"
+        }
+      }
+    },
+    "tests/integration/commands/new.test.ts": {
+      "suites": {
+        "scaffold new command integration tests > help and usage": {
+          "should display help for new command": "passed"
+        },
+        "scaffold new command integration tests > dry run mode": {
+          "should show dry run output without creating files": "failed",
+          "should show dry run with verbose output": "failed"
+        },
+        "scaffold new command integration tests > template handling": {
+          "should show error when template not found": "passed",
+          "should show message when no templates available": "failed"
+        },
+        "scaffold new command integration tests > variable handling": {
+          "should handle valid JSON variables": "failed",
+          "should handle invalid JSON variables": "failed"
+        },
+        "scaffold new command integration tests > path handling": {
+          "should handle custom path option": "failed",
+          "should handle relative paths": "failed"
+        },
+        "scaffold new command integration tests > directory existence": {
+          "should handle existing directory gracefully": "failed"
+        },
+        "scaffold new command integration tests > verbose mode": {
+          "should show detailed output in verbose mode": "failed"
+        },
+        "scaffold new command integration tests > error scenarios": {
+          "should handle permission errors gracefully": "failed",
+          "should handle very long project names": "passed",
+          "should handle special characters in project names": "passed"
+        },
+        "scaffold new command integration tests > real template creation (when available)": {
+          "should handle template not found errors appropriately": "passed"
+        },
+        "scaffold new command integration tests > integration with template service": {
+          "should attempt to load templates from template service": "passed"
+        },
+        "scaffold new command integration tests > exit codes": {
+          "should exit with code 0 for successful dry runs": "failed",
+          "should exit with code 1 for invalid arguments": "passed"
+        },
+        "scaffold new command integration tests > output format validation": {
+          "should produce consistent output format": "failed",
+          "should not leak sensitive information in output": "failed"
+        },
+        "scaffold new command integration tests > argument parsing edge cases": {
+          "should handle missing project name gracefully": "passed",
+          "should handle multiple template specifications": "passed",
+          "should handle conflicting options gracefully": "passed"
+        }
+      }
+    },
+    "tests/integration/commands/template-alias.test.ts": {
+      "suites": {}
+    },
+    "tests/integration/commands/template.test.ts": {
+      "suites": {
+        "scaffold template command integration tests > help and usage": {
+          "should display help for template command": "passed"
+        },
+        "scaffold template command integration tests > list action": {
+          "should list available templates": "failed",
+          "should show verbose template information": "failed",
+          "should handle no templates available": "failed"
+        },
+        "scaffold template command integration tests > create action": {
+          "should require template name for create": "failed",
+          "should handle dry run for create": "failed"
+        },
+        "scaffold template command integration tests > delete action": {
+          "should require template identifier for delete": "failed",
+          "should handle non-existent template deletion": "passed",
+          "should handle dry run for delete": "failed",
+          "should handle force delete": "failed"
+        },
+        "scaffold template command integration tests > export action": {
+          "should require template identifier for export": "failed",
+          "should handle export to default path": "failed",
+          "should handle export to custom path": "failed",
+          "should handle dry run for export": "failed",
+          "should handle non-existent template export": "passed"
+        },
+        "scaffold template command integration tests > import action": {
+          "should require archive path for import": "failed",
+          "should handle dry run for import": "failed",
+          "should handle non-existent archive import": "passed",
+          "should handle import with valid archive": "failed"
+        },
+        "scaffold template command integration tests > alias action": {
+          "should require template identifier for alias": "failed",
+          "should require new alias for alias action": "failed",
+          "should handle alias creation": "passed",
+          "should handle non-existent template for alias": "passed"
+        },
+        "scaffold template command integration tests > unknown action": {
+          "should handle unknown actions": "failed"
+        },
+        "scaffold template command integration tests > verbose mode": {
+          "should show verbose output for all actions": "failed",
+          "should show identifier and alias in verbose mode": "passed"
+        },
+        "scaffold template command integration tests > option combinations": {
+          "should handle multiple options together": "failed",
+          "should handle force and dry-run together": "failed"
+        },
+        "scaffold template command integration tests > exit codes": {
+          "should exit with code 0 for successful operations": "failed",
+          "should exit with code 1 for errors": "passed",
+          "should exit with code 1 for missing required arguments": "passed"
+        },
+        "scaffold template command integration tests > output format validation": {
+          "should produce consistent list output format": "failed",
+          "should not leak sensitive information in output": "failed"
+        },
+        "scaffold template command integration tests > template name validation": {
+          "should handle templates with spaces in names": "failed",
+          "should handle templates with special characters": "failed",
+          "should handle very long template names": "failed"
+        },
+        "scaffold template command integration tests > service integration": {
+          "should integrate with template service": "failed",
+          "should handle service errors gracefully": "passed"
+        },
+        "scaffold template command integration tests > file system operations": {
+          "should handle read-only template directories": "passed",
+          "should handle missing template directories": "failed"
+        }
+      }
+    },
+    "tests/unit/cli/commands/fix.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/cli/commands/new.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/cli/commands/template.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/models/completion-config.test.ts": {
+      "suites": {
+        "CompletionConfig Model > CompletionConfig interface": {
+          "should create valid completion config with all properties": "passed",
+          "should create config with null values for uninstalled state": "passed",
+          "should accept all valid shell types": "passed",
+          "should handle mixed enabled/installed states": "passed"
+        },
+        "CompletionConfig Model > CompletionContext interface": {
+          "should create valid completion context": "passed",
+          "should handle empty context": "passed",
+          "should handle complex command line scenarios": "passed"
+        },
+        "CompletionConfig Model > CompletionProvider interface": {
+          "should create provider with required properties": "passed",
+          "should handle optional methods": "passed",
+          "should implement provider interface correctly": "passed"
+        },
+        "CompletionConfig Model > CommandMetadata interface": {
+          "should create valid command metadata": "passed",
+          "should handle nested subcommands": "passed"
+        },
+        "CompletionConfig Model > SubcommandMetadata interface": {
+          "should create subcommand with all properties": "passed",
+          "should handle empty collections": "passed"
+        },
+        "CompletionConfig Model > OptionMetadata interface": {
+          "should create string option with choices": "passed",
+          "should create boolean flag option": "passed",
+          "should create number option": "passed",
+          "should create path option": "passed",
+          "should handle option without short form": "passed",
+          "should handle option without default value": "passed"
+        },
+        "CompletionConfig Model > ArgumentMetadata interface": {
+          "should create required static argument": "passed",
+          "should create optional variadic argument": "passed",
+          "should create dynamic completion argument": "passed",
+          "should handle all completion types": "passed"
+        },
+        "CompletionConfig Model > Type validation and edge cases": {
+          "should handle Date serialization in completion config": "passed",
+          "should handle Map serialization in completion context": "passed",
+          "should handle unicode characters in completion data": "passed",
+          "should handle empty and whitespace strings": "passed",
+          "should handle very long command lines": "passed",
+          "should handle provider priority edge cases": "passed"
+        }
+      }
+    },
+    "tests/unit/services/completion-providers/file-completion-provider.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/completion-providers/project-completion-provider.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/completion-providers/template-completion-provider.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/completion-service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/configuration.service.test.ts": {
+      "suites": {
+        "ConfigurationService > constructor": {
+          "should initialize with project and workspace roots": "passed",
+          "should work without project and workspace roots": "passed"
+        },
+        "ConfigurationService > loadConfiguration": {
+          "should load all configuration levels": "passed",
+          "should create default global config if missing": "passed",
+          "should handle missing workspace and project configs gracefully": "passed",
+          "should handle corrupted config files gracefully": "passed",
+          "should handle filesystem permission errors": "passed"
+        },
+        "ConfigurationService > get": {
+          "should get value from specific scope": "passed",
+          "should cascade through scopes when no scope specified": "passed",
+          "should support nested key access": "passed",
+          "should return undefined for non-existent keys": "passed",
+          "should handle environment variable overrides": "passed",
+          "should parse JSON environment variables": "passed",
+          "should throw error if configuration not loaded": "passed"
+        },
+        "ConfigurationService > set": {
+          "should set value at specified scope": "passed",
+          "should create nested objects for deep keys": "passed",
+          "should load configuration if not already loaded": "passed",
+          "should create default config for missing scope": "passed"
+        },
+        "ConfigurationService > getAll": {
+          "should return complete config for specific scope": "passed",
+          "should return effective configuration when no scope specified": "passed"
+        },
+        "ConfigurationService > reset": {
+          "should reset configuration to defaults": "passed"
+        },
+        "ConfigurationService > getConfigPath": {
+          "should return correct paths for each scope": "passed",
+          "should throw error for workspace scope without workspace root": "passed",
+          "should throw error for project scope without project root": "passed",
+          "should throw error for unknown scope": "passed"
+        },
+        "ConfigurationService > saveConfiguration": {
+          "should save configuration to correct file": "passed",
+          "should handle concurrent saves to same scope": "passed",
+          "should throw error for non-existent scope": "passed"
+        },
+        "ConfigurationService > hasConfiguration": {
+          "should return true for loaded configurations": "passed",
+          "should return false for unloaded configurations": "passed"
+        },
+        "ConfigurationService > getEffectiveConfiguration": {
+          "should merge configurations with correct precedence": "passed",
+          "should apply environment overrides": "passed",
+          "should work with only global configuration": "passed"
+        },
+        "ConfigurationService > configuration validation and migration": {
+          "should handle invalid configuration data": "passed",
+          "should migrate old configuration format": "passed",
+          "should generate unique IDs for configurations": "passed"
+        },
+        "ConfigurationService > environment variable handling": {
+          "should handle boolean environment variables": "passed",
+          "should handle string environment variables": "passed",
+          "should handle complex JSON environment variables": "passed",
+          "should ignore invalid JSON in environment variables": "passed"
+        },
+        "ConfigurationService > edge cases": {
+          "should handle empty configuration files": "passed",
+          "should handle very deep nested keys": "passed",
+          "should handle special characters in values": "passed",
+          "should handle null and undefined values": "passed"
+        }
+      }
+    },
+    "tests/unit/services/file-system.service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/identifier-service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/project-creation.service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/project-extension.service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/project-fix.service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/project-manifest.service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/project-validation.service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/template-identifier-service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/template-service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/services/variable-substitution-service.test.ts": {
+      "suites": {}
+    },
+    "tests/unit/templates/demo-templates.test.ts": {
+      "suites": {
+        "Demo Templates > Template Structure > react-typescript": {
+          "should have template.json file": "passed",
+          "should have valid JSON structure": "passed",
+          "should have files directory": "passed",
+          "should have valid semantic version": "passed",
+          "should have all template files referenced in template.json": "passed",
+          "should have valid variable definitions": "passed",
+          "should have unique variable names": "passed",
+          "should have valid rules configuration": "passed"
+        },
+        "Demo Templates > Template Structure > nodejs-api": {
+          "should have template.json file": "passed",
+          "should have valid JSON structure": "passed",
+          "should have files directory": "passed",
+          "should have valid semantic version": "passed",
+          "should have all template files referenced in template.json": "passed",
+          "should have valid variable definitions": "passed",
+          "should have unique variable names": "passed",
+          "should have valid rules configuration": "passed"
+        },
+        "Demo Templates > Template Structure > python-fastapi": {
+          "should have template.json file": "passed",
+          "should have valid JSON structure": "passed",
+          "should have files directory": "passed",
+          "should have valid semantic version": "passed",
+          "should have all template files referenced in template.json": "passed",
+          "should have valid variable definitions": "passed",
+          "should have unique variable names": "passed",
+          "should have valid rules configuration": "passed"
+        },
+        "Demo Templates > React TypeScript Template": {
+          "should have React-specific files": "passed",
+          "should have React-specific folders": "passed",
+          "should have PROJECT_NAME variable": "passed"
+        },
+        "Demo Templates > Node.js API Template": {
+          "should have API-specific files": "passed",
+          "should have API-specific folders": "passed",
+          "should have DATABASE_TYPE variable": "passed",
+          "should have API_PREFIX variable": "passed"
+        },
+        "Demo Templates > Python FastAPI Template": {
+          "should have Python-specific files": "passed",
+          "should have Python-specific folders": "passed",
+          "should use snake_case file naming": "passed",
+          "should have API_TITLE and API_VERSION variables": "passed"
+        },
+        "Demo Templates > Variable Substitution": {
+          "react-typescript should have consistent variable usage": "passed",
+          "nodejs-api should have consistent variable usage": "passed",
+          "python-fastapi should have consistent variable usage": "passed"
+        },
+        "Demo Templates > Template Rules": {
+          "react-typescript should have valid file naming convention": "passed",
+          "react-typescript should have required files defined": "passed",
+          "nodejs-api should have valid file naming convention": "passed",
+          "nodejs-api should have required files defined": "passed",
+          "python-fastapi should have valid file naming convention": "passed",
+          "python-fastapi should have required files defined": "passed"
+        }
+      }
+    }
+  }
+}
