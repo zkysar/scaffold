@@ -18,6 +18,8 @@ import {
   ProjectCreationService,
   ProjectManifestService,
   TemplateService,
+  FileSystemService,
+  VariableSubstitutionService,
 } from '@/services';
 
 interface NewCommandOptions {

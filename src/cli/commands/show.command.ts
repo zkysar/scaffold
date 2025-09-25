@@ -16,6 +16,7 @@ import type { ProjectManifest } from '@/models';
 import {
   TemplateService,
   ConfigurationService,
+  TemplateIdentifierService,
 } from '@/services';
 
 interface ShowCommandOptions {

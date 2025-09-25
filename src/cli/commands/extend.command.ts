@@ -18,6 +18,9 @@ import {
   ProjectExtensionService,
   ProjectManifestService,
   TemplateService,
+  FileSystemService,
+  ProjectValidationService,
+  VariableSubstitutionService,
 } from '@/services';
 
 interface ExtendCommandOptions {

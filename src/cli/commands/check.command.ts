@@ -17,6 +17,8 @@ import {
   ProjectManifestService,
   TemplateService,
   FileSystemService,
+  VariableSubstitutionService,
+  TemplateIdentifierService,
 } from '@/services';
 
 interface CheckCommandOptions {

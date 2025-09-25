@@ -12,8 +12,7 @@ import { ExitCode, exitWithCode } from '@/constants/exit-codes';
 import { logger } from '@/lib/logger';
 import { shortSHA } from '@/lib/sha';
 import type { Template } from '@/models';
-import { TemplateService } from '@/services';
-import { TemplateIdentifierService } from '@/services/template-identifier-service';
+import { TemplateService, TemplateIdentifierService } from '@/services';
 
 interface TemplateCommandOptions {
   verbose?: boolean;

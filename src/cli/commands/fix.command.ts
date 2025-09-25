@@ -12,7 +12,14 @@ import { DependencyContainer } from 'tsyringe';
 
 import { ExitCode, exitWithCode } from '@/constants/exit-codes';
 import { logger } from '@/lib/logger';
-import { ProjectFixService, ProjectManifestService } from '@/services';
+import {
+  ProjectFixService,
+  ProjectManifestService,
+  ProjectValidationService,
+  TemplateService,
+  FileSystemService,
+  VariableSubstitutionService,
+} from '@/services';
 
 interface FixCommandOptions {
   verbose?: boolean;
