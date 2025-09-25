@@ -2,22 +2,18 @@
   "files": {
     "src/cli/commands/config.command.ts": [
       {
-        "line": 76,
-        "column": 30,
-        "errorCode": "TS2554",
-        "message": "Expected 0 arguments, but got 2."
-      },
-      {
-        "line": 79,
-        "column": 44,
-        "errorCode": "TS2554",
-        "message": "Expected 1 arguments, but got 3."
-      },
-      {
         "line": 82,
         "column": 56,
         "errorCode": "TS2554",
         "message": "Expected 3 arguments, but got 4."
+      }
+    ],
+    "src/cli/completion/command-registry.ts": [
+      {
+        "line": 49,
+        "column": 36,
+        "errorCode": "TS2554",
+        "message": "Expected 1 arguments, but got 0."
       }
     ],
     "src/services/completion-providers/file-completion-provider.ts": [
@@ -98,6 +94,18 @@
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
+      },
+      {
+        "line": 687,
+        "column": 23,
+        "errorCode": "TS2339",
+        "message": "Property 'filter' does not exist on type 'Promise<string[]>'."
+      },
+      {
+        "line": 687,
+        "column": 30,
+        "errorCode": "TS7006",
+        "message": "Parameter 'option' implicitly has an 'any' type."
       }
     ],
     "src/services/project-creation.service.ts": [
@@ -122,61 +130,61 @@
     ],
     "src/services/project-extension.service.ts": [
       {
+        "line": 34,
+        "column": 5,
+        "errorCode": "TS1206",
+        "message": "Decorators are not valid here."
+      },
+      {
+        "line": 35,
+        "column": 5,
+        "errorCode": "TS1206",
+        "message": "Decorators are not valid here."
+      },
+      {
+        "line": 35,
+        "column": 62,
+        "errorCode": "TS2304",
+        "message": "Cannot find name 'IFileSystemService'."
+      },
+      {
         "line": 36,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
       },
       {
-        "line": 37,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 37,
-        "column": 62,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IFileSystemService'."
-      },
-      {
-        "line": 38,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 38,
+        "line": 36,
         "column": 76,
         "errorCode": "TS2304",
         "message": "Cannot find name 'IVariableSubstitutionService'."
       },
       {
-        "line": 39,
+        "line": 37,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
       },
       {
-        "line": 40,
+        "line": 38,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
       },
       {
-        "line": 40,
+        "line": 38,
         "column": 75,
-        "errorCode": "TS2552",
-        "message": "Cannot find name 'IProjectValidationService'. Did you mean 'IProjectCreationService'?"
+        "errorCode": "TS2304",
+        "message": "Cannot find name 'IProjectValidationService'."
       },
       {
-        "line": 121,
+        "line": 119,
         "column": 11,
         "errorCode": "TS7006",
         "message": "Parameter 'r' implicitly has an 'any' type."
       },
       {
-        "line": 124,
+        "line": 122,
         "column": 44,
         "errorCode": "TS7006",
         "message": "Parameter 'e' implicitly has an 'any' type."
@@ -224,6 +232,12 @@
     ],
     "src/services/project-validation.service.ts": [
       {
+        "line": 41,
+        "column": 5,
+        "errorCode": "TS1206",
+        "message": "Decorators are not valid here."
+      },
+      {
         "line": 42,
         "column": 5,
         "errorCode": "TS1206",
@@ -236,19 +250,13 @@
         "message": "Decorators are not valid here."
       },
       {
-        "line": 44,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 44,
+        "line": 43,
         "column": 76,
         "errorCode": "TS2304",
         "message": "Cannot find name 'IVariableSubstitutionService'."
       },
       {
-        "line": 45,
+        "line": 44,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."

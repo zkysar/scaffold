@@ -46,7 +46,8 @@ export class CommandRegistry {
     if (!this.program) {
       // Lazy load the program to avoid circular dependencies
       const programModule = await import('../program');
-      this.program = programModule.createProgram();
+      const { container } = await import('@/di/container');
+      this.program = programModule.createProgram(container);
     }
     return this.program as Command;
   }

@@ -8,8 +8,6 @@ import {
   FakeProjectCreationService,
   FakeProjectValidationService,
   FakeFileSystemService,
-  createAllFakes,
-  resetAllFakes,
 } from '@tests/fakes/index';
 
 describe('Fake Services Usage Examples', () => {

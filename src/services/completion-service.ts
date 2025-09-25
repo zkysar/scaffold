@@ -673,7 +673,7 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     if (command) commandPath.push(command);
     if (subcommand) commandPath.push(subcommand);
 
-    const allOptions = registry.getCommandOptions(commandPath);
+    const allOptions = await registry.getCommandOptions(commandPath);
 
     // Extract already-used flags from the command line
     const usedFlags = new Set<string>();

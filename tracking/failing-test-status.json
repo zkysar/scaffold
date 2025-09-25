@@ -2,14 +2,22 @@
   "files": {
     "tests/integration/cli/cli-commands.test.ts": {
       "suites": {
+        "Scaffold CLI Integration Tests > scaffold --help": {
+          "should display help information": "failed"
+        },
+        "Scaffold CLI Integration Tests > scaffold new": {
+          "should show help when no project name provided": "failed"
+        },
         "Scaffold CLI Integration Tests > scaffold check": {
           "should check current directory": "failed",
           "should report when not a scaffold project": "failed"
         },
         "Scaffold CLI Integration Tests > scaffold completion": {
+          "should show completion help": "failed",
           "should check completion status": "failed"
         },
         "Scaffold CLI Integration Tests > Error handling": {
+          "should show error for invalid command": "failed",
           "should handle missing required arguments gracefully": "failed"
         }
       }
@@ -52,6 +60,7 @@
           "should reinstall when --force flag is used": "failed"
         },
         "scaffold completion install (integration) > error scenarios": {
+          "should fail with invalid shell type": "failed",
           "should warn when already installed without force": "failed"
         },
         "scaffold completion install (integration) > edge cases": {
@@ -77,6 +86,7 @@
           "should not show duplicate instructions when both --instructions and --verbose are used": "failed"
         },
         "scaffold completion script (integration) > error scenarios": {
+          "should fail with invalid shell type": "failed",
           "should handle shell detection failure gracefully": "failed"
         },
         "scaffold completion script (integration) > script content validation": {
@@ -161,6 +171,7 @@
           "should fail when template is not specified for current directory": "failed"
         },
         "scaffold extend command integration tests > project validation": {
+          "should fail when project directory does not exist": "failed",
           "should fail when project is not scaffold-managed": "failed"
         },
         "scaffold extend command integration tests > successful extend scenarios": {
@@ -219,6 +230,9 @@
     },
     "tests/integration/commands/fix.test.ts": {
       "suites": {
+        "scaffold fix command integration tests > help and usage": {
+          "should display help for fix command": "failed"
+        },
         "scaffold fix command integration tests > non-scaffold projects": {
           "should handle non-scaffold-managed projects gracefully": "failed",
           "should handle current directory when not scaffold-managed": "failed"
@@ -244,7 +258,8 @@
         },
         "scaffold fix command integration tests > path handling": {
           "should handle absolute paths": "failed",
-          "should handle relative paths": "failed"
+          "should handle relative paths": "failed",
+          "should handle non-existent paths": "failed"
         },
         "scaffold fix command integration tests > malformed manifest handling": {
           "should handle missing manifest files": "failed"
@@ -271,6 +286,9 @@
     },
     "tests/integration/commands/new.test.ts": {
       "suites": {
+        "scaffold new command integration tests > help and usage": {
+          "should display help for new command": "failed"
+        },
         "scaffold new command integration tests > dry run mode": {
           "should show dry run output without creating files": "failed",
           "should show dry run with verbose output": "failed"
@@ -306,6 +324,9 @@
     },
     "tests/integration/commands/template.test.ts": {
       "suites": {
+        "scaffold template command integration tests > help and usage": {
+          "should display help for template command": "failed"
+        },
         "scaffold template command integration tests > list action": {
           "should list available templates": "failed",
           "should show verbose template information": "failed",

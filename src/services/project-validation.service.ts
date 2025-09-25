@@ -20,6 +20,8 @@ import type { ITemplateService } from '@/services/template-service';
 import { TemplateService } from '@/services/template-service';
 import type { IFileSystemService } from '@/services/file-system.service';
 import { FileSystemService } from '@/services/file-system.service';
+import type { IVariableSubstitutionService } from '@/services/variable-substitution.service';
+import { VariableSubstitutionService } from '@/services/variable-substitution.service';
 
 export interface IProjectValidationService {
   /**

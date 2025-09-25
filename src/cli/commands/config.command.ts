@@ -79,7 +79,7 @@ async function handleConfigCommand(
       await handleGetConfig(configService, key);
       break;
     case 'set':
-      await handleSetConfig(configService, key, value, options);
+      await handleSetConfig(key, value, options);
       break;
     case 'reset':
       await handleResetConfig(configService, key, options);
