@@ -14,8 +14,14 @@ import type {
 } from '@/models';
 import type { IProjectManifestService } from '@/services/project-manifest.service';
 import { ProjectManifestService } from '@/services/project-manifest.service';
+import type { IFileSystemService } from '@/services/file-system.service';
+import { FileSystemService } from '@/services/file-system.service';
+import type { IProjectValidationService } from '@/services/project-validation.service';
+import { ProjectValidationService } from '@/services/project-validation.service';
 import type { ITemplateService } from '@/services/template-service';
 import { TemplateService } from '@/services/template-service';
+import type { IVariableSubstitutionService } from '@/services/variable-substitution.service';
+import { VariableSubstitutionService } from '@/services/variable-substitution.service';
 
 export interface IProjectExtensionService {
   /**
@@ -33,12 +39,9 @@ export class ProjectExtensionService implements IProjectExtensionService {
   constructor(
     @inject(TemplateService) private readonly templateService: ITemplateService,
     @inject(FileSystemService) private readonly fileService: IFileSystemService,
-    @inject(VariableSubstitutionService)
-    private readonly variableService: IVariableSubstitutionService,
-    @inject(ProjectManifestService)
-    private readonly manifestService: IProjectManifestService,
-    @inject(ProjectValidationService)
-    private readonly validationService: IProjectValidationService
+    @inject(VariableSubstitutionService) private readonly variableService: IVariableSubstitutionService,
+    @inject(ProjectManifestService) private readonly manifestService: IProjectManifestService,
+    @inject(ProjectValidationService) private readonly validationService: IProjectValidationService
   ) {}
 
   async extendProject(

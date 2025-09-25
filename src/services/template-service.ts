@@ -98,8 +98,7 @@ export class TemplateService implements ITemplateService {
   private readonly cacheDir: string;
 
   constructor(
-    @inject(TemplateIdentifierService)
-    private readonly identifierService: TemplateIdentifierService,
+    @inject(TemplateIdentifierService) private readonly identifierService: TemplateIdentifierService,
     options?: TemplateServiceOptions
   ) {
     const homeDir = os.homedir();

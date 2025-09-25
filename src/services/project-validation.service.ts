@@ -20,6 +20,8 @@ import type { IProjectManifestService } from '@/services/project-manifest.servic
 import { ProjectManifestService } from '@/services/project-manifest.service';
 import type { ITemplateService } from '@/services/template-service';
 import { TemplateService } from '@/services/template-service';
+import type { IVariableSubstitutionService } from '@/services/variable-substitution.service';
+import { VariableSubstitutionService } from '@/services/variable-substitution.service';
 
 export interface IProjectValidationService {
   /**
@@ -40,10 +42,8 @@ export class ProjectValidationService implements IProjectValidationService {
   constructor(
     @inject(TemplateService) private readonly templateService: ITemplateService,
     @inject(FileSystemService) private readonly fileService: IFileSystemService,
-    @inject(VariableSubstitutionService)
-    private readonly variableService: IVariableSubstitutionService,
-    @inject(ProjectManifestService)
-    private readonly manifestService: IProjectManifestService
+    @inject(VariableSubstitutionService) private readonly variableService: IVariableSubstitutionService,
+    @inject(ProjectManifestService) private readonly manifestService: IProjectManifestService
   ) {}
 
   async validateProject(projectPath: string): Promise<ValidationReport> {

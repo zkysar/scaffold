@@ -6,6 +6,11 @@ import { randomUUID } from 'crypto';
 
 import { injectable, inject } from 'tsyringe';
 
+import { enhanceError } from '@/lib/error-utils';
+import type { Template, ValidationResult } from '@/models';
+import type { IFileSystemService } from '@/services/file-system.service';
+import { FileSystemService } from '@/services/file-system.service';
+
 export interface VariableSubstitutionOptions {
   preserveEscapes?: boolean;
   throwOnMissing?: boolean;
@@ -78,9 +83,7 @@ export class VariableSubstitutionService
   private readonly variablePattern = /\\?\{\{([^}]+)\}\}/g;
   private readonly escapePattern = /\\(\{\{[^}]+\}\})/g;
 
-  constructor(
-    @inject(FileSystemService) private readonly fileService: IFileSystemService
-  ) {}
+  constructor(@inject(FileSystemService) private readonly fileService: IFileSystemService) {}
 
   substituteVariables(
     content: string,
