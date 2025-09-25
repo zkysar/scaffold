@@ -1,21 +1,5 @@
 {
   "files": {
-    "src/cli/commands/config.command.ts": [
-      {
-        "line": 82,
-        "column": 56,
-        "errorCode": "TS2554",
-        "message": "Expected 3 arguments, but got 4."
-      }
-    ],
-    "src/cli/completion/command-registry.ts": [
-      {
-        "line": 49,
-        "column": 36,
-        "errorCode": "TS2554",
-        "message": "Expected 1 arguments, but got 0."
-      }
-    ],
     "src/services/completion-providers/file-completion-provider.ts": [
       {
         "line": 73,
@@ -94,18 +78,6 @@
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
-      },
-      {
-        "line": 687,
-        "column": 23,
-        "errorCode": "TS2339",
-        "message": "Property 'filter' does not exist on type 'Promise<string[]>'."
-      },
-      {
-        "line": 687,
-        "column": 30,
-        "errorCode": "TS7006",
-        "message": "Parameter 'option' implicitly has an 'any' type."
       }
     ],
     "src/services/project-creation.service.ts": [
@@ -130,64 +102,34 @@
     ],
     "src/services/project-extension.service.ts": [
       {
-        "line": 34,
+        "line": 40,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
       },
       {
-        "line": 35,
+        "line": 41,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
       },
       {
-        "line": 35,
-        "column": 62,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IFileSystemService'."
-      },
-      {
-        "line": 36,
+        "line": 42,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
       },
       {
-        "line": 36,
-        "column": 76,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IVariableSubstitutionService'."
-      },
-      {
-        "line": 37,
+        "line": 43,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
       },
       {
-        "line": 38,
+        "line": 44,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
-      },
-      {
-        "line": 38,
-        "column": 75,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IProjectValidationService'."
-      },
-      {
-        "line": 119,
-        "column": 11,
-        "errorCode": "TS7006",
-        "message": "Parameter 'r' implicitly has an 'any' type."
-      },
-      {
-        "line": 122,
-        "column": 44,
-        "errorCode": "TS7006",
-        "message": "Parameter 'e' implicitly has an 'any' type."
       }
     ],
     "src/services/project-fix.service.ts": [
@@ -232,31 +174,25 @@
     ],
     "src/services/project-validation.service.ts": [
       {
-        "line": 41,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 42,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
         "line": 43,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
-      },
-      {
-        "line": 43,
-        "column": 76,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IVariableSubstitutionService'."
       },
       {
         "line": 44,
+        "column": 5,
+        "errorCode": "TS1206",
+        "message": "Decorators are not valid here."
+      },
+      {
+        "line": 45,
+        "column": 5,
+        "errorCode": "TS1206",
+        "message": "Decorators are not valid here."
+      },
+      {
+        "line": 46,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
@@ -272,52 +208,10 @@
     ],
     "src/services/variable-substitution.service.ts": [
       {
-        "line": 54,
-        "column": 15,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'Template'."
-      },
-      {
-        "line": 56,
-        "column": 6,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'ValidationResult'."
-      },
-      {
-        "line": 82,
+        "line": 87,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
-      },
-      {
-        "line": 82,
-        "column": 62,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IFileSystemService'."
-      },
-      {
-        "line": 156,
-        "column": 13,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'enhanceError'."
-      },
-      {
-        "line": 178,
-        "column": 15,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'Template'."
-      },
-      {
-        "line": 180,
-        "column": 6,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'ValidationResult'."
-      },
-      {
-        "line": 181,
-        "column": 19,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'ValidationResult'."
       }
     ],
     "tests/contract/commands/scaffold-check.test.ts": [
@@ -1304,32 +1198,22 @@
     ],
     "tests/fakes/example.test.ts": [
       {
-        "line": 11,
-        "column": 3,
-        "errorCode": "TS2305",
-        "message": "Module '\"@tests/fakes/index\"' has no exported member 'createAllFakes'."
+        "line": 116,
+        "column": 34,
+        "errorCode": "TS2304",
+        "message": "Cannot find name 'createAllFakes'."
       },
       {
-        "line": 12,
-        "column": 3,
-        "errorCode": "TS2305",
-        "message": "Module '\"@tests/fakes/index\"' has no exported member 'resetAllFakes'."
-      }
-    ],
-    "tests/helpers/test-utils.ts": [
+        "line": 119,
+        "column": 15,
+        "errorCode": "TS2304",
+        "message": "Cannot find name 'createAllFakes'."
+      },
       {
-        "line": 33,
-        "column": 65,
-        "errorCode": "TS2554",
-        "message": "Expected 1 arguments, but got 2."
-      }
-    ],
-    "tests/integration/commands/template-alias.test.ts": [
-      {
-        "line": 28,
-        "column": 23,
-        "errorCode": "TS2554",
-        "message": "Expected 1-2 arguments, but got 0."
+        "line": 120,
+        "column": 7,
+        "errorCode": "TS2304",
+        "message": "Cannot find name 'resetAllFakes'."
       }
     ],
     "tests/unit/cli/commands/fix.test.ts": [
@@ -1952,10 +1836,10 @@
     ],
     "tests/unit/services/project-extension.service.test.ts": [
       {
-        "line": 123,
+        "line": 122,
         "column": 7,
         "errorCode": "TS2345",
-        "message": "Argument of type '(projectPath: string, manifest: ProjectManifest) => Promise<void>' is not assignable to parameter of type 'IProjectManifestService'."
+        "message": "Argument of type '(projectPath: string) => Promise<ProjectManifest | null>' is not assignable to parameter of type 'IVariableSubstitutionService'."
       }
     ],
     "tests/unit/services/project-fix.service.test.ts": [
