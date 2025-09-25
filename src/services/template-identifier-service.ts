@@ -8,6 +8,10 @@ import * as path from 'path';
 
 import { injectable } from 'tsyringe';
 
+import { generateSHAFromObject } from '@/lib/sha';
+import type { Template } from '@/models';
+import { IdentifierService } from './identifier-service';
+
 /**
  * Service for managing template identifiers (SHAs and aliases)
  */
@@ -69,7 +73,7 @@ export class TemplateIdentifierService extends IdentifierService {
       ...template,
       id: sha,
       // Remove aliases from the template itself (managed separately)
-      aliases: undefined as any
+      aliases: undefined
     };
 
     return migratedTemplate;

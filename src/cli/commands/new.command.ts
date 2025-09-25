@@ -6,7 +6,7 @@
 import { existsSync } from 'fs';
 import { resolve } from 'path';
 
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
@@ -185,7 +185,7 @@ async function handleNewCommand(
   const targetPath = resolve(basePath, finalProjectName);
 
   if (verbose) {
-    logger.info(chalk.blue('Target path:'), targetPath);
+    logger.info(`${chalk.blue('Target path:')} ${targetPath}`);
   }
 
   // Check if target directory already exists
@@ -214,7 +214,7 @@ async function handleNewCommand(
   if (options.template) {
     templateIds = [options.template];
     if (verbose) {
-      logger.info(chalk.blue('Using template:'), options.template);
+      logger.info(`${chalk.blue('Using template:')} ${options.template}`);
     }
   } else {
     // Use the new template selector utility
@@ -222,7 +222,7 @@ async function handleNewCommand(
       templateIds = await selectTemplates(templateService, { verbose });
 
       if (verbose) {
-        logger.info(chalk.blue('Selected templates:'), templateIds);
+        logger.info(`${chalk.blue('Selected templates:')} ${templateIds}`);
       }
     } catch (error) {
       if (
@@ -252,7 +252,7 @@ async function handleNewCommand(
     try {
       variables = JSON.parse(options.variables);
       if (verbose) {
-        logger.info(chalk.blue('Variables:'), variables);
+        logger.info(`${chalk.blue('Variables:')} ${variables}`);
       }
     } catch (error) {
       throw new Error(
@@ -263,10 +263,10 @@ async function handleNewCommand(
 
   if (dryRun) {
     logger.info(chalk.yellow('DRY RUN - Showing what would be created'));
-    logger.info(chalk.blue('Project name:'), finalProjectName);
-    logger.info(chalk.blue('Target path:'), targetPath);
-    logger.info(chalk.blue('Templates:'), templateIds);
-    logger.info(chalk.blue('Variables:'), variables);
+    logger.info(`${chalk.blue('Project name:')} ${finalProjectName}`);
+    logger.info(`${chalk.blue('Target path:')} ${targetPath}`);
+    logger.info(`${chalk.blue('Templates:')} ${templateIds}`);
+    logger.info(`${chalk.blue('Variables:')} ${variables}`);
     logger.info('');
   }
 
@@ -291,16 +291,15 @@ async function handleNewCommand(
     logger.info(chalk.green('✓ Project created successfully!'));
   }
 
-  logger.info(chalk.blue('Project name:'), manifest.projectName);
-  logger.info(chalk.blue('Location:'), targetPath);
+  logger.info(`${chalk.blue('Project name:')} ${manifest.projectName}`);
+  logger.info(`${chalk.blue('Location:')} ${targetPath}`);
   logger.info(
-    chalk.blue('Templates applied:'),
-    manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')
+    `${chalk.blue('Templates applied:')} ${manifest.templates.map(t => `${t.name}@${t.version}`).join(', ')}`
   );
 
   if (verbose) {
-    logger.info(chalk.blue('Manifest ID:'), manifest.id);
-    logger.info(chalk.blue('Created at:'), manifest.created);
+    logger.info(`${chalk.blue('Manifest ID:')} ${manifest.id}`);
+    logger.info(`${chalk.blue('Created at:')} ${manifest.created}`);
   }
 
   exitWithCode(ExitCode.SUCCESS);
