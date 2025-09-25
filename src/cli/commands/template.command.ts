@@ -95,7 +95,7 @@ async function handleTemplateCommand(
       await handleImportTemplate(templateService, identifier, options);
       break;
     case 'alias':
-      await handleAliasTemplate(identifierService, templateService, identifier, alias, options);
+      await handleAliasTemplate(identifierService, templateService, identifier, alias);
       break;
     default:
       logger.error(chalk.red('Error:'), `Unknown action: ${action}`);
@@ -509,8 +509,7 @@ async function handleAliasTemplate(
   identifierService: TemplateIdentifierService,
   templateService: TemplateService,
   identifier: string | undefined,
-  alias: string | undefined,
-  options: TemplateCommandOptions
+  alias: string | undefined
 ): Promise<void> {
   if (!identifier) {
     logger.error(chalk.red('Error:'), 'Template SHA or existing alias is required');

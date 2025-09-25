@@ -42,11 +42,11 @@ export class CommandRegistry {
   /**
    * Get the program instance (lazy initialization)
    */
-  private getProgram(): Command {
+  private async getProgram(): Promise<Command> {
     if (!this.program) {
       // Lazy load the program to avoid circular dependencies
-      const { createProgram } = require('../program');
-      this.program = createProgram();
+      const programModule = await import('../program');
+      this.program = programModule.createProgram();
     }
     return this.program as Command;
   }
@@ -54,8 +54,8 @@ export class CommandRegistry {
   /**
    * Get all top-level command names
    */
-  getTopLevelCommands(): string[] {
-    const program = this.getProgram();
+  async getTopLevelCommands(): Promise<string[]> {
+    const program = await this.getProgram();
 
     // Filter out hidden commands (hidden property may not exist on all Commands)
     const visibleCommands = program.commands
@@ -68,8 +68,8 @@ export class CommandRegistry {
   /**
    * Get subcommands for a given command
    */
-  getSubcommands(commandName: string): string[] {
-    const program = this.getProgram();
+  async getSubcommands(commandName: string): Promise<string[]> {
+    const program = await this.getProgram();
     const command = program.commands.find(cmd =>
       cmd.name() === commandName || cmd.aliases().includes(commandName)
     );
@@ -102,8 +102,8 @@ export class CommandRegistry {
   /**
    * Get options for a command (including subcommands)
    */
-  getCommandOptions(commandPath: string[]): string[] {
-    const program = this.getProgram();
+  async getCommandOptions(commandPath: string[]): Promise<string[]> {
+    const program = await this.getProgram();
     let current: Command | undefined = program;
 
     // Navigate to the specified command
@@ -139,8 +139,8 @@ export class CommandRegistry {
   /**
    * Check if a command exists
    */
-  hasCommand(commandName: string): boolean {
-    const program = this.getProgram();
+  async hasCommand(commandName: string): Promise<boolean> {
+    const program = await this.getProgram();
     return program.commands.some(cmd =>
       cmd.name() === commandName || cmd.aliases().includes(commandName)
     );
@@ -149,8 +149,8 @@ export class CommandRegistry {
   /**
    * Get command info for a specific command
    */
-  getCommandInfo(commandName: string): CommandInfo | null {
-    const program = this.getProgram();
+  async getCommandInfo(commandName: string): Promise<CommandInfo | null> {
+    const program = await this.getProgram();
     const command = program.commands.find(cmd =>
       cmd.name() === commandName || cmd.aliases().includes(commandName)
     );

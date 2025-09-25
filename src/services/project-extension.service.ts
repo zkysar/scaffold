@@ -16,8 +16,6 @@ import type { IProjectManifestService } from '@/services/project-manifest.servic
 import { ProjectManifestService } from '@/services/project-manifest.service';
 import type { ITemplateService } from '@/services/template-service';
 import { TemplateService } from '@/services/template-service';
-import type { IProjectCreationService } from '@/services/project-creation.service';
-import { ProjectCreationService } from '@/services/project-creation.service';
 
 export interface IProjectExtensionService {
   /**

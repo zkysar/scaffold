@@ -12,7 +12,6 @@ import type {
   ValidationError,
   ValidationWarning,
   ValidationStats,
-  ProjectManifest,
 } from '@/models';
 import { shortSHA } from '@/lib/sha';
 import type { IProjectManifestService } from '@/services/project-manifest.service';
