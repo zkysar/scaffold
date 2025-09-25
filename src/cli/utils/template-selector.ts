@@ -4,10 +4,9 @@
  */
 
 import chalk from 'chalk';
-import inquirer from 'inquirer';
+import { prompt } from 'inquirer';
 
 import { logger } from '@/lib/logger';
-import type { TemplateSummary } from '@/models';
 import { TemplateService } from '@/services';
 
 export interface TemplateSelectionOptions {
@@ -65,7 +64,9 @@ export async function selectTemplates(
       }
 
       if (required) {
-        throw new Error('No templates available after filtering excluded templates');
+        throw new Error(
+          'No templates available after filtering excluded templates'
+        );
       }
 
       return [];
@@ -73,7 +74,9 @@ export async function selectTemplates(
 
     if (verbose) {
       logger.info(
-        chalk.blue('Found ') + availableTemplates.length + ' available templates'
+        chalk.blue('Found ') +
+          availableTemplates.length +
+          ' available templates'
       );
     }
 
@@ -85,7 +88,7 @@ export async function selectTemplates(
     }));
 
     if (allowMultiple) {
-      const { selectedTemplates } = await inquirer.prompt([
+      const { selectedTemplates } = await prompt([
         {
           type: 'checkbox',
           name: 'selectedTemplates',
@@ -102,12 +105,14 @@ export async function selectTemplates(
       ]);
 
       if (verbose && selectedTemplates.length > 0) {
-        logger.info(chalk.blue('Selected templates:') + " " +  selectedTemplates);
+        logger.info(
+          chalk.blue('Selected templates:') + ' ' + selectedTemplates
+        );
       }
 
       return selectedTemplates;
     } else {
-      const { selectedTemplate } = await inquirer.prompt([
+      const { selectedTemplate } = await prompt([
         {
           type: 'list',
           name: 'selectedTemplate',

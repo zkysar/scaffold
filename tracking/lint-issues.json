@@ -157,29 +157,6 @@
         "message": "Unexpected any. Specify a different type."
       }
     ],
-    "src/cli/utils/template-selector.ts": [
-      {
-        "line": 10,
-        "column": 15,
-        "rule": "@typescript-eslint/no-unused-vars",
-        "severity": "error",
-        "message": "'TemplateSummary' is defined but never used."
-      },
-      {
-        "line": 88,
-        "column": 43,
-        "rule": "import/no-named-as-default-member",
-        "severity": "warning",
-        "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
-      },
-      {
-        "line": 110,
-        "column": 42,
-        "rule": "import/no-named-as-default-member",
-        "severity": "warning",
-        "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
-      }
-    ],
     "src/di/container.ts": [
       {
         "line": 15,
