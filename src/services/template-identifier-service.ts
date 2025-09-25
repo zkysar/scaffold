@@ -10,7 +10,7 @@ import { injectable } from 'tsyringe';
 
 import { generateSHAFromObject } from '@/lib/sha';
 import type { Template } from '@/models';
-import { IdentifierService } from './identifier-service';
+import { IdentifierService } from '@/services/identifier-service';
 
 /**
  * Service for managing template identifiers (SHAs and aliases)
