@@ -18,7 +18,6 @@ import type {
   ShellCompletionScript,
 } from '@/models';
 import { ShellType } from '@/models';
-
 import { TemplateService } from '@/services/template-service';
 
 export interface ICompletionService {
@@ -208,7 +207,8 @@ export class CompletionService implements ICompletionService {
         const config = (await fs.readJson(configPath)) as CompletionConfig;
 
         // Check if script file still exists
-        const scriptExists = config.installPath && await fs.pathExists(config.installPath);
+        const scriptExists =
+          config.installPath && (await fs.pathExists(config.installPath));
 
         if (scriptExists) {
           return { ...config, isInstalled: true };
@@ -673,7 +673,7 @@ complete -c scaffold -f -a "(__scaffold_complete)"
     if (command) commandPath.push(command);
     if (subcommand) commandPath.push(subcommand);
 
-    const allOptions = await registry.getCommandOptions(commandPath);
+    const allOptions = registry.getCommandOptions(commandPath);
 
     // Extract already-used flags from the command line
     const usedFlags = new Set<string>();
@@ -733,9 +733,9 @@ complete -c scaffold -f -a "(__scaffold_complete)"
       // For template delete/export, we should provide template name completions
       // Import the template provider to get template names
       // Dynamic imports needed for completion providers
-      const {
-        TemplateCompletionProvider,
-      } = await import('./completion-providers/template-completion-provider');
+      const { TemplateCompletionProvider } = await import(
+        './completion-providers/template-completion-provider'
+      );
       const templateProvider = new TemplateCompletionProvider(
         this.templateService
       );

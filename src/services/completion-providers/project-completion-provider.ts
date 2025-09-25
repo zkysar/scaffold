@@ -8,10 +8,13 @@ import * as fs from 'fs-extra';
 import { injectable, inject } from 'tsyringe';
 
 import { logger } from '@/lib/logger';
-import type { CompletionContext, CompletionItem, ProjectManifest } from '@/models';
+import type {
+  CompletionContext,
+  CompletionItem,
+  ProjectManifest,
+} from '@/models';
 import type { IProjectManifestService } from '@/services/project-manifest.service';
 import { ProjectManifestService } from '@/services/project-manifest.service';
-
 
 export interface IProjectCompletionProvider {
   /**
@@ -27,7 +30,10 @@ export interface IProjectCompletionProvider {
   /**
    * Get projects from a specific directory
    */
-  getProjectsFromDirectory(directory: string, context: CompletionContext): Promise<CompletionItem[]>;
+  getProjectsFromDirectory(
+    directory: string,
+    context: CompletionContext
+  ): Promise<CompletionItem[]>;
 
   /**
    * Check if a directory contains a scaffold project
@@ -38,13 +44,17 @@ export interface IProjectCompletionProvider {
 @injectable()
 export class ProjectCompletionProvider implements IProjectCompletionProvider {
   private cacheExpiry: number = 2 * 60 * 1000; // 2 minutes (shorter than templates)
-  private cache: Map<string, { data: CompletionItem[]; timestamp: number }> = new Map();
+  private cache: Map<string, { data: CompletionItem[]; timestamp: number }> =
+    new Map();
 
   constructor(
-    @inject(ProjectManifestService) private readonly manifestService: IProjectManifestService
+    @inject(ProjectManifestService)
+    private readonly manifestService: IProjectManifestService
   ) {}
 
-  async getProjectCompletions(context: CompletionContext): Promise<CompletionItem[]> {
+  async getProjectCompletions(
+    context: CompletionContext
+  ): Promise<CompletionItem[]> {
     const currentDir = context.currentDirectory;
     const cacheKey = `projects-${currentDir}`;
     const cached = this.cache.get(cacheKey);
@@ -63,7 +73,10 @@ export class ProjectCompletionProvider implements IProjectCompletionProvider {
 
       return this.filterCompletions(completions, context.currentWord);
     } catch (error) {
-      logger.error('Failed to scan for projects:', error);
+      logger.error(
+        'Failed to scan for projects:',
+        error instanceof Error ? error.message : String(error)
+      );
       return [];
     }
   }
@@ -73,7 +86,10 @@ export class ProjectCompletionProvider implements IProjectCompletionProvider {
     return completions.map(completion => completion.value);
   }
 
-  async getProjectsFromDirectory(directory: string, context: CompletionContext): Promise<CompletionItem[]> {
+  async getProjectsFromDirectory(
+    directory: string,
+    context: CompletionContext
+  ): Promise<CompletionItem[]> {
     const cacheKey = `projects-${directory}`;
     const cached = this.cache.get(cacheKey);
 
@@ -91,7 +107,10 @@ export class ProjectCompletionProvider implements IProjectCompletionProvider {
 
       return this.filterCompletions(completions, context.currentWord);
     } catch (error) {
-      logger.error(`Failed to scan directory ${directory} for projects:`, error);
+      logger.error(
+        `Failed to scan directory ${directory} for projects:`,
+        error instanceof Error ? error.message : String(error)
+      );
       return [];
     }
   }
@@ -126,7 +145,9 @@ export class ProjectCompletionProvider implements IProjectCompletionProvider {
   /**
    * Get recent projects from user's history
    */
-  async getRecentProjects(context: CompletionContext): Promise<CompletionItem[]> {
+  async getRecentProjects(
+    context: CompletionContext
+  ): Promise<CompletionItem[]> {
     // This would integrate with user history/config if available
     // For now, just return current directory projects
     return this.getProjectCompletions(context);
@@ -177,12 +198,18 @@ export class ProjectCompletionProvider implements IProjectCompletionProvider {
 
       return completions;
     } catch (error) {
-      logger.error(`Error scanning directory ${directory}:`, error);
+      logger.error(
+        `Error scanning directory ${directory}:`,
+        error instanceof Error ? error.message : String(error)
+      );
       return [];
     }
   }
 
-  private async scanParentDirectories(directory: string, maxDepth: number): Promise<CompletionItem[]> {
+  private async scanParentDirectories(
+    directory: string,
+    maxDepth: number
+  ): Promise<CompletionItem[]> {
     const completions: CompletionItem[] = [];
     let currentDir = path.dirname(directory);
     let depth = 0;
@@ -222,15 +249,19 @@ export class ProjectCompletionProvider implements IProjectCompletionProvider {
     return completions;
   }
 
-  private filterCompletions(completions: CompletionItem[], currentWord: string): CompletionItem[] {
+  private filterCompletions(
+    completions: CompletionItem[],
+    currentWord: string
+  ): CompletionItem[] {
     if (!currentWord) {
       return completions;
     }
 
     const lowerCurrentWord = currentWord.toLowerCase();
-    return completions.filter(completion =>
-      completion.value.toLowerCase().startsWith(lowerCurrentWord) ||
-      completion.value.toLowerCase().includes(lowerCurrentWord)
+    return completions.filter(
+      completion =>
+        completion.value.toLowerCase().startsWith(lowerCurrentWord) ||
+        completion.value.toLowerCase().includes(lowerCurrentWord)
     );
   }
 }

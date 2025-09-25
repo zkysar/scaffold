@@ -8,7 +8,6 @@ import { logger } from '@/lib/logger';
 import type { CompletionContext, CompletionItem } from '@/models';
 import { TemplateService } from '@/services/template-service';
 
-
 export interface ITemplateCompletionProvider {
   /**
    * Get template name completions
@@ -29,13 +28,16 @@ export interface ITemplateCompletionProvider {
 @injectable()
 export class TemplateCompletionProvider implements ITemplateCompletionProvider {
   private cacheExpiry: number = 5 * 60 * 1000; // 5 minutes
-  private cache: Map<string, { data: CompletionItem[]; timestamp: number }> = new Map();
+  private cache: Map<string, { data: CompletionItem[]; timestamp: number }> =
+    new Map();
 
   constructor(
     @inject(TemplateService) private readonly templateService: TemplateService
   ) {}
 
-  async getTemplateCompletions(context: CompletionContext): Promise<CompletionItem[]> {
+  async getTemplateCompletions(
+    context: CompletionContext
+  ): Promise<CompletionItem[]> {
     const cacheKey = 'template-completions';
     const cached = this.cache.get(cacheKey);
 
@@ -59,24 +61,34 @@ export class TemplateCompletionProvider implements ITemplateCompletionProvider {
 
       return this.filterCompletions(completions, context.currentWord);
     } catch (error) {
-      logger.error('Failed to load templates for completion:', error);
+      logger.error(
+        'Failed to load templates for completion:',
+        error instanceof Error ? error.message : String(error)
+      );
       return [];
     }
   }
 
-  async getTemplateIdCompletions(context: CompletionContext): Promise<string[]> {
+  async getTemplateIdCompletions(
+    context: CompletionContext
+  ): Promise<string[]> {
     try {
       const library = await this.templateService.loadTemplates();
       const templateIds = library.templates.map(template => template.id);
 
       return this.filterStringCompletions(templateIds, context.currentWord);
     } catch (error) {
-      logger.error('Failed to load template IDs for completion:', error);
+      logger.error(
+        'Failed to load template IDs for completion:',
+        error instanceof Error ? error.message : String(error)
+      );
       return [];
     }
   }
 
-  async getTemplateDetails(context: CompletionContext): Promise<CompletionItem[]> {
+  async getTemplateDetails(
+    context: CompletionContext
+  ): Promise<CompletionItem[]> {
     const cacheKey = 'template-details';
     const cached = this.cache.get(cacheKey);
 
@@ -100,7 +112,10 @@ export class TemplateCompletionProvider implements ITemplateCompletionProvider {
 
       return this.filterCompletions(completions, context.currentWord);
     } catch (error) {
-      logger.error('Failed to load template details for completion:', error);
+      logger.error(
+        'Failed to load template details for completion:',
+        error instanceof Error ? error.message : String(error)
+      );
       return [];
     }
   }
@@ -118,8 +133,9 @@ export class TemplateCompletionProvider implements ITemplateCompletionProvider {
   async templateExists(templateName: string): Promise<boolean> {
     try {
       const library = await this.templateService.loadTemplates();
-      return library.templates.some(template =>
-        template.name === templateName || template.id === templateName
+      return library.templates.some(
+        template =>
+          template.name === templateName || template.id === templateName
       );
     } catch (error) {
       return false;
@@ -132,8 +148,8 @@ export class TemplateCompletionProvider implements ITemplateCompletionProvider {
   async getTemplate(nameOrId: string): Promise<CompletionItem | null> {
     try {
       const library = await this.templateService.loadTemplates();
-      const template = library.templates.find(t =>
-        t.name === nameOrId || t.id === nameOrId
+      const template = library.templates.find(
+        t => t.name === nameOrId || t.id === nameOrId
       );
 
       if (template) {
@@ -151,19 +167,27 @@ export class TemplateCompletionProvider implements ITemplateCompletionProvider {
     }
   }
 
-  private filterCompletions(completions: CompletionItem[], currentWord: string): CompletionItem[] {
+  private filterCompletions(
+    completions: CompletionItem[],
+    currentWord: string
+  ): CompletionItem[] {
     if (!currentWord) {
       return completions;
     }
 
     const lowerCurrentWord = currentWord.toLowerCase();
-    return completions.filter(completion =>
-      completion.value.toLowerCase().startsWith(lowerCurrentWord) ||
-      (completion.description && completion.description.toLowerCase().includes(lowerCurrentWord))
+    return completions.filter(
+      completion =>
+        completion.value.toLowerCase().startsWith(lowerCurrentWord) ||
+        (completion.description &&
+          completion.description.toLowerCase().includes(lowerCurrentWord))
     );
   }
 
-  private filterStringCompletions(completions: string[], currentWord: string): string[] {
+  private filterStringCompletions(
+    completions: string[],
+    currentWord: string
+  ): string[] {
     if (!currentWord) {
       return completions;
     }

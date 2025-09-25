@@ -2,22 +2,14 @@
   "files": {
     "tests/integration/cli/cli-commands.test.ts": {
       "suites": {
-        "Scaffold CLI Integration Tests > scaffold --help": {
-          "should display help information": "failed"
-        },
-        "Scaffold CLI Integration Tests > scaffold new": {
-          "should show help when no project name provided": "failed"
-        },
         "Scaffold CLI Integration Tests > scaffold check": {
           "should check current directory": "failed",
           "should report when not a scaffold project": "failed"
         },
         "Scaffold CLI Integration Tests > scaffold completion": {
-          "should show completion help": "failed",
           "should check completion status": "failed"
         },
         "Scaffold CLI Integration Tests > Error handling": {
-          "should show error for invalid command": "failed",
           "should handle missing required arguments gracefully": "failed"
         }
       }
@@ -60,7 +52,6 @@
           "should reinstall when --force flag is used": "failed"
         },
         "scaffold completion install (integration) > error scenarios": {
-          "should fail with invalid shell type": "failed",
           "should warn when already installed without force": "failed"
         },
         "scaffold completion install (integration) > edge cases": {
@@ -86,7 +77,6 @@
           "should not show duplicate instructions when both --instructions and --verbose are used": "failed"
         },
         "scaffold completion script (integration) > error scenarios": {
-          "should fail with invalid shell type": "failed",
           "should handle shell detection failure gracefully": "failed"
         },
         "scaffold completion script (integration) > script content validation": {
@@ -171,7 +161,6 @@
           "should fail when template is not specified for current directory": "failed"
         },
         "scaffold extend command integration tests > project validation": {
-          "should fail when project directory does not exist": "failed",
           "should fail when project is not scaffold-managed": "failed"
         },
         "scaffold extend command integration tests > successful extend scenarios": {
@@ -230,9 +219,6 @@
     },
     "tests/integration/commands/fix.test.ts": {
       "suites": {
-        "scaffold fix command integration tests > help and usage": {
-          "should display help for fix command": "failed"
-        },
         "scaffold fix command integration tests > non-scaffold projects": {
           "should handle non-scaffold-managed projects gracefully": "failed",
           "should handle current directory when not scaffold-managed": "failed"
@@ -258,8 +244,7 @@
         },
         "scaffold fix command integration tests > path handling": {
           "should handle absolute paths": "failed",
-          "should handle relative paths": "failed",
-          "should handle non-existent paths": "failed"
+          "should handle relative paths": "failed"
         },
         "scaffold fix command integration tests > malformed manifest handling": {
           "should handle missing manifest files": "failed"
@@ -286,9 +271,6 @@
     },
     "tests/integration/commands/new.test.ts": {
       "suites": {
-        "scaffold new command integration tests > help and usage": {
-          "should display help for new command": "failed"
-        },
         "scaffold new command integration tests > dry run mode": {
           "should show dry run output without creating files": "failed",
           "should show dry run with verbose output": "failed"
@@ -322,11 +304,34 @@
         }
       }
     },
+    "tests/integration/commands/template-alias.test.ts": {
+      "suites": {
+        "scaffold template alias command (integration) > successful alias operations": {
+          "should create an alias for a template using full SHA": "failed",
+          "should create an alias using short SHA": "failed",
+          "should create multiple aliases for same template": "failed",
+          "should update an existing alias to point to same template (idempotent)": "failed",
+          "should use alias to create a new project": "failed"
+        },
+        "scaffold template alias command (integration) > error scenarios": {
+          "should error when creating alias for non-existent template": "failed",
+          "should error when alias already exists for different template": "failed",
+          "should error with invalid alias format": "failed",
+          "should error with ambiguous short SHA": "failed",
+          "should error when no arguments provided": "failed"
+        },
+        "scaffold template alias command (integration) > template list with aliases": {
+          "should display aliases in template list": "failed",
+          "should show multiple aliases for same template": "failed"
+        },
+        "scaffold template alias command (integration) > using aliases in other commands": {
+          "should delete template using alias": "failed",
+          "should export template using alias": "failed"
+        }
+      }
+    },
     "tests/integration/commands/template.test.ts": {
       "suites": {
-        "scaffold template command integration tests > help and usage": {
-          "should display help for template command": "failed"
-        },
         "scaffold template command integration tests > list action": {
           "should list available templates": "failed",
           "should show verbose template information": "failed",
@@ -383,6 +388,24 @@
         },
         "scaffold template command integration tests > file system operations": {
           "should handle missing template directories": "failed"
+        }
+      }
+    },
+    "tests/unit/services/project-manifest.service.test.ts": {
+      "suites": {
+        "ProjectManifestService > updateProjectManifest": {
+          "should handle file service errors": "failed"
+        }
+      }
+    },
+    "tests/unit/services/variable-substitution-service.test.ts": {
+      "suites": {
+        "VariableSubstitutionService > substituteVariables": {
+          "should handle nested variables": "failed",
+          "should detect self-referencing variables": "failed",
+          "should handle default values": "failed",
+          "should use variable value over default when present": "failed",
+          "should handle indirect circular reference through multiple paths": "failed"
         }
       }
     }

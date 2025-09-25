@@ -42,12 +42,14 @@ export class CommandRegistry {
   /**
    * Get the program instance (lazy initialization)
    */
-  private async getProgram(): Promise<Command> {
+  private getProgram(): Command {
     if (!this.program) {
       // Lazy load the program to avoid circular dependencies
-      const programModule = await import('../program');
-      const { container } = await import('@/di/container');
-      this.program = programModule.createProgram(container);
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { createProgram } = require('../program');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { container } = require('@/di/container');
+      this.program = createProgram(container);
     }
     return this.program as Command;
   }
@@ -55,12 +57,12 @@ export class CommandRegistry {
   /**
    * Get all top-level command names
    */
-  async getTopLevelCommands(): Promise<string[]> {
-    const program = await this.getProgram();
+  getTopLevelCommands(): string[] {
+    const program = this.getProgram();
 
     // Filter out hidden commands (hidden property may not exist on all Commands)
     const visibleCommands = program.commands
-      .filter(cmd => !(cmd as any).hidden)
+      .filter(cmd => !('hidden' in cmd && (cmd as { hidden?: boolean }).hidden))
       .map(cmd => cmd.name());
 
     return visibleCommands;
@@ -69,10 +71,10 @@ export class CommandRegistry {
   /**
    * Get subcommands for a given command
    */
-  async getSubcommands(commandName: string): Promise<string[]> {
-    const program = await this.getProgram();
-    const command = program.commands.find(cmd =>
-      cmd.name() === commandName || cmd.aliases().includes(commandName)
+  getSubcommands(commandName: string): string[] {
+    const program = this.getProgram();
+    const command = program.commands.find(
+      cmd => cmd.name() === commandName || cmd.aliases().includes(commandName)
     );
 
     if (!command) {
@@ -82,14 +84,17 @@ export class CommandRegistry {
     // Check if this command has subcommands
     if (command.commands && command.commands.length > 0) {
       return command.commands
-        .filter(cmd => !(cmd as any).hidden)
+        .filter(
+          cmd => !('hidden' in cmd && (cmd as { hidden?: boolean }).hidden)
+        )
         .map(cmd => cmd.name());
     }
 
     // Check if this command has argument choices for the first positional argument
     // This handles cases like 'scaffold template <action>' where action has specific choices
-    if ((command as any)._args && (command as any)._args.length > 0) {
-      const firstArg = (command as any)._args[0];
+    const commandWithArgs = command as { _args?: Array<{ _name: string }> };
+    if (commandWithArgs._args && commandWithArgs._args.length > 0) {
+      const firstArg = commandWithArgs._args[0];
 
       // Special handling for known commands with argument choices
       if (commandName === 'template' && firstArg._name === 'action') {
@@ -103,14 +108,14 @@ export class CommandRegistry {
   /**
    * Get options for a command (including subcommands)
    */
-  async getCommandOptions(commandPath: string[]): Promise<string[]> {
-    const program = await this.getProgram();
+  getCommandOptions(commandPath: string[]): string[] {
+    const program = this.getProgram();
     let current: Command | undefined = program;
 
     // Navigate to the specified command
     for (const name of commandPath) {
-      current = current?.commands.find(cmd =>
-        cmd.name() === name || cmd.aliases().includes(name)
+      current = current?.commands.find(
+        cmd => cmd.name() === name || cmd.aliases().includes(name)
       );
       if (!current) break;
     }
@@ -140,20 +145,20 @@ export class CommandRegistry {
   /**
    * Check if a command exists
    */
-  async hasCommand(commandName: string): Promise<boolean> {
-    const program = await this.getProgram();
-    return program.commands.some(cmd =>
-      cmd.name() === commandName || cmd.aliases().includes(commandName)
+  hasCommand(commandName: string): boolean {
+    const program = this.getProgram();
+    return program.commands.some(
+      cmd => cmd.name() === commandName || cmd.aliases().includes(commandName)
     );
   }
 
   /**
    * Get command info for a specific command
    */
-  async getCommandInfo(commandName: string): Promise<CommandInfo | null> {
-    const program = await this.getProgram();
-    const command = program.commands.find(cmd =>
-      cmd.name() === commandName || cmd.aliases().includes(commandName)
+  getCommandInfo(commandName: string): CommandInfo | null {
+    const program = this.getProgram();
+    const command = program.commands.find(
+      cmd => cmd.name() === commandName || cmd.aliases().includes(commandName)
     );
 
     if (!command) {
@@ -169,7 +174,9 @@ export class CommandRegistry {
       aliases: command.aliases(),
       description: command.description(),
       subcommands: command.commands
-        .filter(cmd => !(cmd as any).hidden)
+        .filter(
+          cmd => !('hidden' in cmd && (cmd as { hidden?: boolean }).hidden)
+        )
         .map(cmd => this.buildCommandInfo(cmd)),
       options: command.options.map(opt => ({
         flags: opt.flags,
