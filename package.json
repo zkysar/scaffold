@@ -20,9 +20,7 @@
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage .scaffold-temp",
-    "prepare": "husky",
-    "tracking:update": "node scripts/update-tracking.js",
-    "tracking:update:silent": "node scripts/update-tracking.js --silent"
+    "prepare": "husky"
   },
   "keywords": [
     "cli",
