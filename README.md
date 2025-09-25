@@ -13,7 +13,6 @@ Scaffold CLI provides a comprehensive solution for managing project templates an
 - **Automatic fixing** - Repair structural issues with intelligent suggestions
 - **Configuration cascade** - Global, workspace, and project-level settings
 - **Shell completion** - Built-in completion support for bash, zsh, and fish
-- **Docker support** - Containerized development and testing environment
 - **Extensible architecture** - Plugin-friendly design for custom functionality
 
 ## Installation
@@ -48,16 +47,6 @@ npm run build
 
 # Link for local development
 npm link
-```
-
-### Docker Installation
-
-```bash
-# Development environment
-docker-compose up dev
-
-# Run specific commands
-docker-compose run --rm dev scaffold --help
 ```
 
 ## Quick Start
@@ -400,25 +389,6 @@ npm run dev
 npm test
 ```
 
-### Docker Development
-
-```bash
-# Start development container
-docker-compose up dev
-
-# Run tests in container
-docker-compose run test
-
-# Run linting
-docker-compose run lint
-
-# Run type checking
-docker-compose run typecheck
-
-# Build project
-docker-compose run build
-```
-
 ### Available Scripts
 
 ```bash
@@ -448,10 +418,6 @@ tests/
 ├── integration/     # Integration tests
 └── contract/        # Contract validation tests
 
-docker/
-├── development/     # Development container config
-├── testing/         # Test container config
-└── production/      # Production container config
 ```
 
 ### Testing
@@ -473,19 +439,6 @@ npm test -- src/services/template.service.test.ts
 
 # Run tests matching pattern
 npm test -- --testNamePattern="validation"
-```
-
-#### Testing in Docker
-
-```bash
-# Run full test suite in container
-docker-compose run test
-
-# Run tests with coverage
-docker-compose run test npm run test:coverage
-
-# Run tests in watch mode
-docker-compose run test npm run test:watch
 ```
 
 ### Code Style

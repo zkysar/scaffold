@@ -13,8 +13,6 @@
     "test:unit": "jest tests/unit",
     "test:contract": "jest tests/contract",
     "test:integration": "npm run build && jest tests/integration",
-    "test:integration:docker": "npm run build && jest tests/integration",
-    "test:cli": "npm run build && docker compose --profile test-cli up --abort-on-container-exit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:coverage:check": "jest --coverage --coverageThreshold='{\"global\":{\"branches\":50,\"functions\":50,\"lines\":50,\"statements\":50}}'",
