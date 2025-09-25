@@ -134,7 +134,7 @@ export class TemplateService implements ITemplateService {
             aliases: aliases,
           });
         } catch (error) {
-          logger.warn(`Failed to load template from ${templateDir}:`, error);
+          logger.warn(`Failed to load template from ${templateDir}: ${error}`);
         }
       }
 
@@ -321,7 +321,7 @@ export class TemplateService implements ITemplateService {
     }
   }
 
-  async installTemplate(_source: TemplateSource, _templateId: string): Promise<void> {
+  async installTemplate(): Promise<void> {
     throw new Error('Remote template installation not yet implemented');
   }
 

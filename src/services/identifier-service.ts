@@ -6,7 +6,7 @@
 import * as path from 'path';
 
 import * as fs from 'fs-extra';
-import { injectable } from 'tsyringe';
+// import { injectable } from 'tsyringe';
 
 import { logger } from '@/lib/logger';
 import { shortSHA, isValidSHA, findSHAByPrefix } from '@/lib/sha';
@@ -49,7 +49,7 @@ export abstract class IdentifierService {
         this.buildReverseMapping();
       }
     } catch (error) {
-      logger.warn(`Failed to load aliases from ${this.aliasFilePath}:`, error);
+      logger.warn(`Failed to load aliases from ${this.aliasFilePath}: ${error}`);
       this.aliasMapping = {};
       this.reverseAliasMapping = {};
     }
