@@ -15,8 +15,6 @@ import { logger } from '@/lib/logger';
 import {
   ProjectFixService,
   ProjectManifestService,
-  TemplateService,
-  FileSystemService,
 } from '@/services';
 
 interface FixCommandOptions {
@@ -93,8 +91,6 @@ async function handleFixCommand(
   }
 
   // Resolve services from DI container
-  const fileSystemService = container.resolve(FileSystemService);
-  const templateService = container.resolve(TemplateService);
   const manifestService = container.resolve(ProjectManifestService);
   const fixService = container.resolve(ProjectFixService);
 

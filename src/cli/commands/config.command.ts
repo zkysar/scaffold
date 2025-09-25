@@ -10,7 +10,6 @@ import { DependencyContainer } from 'tsyringe';
 import { logger } from '@/lib/logger';
 import { ConfigurationService } from '@/services/configuration.service';
 
-
 interface ConfigCommandOptions {
   verbose?: boolean;
   dryRun?: boolean;
@@ -66,17 +65,19 @@ async function handleConfigCommand(
     logger.info(`${chalk.blue('Config action:')} ${action}`);
     if (key) logger.info(`${chalk.blue('Key:')} ${key}`);
     if (value) logger.info(`${chalk.blue('Value:')} ${value}`);
-    logger.info(`${chalk.blue('Options:')} ${JSON.stringify(options, null, 2)}`);
+    logger.info(
+      `${chalk.blue('Options:')} ${JSON.stringify(options, null, 2)}`
+    );
   }
 
   const configService = container.resolve(ConfigurationService);
 
   switch (action.toLowerCase()) {
     case 'list':
-      await handleListConfig(configService, options);
+      await handleListConfig();
       break;
     case 'get':
-      await handleGetConfig(configService, key, options);
+      await handleGetConfig(configService, key);
       break;
     case 'set':
       await handleSetConfig(configService, key, value, options);
@@ -100,7 +101,10 @@ async function handleListConfig(): Promise<void> {
   );
 }
 
-async function handleGetConfig(key: string): Promise<void> {
+async function handleGetConfig(
+  _configService: ConfigurationService,
+  key: string
+): Promise<void> {
   if (!key) {
     logger.error(
       `${chalk.red('Error:')} Configuration key is required for get action`
@@ -116,6 +120,7 @@ async function handleGetConfig(key: string): Promise<void> {
 }
 
 async function handleSetConfig(
+  _configService: ConfigurationService,
   key: string,
   value: string,
   options: ConfigCommandOptions

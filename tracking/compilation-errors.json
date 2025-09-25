@@ -1,317 +1,5 @@
 {
   "files": {
-    "src/cli/commands/config.command.ts": [
-      {
-        "line": 76,
-        "column": 30,
-        "errorCode": "TS2554",
-        "message": "Expected 0 arguments, but got 2."
-      },
-      {
-        "line": 79,
-        "column": 44,
-        "errorCode": "TS2554",
-        "message": "Expected 1 arguments, but got 3."
-      },
-      {
-        "line": 82,
-        "column": 56,
-        "errorCode": "TS2554",
-        "message": "Expected 3 arguments, but got 4."
-      }
-    ],
-    "src/services/completion-providers/file-completion-provider.ts": [
-      {
-        "line": 73,
-        "column": 55,
-        "errorCode": "TS2345",
-        "message": "Argument of type 'unknown' is not assignable to parameter of type 'string | Error | undefined'."
-      },
-      {
-        "line": 108,
-        "column": 60,
-        "errorCode": "TS2345",
-        "message": "Argument of type 'unknown' is not assignable to parameter of type 'string | Error | undefined'."
-      },
-      {
-        "line": 253,
-        "column": 62,
-        "errorCode": "TS2345",
-        "message": "Argument of type 'unknown' is not assignable to parameter of type 'string | Error | undefined'."
-      }
-    ],
-    "src/services/completion-providers/project-completion-provider.ts": [
-      {
-        "line": 44,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 66,
-        "column": 52,
-        "errorCode": "TS2345",
-        "message": "Argument of type 'unknown' is not assignable to parameter of type 'string | Error | undefined'."
-      },
-      {
-        "line": 94,
-        "column": 75,
-        "errorCode": "TS2345",
-        "message": "Argument of type 'unknown' is not assignable to parameter of type 'string | Error | undefined'."
-      },
-      {
-        "line": 180,
-        "column": 62,
-        "errorCode": "TS2345",
-        "message": "Argument of type 'unknown' is not assignable to parameter of type 'string | Error | undefined'."
-      }
-    ],
-    "src/services/completion-providers/template-completion-provider.ts": [
-      {
-        "line": 35,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 62,
-        "column": 64,
-        "errorCode": "TS2345",
-        "message": "Argument of type 'unknown' is not assignable to parameter of type 'string | Error | undefined'."
-      },
-      {
-        "line": 74,
-        "column": 67,
-        "errorCode": "TS2345",
-        "message": "Argument of type 'unknown' is not assignable to parameter of type 'string | Error | undefined'."
-      },
-      {
-        "line": 103,
-        "column": 71,
-        "errorCode": "TS2345",
-        "message": "Argument of type 'unknown' is not assignable to parameter of type 'string | Error | undefined'."
-      }
-    ],
-    "src/services/completion-service.ts": [
-      {
-        "line": 72,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      }
-    ],
-    "src/services/project-creation.service.ts": [
-      {
-        "line": 51,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 52,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 53,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      }
-    ],
-    "src/services/project-extension.service.ts": [
-      {
-        "line": 36,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 37,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 37,
-        "column": 62,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IFileSystemService'."
-      },
-      {
-        "line": 38,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 38,
-        "column": 76,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IVariableSubstitutionService'."
-      },
-      {
-        "line": 39,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 40,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 40,
-        "column": 75,
-        "errorCode": "TS2552",
-        "message": "Cannot find name 'IProjectValidationService'. Did you mean 'IProjectCreationService'?"
-      },
-      {
-        "line": 121,
-        "column": 11,
-        "errorCode": "TS7006",
-        "message": "Parameter 'r' implicitly has an 'any' type."
-      },
-      {
-        "line": 124,
-        "column": 44,
-        "errorCode": "TS7006",
-        "message": "Parameter 'e' implicitly has an 'any' type."
-      }
-    ],
-    "src/services/project-fix.service.ts": [
-      {
-        "line": 38,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 39,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 40,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 41,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 42,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      }
-    ],
-    "src/services/project-manifest.service.ts": [
-      {
-        "line": 53,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      }
-    ],
-    "src/services/project-validation.service.ts": [
-      {
-        "line": 42,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 43,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 44,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 44,
-        "column": 76,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IVariableSubstitutionService'."
-      },
-      {
-        "line": 45,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      }
-    ],
-    "src/services/template-service.ts": [
-      {
-        "line": 103,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      }
-    ],
-    "src/services/variable-substitution.service.ts": [
-      {
-        "line": 54,
-        "column": 15,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'Template'."
-      },
-      {
-        "line": 56,
-        "column": 6,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'ValidationResult'."
-      },
-      {
-        "line": 82,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 82,
-        "column": 62,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IFileSystemService'."
-      },
-      {
-        "line": 156,
-        "column": 13,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'enhanceError'."
-      },
-      {
-        "line": 178,
-        "column": 15,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'Template'."
-      },
-      {
-        "line": 180,
-        "column": 6,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'ValidationResult'."
-      },
-      {
-        "line": 181,
-        "column": 19,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'ValidationResult'."
-      }
-    ],
     "tests/contract/commands/scaffold-check.test.ts": [
       {
         "line": 94,
@@ -1296,32 +984,22 @@
     ],
     "tests/fakes/example.test.ts": [
       {
-        "line": 11,
-        "column": 3,
-        "errorCode": "TS2305",
-        "message": "Module '\"@tests/fakes/index\"' has no exported member 'createAllFakes'."
+        "line": 116,
+        "column": 34,
+        "errorCode": "TS2304",
+        "message": "Cannot find name 'createAllFakes'."
       },
       {
-        "line": 12,
-        "column": 3,
-        "errorCode": "TS2305",
-        "message": "Module '\"@tests/fakes/index\"' has no exported member 'resetAllFakes'."
-      }
-    ],
-    "tests/helpers/test-utils.ts": [
+        "line": 119,
+        "column": 15,
+        "errorCode": "TS2304",
+        "message": "Cannot find name 'createAllFakes'."
+      },
       {
-        "line": 33,
-        "column": 65,
-        "errorCode": "TS2554",
-        "message": "Expected 1 arguments, but got 2."
-      }
-    ],
-    "tests/integration/commands/template-alias.test.ts": [
-      {
-        "line": 28,
-        "column": 23,
-        "errorCode": "TS2554",
-        "message": "Expected 1-2 arguments, but got 0."
+        "line": 120,
+        "column": 7,
+        "errorCode": "TS2304",
+        "message": "Cannot find name 'resetAllFakes'."
       }
     ],
     "tests/unit/cli/commands/fix.test.ts": [
@@ -1944,10 +1622,10 @@
     ],
     "tests/unit/services/project-extension.service.test.ts": [
       {
-        "line": 123,
+        "line": 122,
         "column": 7,
         "errorCode": "TS2345",
-        "message": "Argument of type '(projectPath: string, manifest: ProjectManifest) => Promise<void>' is not assignable to parameter of type 'IProjectManifestService'."
+        "message": "Argument of type '(projectPath: string) => Promise<ProjectManifest | null>' is not assignable to parameter of type 'IVariableSubstitutionService'."
       }
     ],
     "tests/unit/services/project-fix.service.test.ts": [

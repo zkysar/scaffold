@@ -304,6 +304,32 @@
         }
       }
     },
+    "tests/integration/commands/template-alias.test.ts": {
+      "suites": {
+        "scaffold template alias command (integration) > successful alias operations": {
+          "should create an alias for a template using full SHA": "failed",
+          "should create an alias using short SHA": "failed",
+          "should create multiple aliases for same template": "failed",
+          "should update an existing alias to point to same template (idempotent)": "failed",
+          "should use alias to create a new project": "failed"
+        },
+        "scaffold template alias command (integration) > error scenarios": {
+          "should error when creating alias for non-existent template": "failed",
+          "should error when alias already exists for different template": "failed",
+          "should error with invalid alias format": "failed",
+          "should error with ambiguous short SHA": "failed",
+          "should error when no arguments provided": "failed"
+        },
+        "scaffold template alias command (integration) > template list with aliases": {
+          "should display aliases in template list": "failed",
+          "should show multiple aliases for same template": "failed"
+        },
+        "scaffold template alias command (integration) > using aliases in other commands": {
+          "should delete template using alias": "failed",
+          "should export template using alias": "failed"
+        }
+      }
+    },
     "tests/integration/commands/template.test.ts": {
       "suites": {
         "scaffold template command integration tests > list action": {
@@ -362,6 +388,24 @@
         },
         "scaffold template command integration tests > file system operations": {
           "should handle missing template directories": "failed"
+        }
+      }
+    },
+    "tests/unit/services/project-manifest.service.test.ts": {
+      "suites": {
+        "ProjectManifestService > updateProjectManifest": {
+          "should handle file service errors": "failed"
+        }
+      }
+    },
+    "tests/unit/services/variable-substitution-service.test.ts": {
+      "suites": {
+        "VariableSubstitutionService > substituteVariables": {
+          "should handle nested variables": "failed",
+          "should detect self-referencing variables": "failed",
+          "should handle default values": "failed",
+          "should use variable value over default when present": "failed",
+          "should handle indirect circular reference through multiple paths": "failed"
         }
       }
     }
