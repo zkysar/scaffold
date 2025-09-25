@@ -2,55 +2,32 @@
   "files": {
     "src/cli/commands/extend.command.ts": [
       {
-        "line": 103,
-        "column": 9,
-        "rule": "@typescript-eslint/no-unused-vars",
-        "severity": "error",
-        "message": "'fileSystemService' is assigned a value but never used."
-      },
-      {
-        "line": 109,
+        "line": 107,
         "column": 17,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 151,
+        "line": 149,
         "column": 26,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 152,
+        "line": 150,
         "column": 23,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 236,
+        "line": 234,
         "column": 33,
         "rule": "import/no-named-as-default-member",
         "severity": "warning",
         "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
-      }
-    ],
-    "src/cli/commands/fix.command.ts": [
-      {
-        "line": 96,
-        "column": 9,
-        "rule": "@typescript-eslint/no-unused-vars",
-        "severity": "error",
-        "message": "'fileSystemService' is assigned a value but never used."
-      },
-      {
-        "line": 97,
-        "column": 9,
-        "rule": "@typescript-eslint/no-unused-vars",
-        "severity": "error",
-        "message": "'templateService' is assigned a value but never used."
       }
     ],
     "src/cli/commands/new.command.ts": [
@@ -101,49 +78,42 @@
     ],
     "src/cli/completion/command-registry.ts": [
       {
-        "line": 48,
-        "column": 33,
-        "rule": "@typescript-eslint/no-var-requires",
-        "severity": "error",
-        "message": "Require statement not part of import statement."
-      },
-      {
-        "line": 62,
+        "line": 65,
         "column": 31,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 84,
+        "line": 87,
         "column": 33,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 90,
+        "line": 93,
         "column": 21,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 90,
+        "line": 93,
         "column": 47,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 91,
+        "line": 94,
         "column": 36,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 171,
+        "line": 174,
         "column": 33,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
@@ -152,21 +122,14 @@
     ],
     "src/cli/utils/template-selector.ts": [
       {
-        "line": 10,
-        "column": 15,
-        "rule": "@typescript-eslint/no-unused-vars",
-        "severity": "error",
-        "message": "'TemplateSummary' is defined but never used."
-      },
-      {
-        "line": 88,
+        "line": 87,
         "column": 43,
         "rule": "import/no-named-as-default-member",
         "severity": "warning",
         "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
       },
       {
-        "line": 110,
+        "line": 109,
         "column": 42,
         "rule": "import/no-named-as-default-member",
         "severity": "warning",
@@ -194,15 +157,6 @@
         "rule": "import/order",
         "severity": "warning",
         "message": "`@/services/completion-providers/template-completion-provider` import should occur before import of `@/services/completion-service`"
-      }
-    ],
-    "src/index.ts": [
-      {
-        "line": 8,
-        "column": 15,
-        "rule": "import/export",
-        "severity": "error",
-        "message": "No named exports found in module './types'."
       }
     ],
     "src/lib/error-utils.ts": [
@@ -345,28 +299,28 @@
         "column": 1,
         "rule": "import/order",
         "severity": "warning",
-        "message": "`@/services/project-creation.service` type import should occur before type import of `@/services/project-manifest.service`"
-      },
-      {
-        "line": 19,
-        "column": 15,
-        "rule": "@typescript-eslint/no-unused-vars",
-        "severity": "error",
-        "message": "'IProjectCreationService' is defined but never used."
+        "message": "`@/services/file-system.service` type import should occur before type import of `@/services/project-manifest.service`"
       },
       {
         "line": 20,
         "column": 1,
         "rule": "import/order",
         "severity": "warning",
-        "message": "`@/services/project-creation.service` import should occur before type import of `@/services/project-manifest.service`"
+        "message": "`@/services/file-system.service` import should occur before type import of `@/services/project-manifest.service`"
       },
       {
-        "line": 20,
-        "column": 10,
-        "rule": "@typescript-eslint/no-unused-vars",
-        "severity": "error",
-        "message": "'ProjectCreationService' is defined but never used."
+        "line": 23,
+        "column": 1,
+        "rule": "import/order",
+        "severity": "warning",
+        "message": "`@/services/project-validation.service` type import should occur before type import of `@/services/template-service`"
+      },
+      {
+        "line": 24,
+        "column": 1,
+        "rule": "import/order",
+        "severity": "warning",
+        "message": "`@/services/project-validation.service` import should occur before type import of `@/services/template-service`"
       }
     ],
     "src/services/project-fix.service.ts": [
@@ -389,28 +343,21 @@
     ],
     "src/services/project-validation.service.ts": [
       {
-        "line": 15,
-        "column": 3,
-        "rule": "@typescript-eslint/no-unused-vars",
-        "severity": "error",
-        "message": "'ProjectManifest' is defined but never used."
-      },
-      {
-        "line": 17,
+        "line": 16,
         "column": 1,
         "rule": "import/order",
         "severity": "warning",
         "message": "`@/lib/sha` import should occur before type import of `@/models`"
       },
       {
-        "line": 22,
+        "line": 21,
         "column": 1,
         "rule": "import/order",
         "severity": "warning",
         "message": "`@/services/file-system.service` type import should occur before type import of `@/services/project-manifest.service`"
       },
       {
-        "line": 23,
+        "line": 22,
         "column": 1,
         "rule": "import/order",
         "severity": "warning",
@@ -444,91 +391,98 @@
     ],
     "src/services/variable-substitution.service.ts": [
       {
-        "line": 17,
+        "line": 10,
+        "column": 1,
+        "rule": "import/order",
+        "severity": "warning",
+        "message": "`@/lib/error-utils` import should occur before type import of `@/models`"
+      },
+      {
+        "line": 22,
         "column": 29,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 28,
+        "line": 33,
         "column": 31,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 37,
+        "line": 42,
         "column": 31,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 46,
+        "line": 51,
         "column": 31,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 55,
+        "line": 60,
         "column": 30,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 71,
+        "line": 76,
         "column": 43,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 87,
+        "line": 92,
         "column": 31,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 136,
+        "line": 141,
         "column": 31,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 171,
+        "line": 176,
         "column": 31,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 179,
+        "line": 184,
         "column": 30,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 313,
+        "line": 318,
         "column": 43,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 427,
+        "line": 432,
         "column": 31,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
       },
       {
-        "line": 428,
+        "line": 433,
         "column": 6,
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",

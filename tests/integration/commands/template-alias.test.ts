@@ -25,8 +25,8 @@ describe('scaffold template alias command (integration)', () => {
     process.chdir(tempDir);
 
     // Reset services
-    templateService = new TemplateService();
     identifierService = TemplateIdentifierService.getInstance();
+    templateService = new TemplateService(identifierService);
 
     // Create a test template
     const testTemplate: Template = {

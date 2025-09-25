@@ -45,8 +45,11 @@ export class CommandRegistry {
   private getProgram(): Command {
     if (!this.program) {
       // Lazy load the program to avoid circular dependencies
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { createProgram } = require('../program');
-      this.program = createProgram();
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { container } = require('@/di/container');
+      this.program = createProgram(container);
     }
     return this.program as Command;
   }
@@ -59,7 +62,7 @@ export class CommandRegistry {
 
     // Filter out hidden commands (hidden property may not exist on all Commands)
     const visibleCommands = program.commands
-      .filter(cmd => !(cmd as any).hidden)
+      .filter(cmd => !('hidden' in cmd && (cmd as { hidden?: boolean }).hidden))
       .map(cmd => cmd.name());
 
     return visibleCommands;
@@ -70,8 +73,8 @@ export class CommandRegistry {
    */
   getSubcommands(commandName: string): string[] {
     const program = this.getProgram();
-    const command = program.commands.find(cmd =>
-      cmd.name() === commandName || cmd.aliases().includes(commandName)
+    const command = program.commands.find(
+      cmd => cmd.name() === commandName || cmd.aliases().includes(commandName)
     );
 
     if (!command) {
@@ -81,14 +84,17 @@ export class CommandRegistry {
     // Check if this command has subcommands
     if (command.commands && command.commands.length > 0) {
       return command.commands
-        .filter(cmd => !(cmd as any).hidden)
+        .filter(
+          cmd => !('hidden' in cmd && (cmd as { hidden?: boolean }).hidden)
+        )
         .map(cmd => cmd.name());
     }
 
     // Check if this command has argument choices for the first positional argument
     // This handles cases like 'scaffold template <action>' where action has specific choices
-    if ((command as any)._args && (command as any)._args.length > 0) {
-      const firstArg = (command as any)._args[0];
+    const commandWithArgs = command as { _args?: Array<{ _name: string }> };
+    if (commandWithArgs._args && commandWithArgs._args.length > 0) {
+      const firstArg = commandWithArgs._args[0];
 
       // Special handling for known commands with argument choices
       if (commandName === 'template' && firstArg._name === 'action') {
@@ -108,8 +114,8 @@ export class CommandRegistry {
 
     // Navigate to the specified command
     for (const name of commandPath) {
-      current = current?.commands.find(cmd =>
-        cmd.name() === name || cmd.aliases().includes(name)
+      current = current?.commands.find(
+        cmd => cmd.name() === name || cmd.aliases().includes(name)
       );
       if (!current) break;
     }
@@ -141,8 +147,8 @@ export class CommandRegistry {
    */
   hasCommand(commandName: string): boolean {
     const program = this.getProgram();
-    return program.commands.some(cmd =>
-      cmd.name() === commandName || cmd.aliases().includes(commandName)
+    return program.commands.some(
+      cmd => cmd.name() === commandName || cmd.aliases().includes(commandName)
     );
   }
 
@@ -151,8 +157,8 @@ export class CommandRegistry {
    */
   getCommandInfo(commandName: string): CommandInfo | null {
     const program = this.getProgram();
-    const command = program.commands.find(cmd =>
-      cmd.name() === commandName || cmd.aliases().includes(commandName)
+    const command = program.commands.find(
+      cmd => cmd.name() === commandName || cmd.aliases().includes(commandName)
     );
 
     if (!command) {
@@ -168,7 +174,9 @@ export class CommandRegistry {
       aliases: command.aliases(),
       description: command.description(),
       subcommands: command.commands
-        .filter(cmd => !(cmd as any).hidden)
+        .filter(
+          cmd => !('hidden' in cmd && (cmd as { hidden?: boolean }).hidden)
+        )
         .map(cmd => this.buildCommandInfo(cmd)),
       options: command.options.map(opt => ({
         flags: opt.flags,

@@ -6,6 +6,11 @@ import { randomUUID } from 'crypto';
 
 import { injectable, inject } from 'tsyringe';
 
+import type { Template, ValidationResult } from '@/models';
+import { enhanceError } from '@/lib/error-utils';
+import type { IFileSystemService } from '@/services/file-system.service';
+import { FileSystemService } from '@/services/file-system.service';
+
 export interface VariableSubstitutionOptions {
   preserveEscapes?: boolean;
   throwOnMissing?: boolean;
