@@ -45,7 +45,7 @@ export class CommandRegistry {
   private getProgram(): Command {
     if (!this.program) {
       // Lazy load the program to avoid circular dependencies
-      const { createProgram } = require('../program');
+      const { createProgram } = require('@/cli/program');
       this.program = createProgram();
     }
     return this.program as Command;
