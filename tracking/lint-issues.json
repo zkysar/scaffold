@@ -76,66 +76,6 @@
         "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
       }
     ],
-    "src/cli/completion/command-registry.ts": [
-      {
-        "line": 65,
-        "column": 31,
-        "rule": "@typescript-eslint/no-explicit-any",
-        "severity": "warning",
-        "message": "Unexpected any. Specify a different type."
-      },
-      {
-        "line": 87,
-        "column": 33,
-        "rule": "@typescript-eslint/no-explicit-any",
-        "severity": "warning",
-        "message": "Unexpected any. Specify a different type."
-      },
-      {
-        "line": 93,
-        "column": 21,
-        "rule": "@typescript-eslint/no-explicit-any",
-        "severity": "warning",
-        "message": "Unexpected any. Specify a different type."
-      },
-      {
-        "line": 93,
-        "column": 47,
-        "rule": "@typescript-eslint/no-explicit-any",
-        "severity": "warning",
-        "message": "Unexpected any. Specify a different type."
-      },
-      {
-        "line": 94,
-        "column": 36,
-        "rule": "@typescript-eslint/no-explicit-any",
-        "severity": "warning",
-        "message": "Unexpected any. Specify a different type."
-      },
-      {
-        "line": 174,
-        "column": 33,
-        "rule": "@typescript-eslint/no-explicit-any",
-        "severity": "warning",
-        "message": "Unexpected any. Specify a different type."
-      }
-    ],
-    "src/cli/utils/template-selector.ts": [
-      {
-        "line": 87,
-        "column": 43,
-        "rule": "import/no-named-as-default-member",
-        "severity": "warning",
-        "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
-      },
-      {
-        "line": 109,
-        "column": 42,
-        "rule": "import/no-named-as-default-member",
-        "severity": "warning",
-        "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
-      }
-    ],
     "src/di/container.ts": [
       {
         "line": 15,
@@ -196,15 +136,6 @@
         "rule": "@typescript-eslint/no-explicit-any",
         "severity": "warning",
         "message": "Unexpected any. Specify a different type."
-      }
-    ],
-    "src/services/completion-service.ts": [
-      {
-        "line": 20,
-        "column": 1,
-        "rule": "import/order",
-        "severity": "warning",
-        "message": "There should be no empty line within import group"
       }
     ],
     "src/services/configuration.service.ts": [
