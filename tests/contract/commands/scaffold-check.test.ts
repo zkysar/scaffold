@@ -5,6 +5,7 @@
 
 import { createCheckCommand } from '@/cli/commands/check.command';
 import { logger } from '@/lib/logger';
+import { configureContainer } from '@/di/container';
 import {
   createMockFileSystem,
   createMockConsole,
@@ -91,7 +92,7 @@ describe('scaffold check command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, []);
 
       // Assert
@@ -125,7 +126,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['/test-project']);
 
       // Assert
@@ -164,7 +165,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, [
         '/test-project',
         '--verbose',
@@ -251,7 +252,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, [
         '/test-project',
         '--strict',
@@ -285,7 +286,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, [
         '/test-project',
         '--config',
@@ -305,7 +306,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['/nonexistent-project']);
 
       // Assert
@@ -327,7 +328,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['/regular-project']);
 
       // Assert
@@ -361,7 +362,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['/readonly-project']);
 
       // Assert - Should still work for read-only operations
@@ -395,7 +396,7 @@ describe('scaffold check command contract', () => {
       jest.spyOn(process, 'cwd').mockReturnValue('/current/dir');
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['./project']);
 
       // Assert
@@ -415,7 +416,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['/broken-project']);
 
       // Assert
@@ -449,7 +450,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['/test-project']);
 
       // Assert
@@ -465,7 +466,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['/empty-project']);
 
       // Assert
@@ -495,7 +496,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, [
         '/test-project',
         '--format',
@@ -535,7 +536,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['/project-with-errors']);
 
       // Assert - Currently exits 0 due to mock implementation
@@ -569,7 +570,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['/project-with-warnings']);
 
       // Assert - Currently exits 0 due to mock implementation
@@ -607,7 +608,7 @@ describe('scaffold check command contract', () => {
       mockFs(mockFileSystem);
 
       // Act
-      const command = createCheckCommand();
+      const command = createCheckCommand(configureContainer());
       const result = await executeCommand(command, ['/valid-project']);
 
       // Assert
