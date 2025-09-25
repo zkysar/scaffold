@@ -180,29 +180,6 @@
         "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
       }
     ],
-    "src/di/container.ts": [
-      {
-        "line": 15,
-        "column": 1,
-        "rule": "import/order",
-        "severity": "warning",
-        "message": "`@/services/completion-providers/file-completion-provider` import should occur before import of `@/services/completion-service`"
-      },
-      {
-        "line": 16,
-        "column": 1,
-        "rule": "import/order",
-        "severity": "warning",
-        "message": "`@/services/completion-providers/project-completion-provider` import should occur before import of `@/services/completion-service`"
-      },
-      {
-        "line": 17,
-        "column": 1,
-        "rule": "import/order",
-        "severity": "warning",
-        "message": "`@/services/completion-providers/template-completion-provider` import should occur before import of `@/services/completion-service`"
-      }
-    ],
     "src/index.ts": [
       {
         "line": 8,
