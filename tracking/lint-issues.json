@@ -60,36 +60,6 @@
         "message": "'validationService' is assigned a value but never used."
       }
     ],
-    "src/cli/commands/new.command.ts": [
-      {
-        "line": 122,
-        "column": 28,
-        "rule": "import/no-named-as-default-member",
-        "severity": "warning",
-        "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
-      },
-      {
-        "line": 152,
-        "column": 37,
-        "rule": "import/no-named-as-default-member",
-        "severity": "warning",
-        "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
-      },
-      {
-        "line": 162,
-        "column": 36,
-        "rule": "import/no-named-as-default-member",
-        "severity": "warning",
-        "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
-      },
-      {
-        "line": 193,
-        "column": 33,
-        "rule": "import/no-named-as-default-member",
-        "severity": "warning",
-        "message": "Caution: `inquirer` also has a named export `prompt`. Check if you meant to write `import {prompt} from 'inquirer'` instead."
-      }
-    ],
     "src/cli/commands/template.command.ts": [
       {
         "line": 192,

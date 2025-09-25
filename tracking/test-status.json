@@ -104,7 +104,7 @@
         },
         "scaffold completion complete (integration) > performance": {
           "should complete within reasonable time": "failed",
-          "should handle complex command lines efficiently": "passed"
+          "should handle complex command lines efficiently": "failed"
         },
         "scaffold completion complete (integration) > output format": {
           "should output valid JSON for each completion": "failed",

@@ -8,7 +8,7 @@ import { resolve } from 'path';
 
 import * as chalk from 'chalk';
 import { Command } from 'commander';
-import inquirer from 'inquirer';
+import { prompt } from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
 
 import { selectTemplates } from '@/cli/utils/template-selector';
@@ -47,15 +47,21 @@ export function createNewCommand(container: DependencyContainer): Command {
         try {
           await handleNewCommand(projectName, options, container);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
 
           // Check if it's a system/permission error
-          if (errorMessage.includes('permission denied') ||
-              errorMessage.includes('EACCES') ||
-              errorMessage.includes('EPERM') ||
-              errorMessage.includes('ENOENT') ||
-              errorMessage.includes('no such file or directory')) {
-            exitWithCode(ExitCode.SYSTEM_ERROR, `System error: ${errorMessage}`);
+          if (
+            errorMessage.includes('permission denied') ||
+            errorMessage.includes('EACCES') ||
+            errorMessage.includes('EPERM') ||
+            errorMessage.includes('ENOENT') ||
+            errorMessage.includes('no such file or directory')
+          ) {
+            exitWithCode(
+              ExitCode.SYSTEM_ERROR,
+              `System error: ${errorMessage}`
+            );
           } else {
             // Default to user error for other cases
             exitWithCode(ExitCode.USER_ERROR, `Error: ${errorMessage}`);
@@ -91,11 +97,15 @@ async function handleNewCommand(
           logger.info('No template specified, using default template');
         }
       } else {
-        logger.info('No template specified. Use --template option to specify a template.');
+        logger.info(
+          'No template specified. Use --template option to specify a template.'
+        );
         exitWithCode(ExitCode.USER_ERROR);
       }
     } catch (error) {
-      logger.info('No template specified. Use --template option to specify a template.');
+      logger.info(
+        'No template specified. Use --template option to specify a template.'
+      );
       exitWithCode(ExitCode.USER_ERROR);
     }
   }
@@ -108,18 +118,21 @@ async function handleNewCommand(
     }
     // Validate project name (no special characters except dash and underscore)
     if (!/^[a-zA-Z0-9_-]+$/.test(projectName.trim())) {
-      logger.info('Project name can only contain letters, numbers, dashes, and underscores');
+      logger.info(
+        'Project name can only contain letters, numbers, dashes, and underscores'
+      );
       exitWithCode(ExitCode.USER_ERROR);
     }
   }
 
   // If project name was provided as an empty string, it should be treated as not provided
-  const hasValidProjectName = projectName !== undefined && projectName.trim().length > 0;
+  const hasValidProjectName =
+    projectName !== undefined && projectName.trim().length > 0;
 
   // Prompt for project name if not provided
   let finalProjectName: string;
   if (!hasValidProjectName) {
-    const { name } = await inquirer.prompt([
+    const { name } = await prompt([
       {
         type: 'input',
         name: 'name',
@@ -149,7 +162,7 @@ async function handleNewCommand(
   // Prompt for path if not provided
   let basePath: string;
   if (!options.path) {
-    const { useCurrentDir } = await inquirer.prompt([
+    const { useCurrentDir } = await prompt([
       {
         type: 'confirm',
         name: 'useCurrentDir',
@@ -159,7 +172,7 @@ async function handleNewCommand(
     ]);
 
     if (!useCurrentDir) {
-      const { customPath } = await inquirer.prompt([
+      const { customPath } = await prompt([
         {
           type: 'input',
           name: 'customPath',
@@ -190,7 +203,7 @@ async function handleNewCommand(
 
   // Check if target directory already exists
   if (existsSync(targetPath)) {
-    const { overwrite } = await inquirer.prompt([
+    const { overwrite } = await prompt([
       {
         type: 'confirm',
         name: 'overwrite',
@@ -229,7 +242,11 @@ async function handleNewCommand(
         error instanceof Error &&
         error.message.includes('Failed to load templates')
       ) {
-        logger.info(chalk.yellow('No template specified and no templates found in library.'));
+        logger.info(
+          chalk.yellow(
+            'No template specified and no templates found in library.'
+          )
+        );
         logger.info(
           chalk.gray(
             'Use "scaffold template create" to create your first template.'
