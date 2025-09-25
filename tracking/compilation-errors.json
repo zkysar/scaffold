@@ -122,61 +122,61 @@
     ],
     "src/services/project-extension.service.ts": [
       {
+        "line": 34,
+        "column": 5,
+        "errorCode": "TS1206",
+        "message": "Decorators are not valid here."
+      },
+      {
+        "line": 35,
+        "column": 5,
+        "errorCode": "TS1206",
+        "message": "Decorators are not valid here."
+      },
+      {
+        "line": 35,
+        "column": 62,
+        "errorCode": "TS2304",
+        "message": "Cannot find name 'IFileSystemService'."
+      },
+      {
         "line": 36,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
       },
       {
-        "line": 37,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 37,
-        "column": 62,
-        "errorCode": "TS2304",
-        "message": "Cannot find name 'IFileSystemService'."
-      },
-      {
-        "line": 38,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 38,
+        "line": 36,
         "column": 76,
         "errorCode": "TS2304",
         "message": "Cannot find name 'IVariableSubstitutionService'."
       },
       {
-        "line": 39,
+        "line": 37,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
       },
       {
-        "line": 40,
+        "line": 38,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
       },
       {
-        "line": 40,
+        "line": 38,
         "column": 75,
-        "errorCode": "TS2552",
-        "message": "Cannot find name 'IProjectValidationService'. Did you mean 'IProjectCreationService'?"
+        "errorCode": "TS2304",
+        "message": "Cannot find name 'IProjectValidationService'."
       },
       {
-        "line": 121,
+        "line": 119,
         "column": 11,
         "errorCode": "TS7006",
         "message": "Parameter 'r' implicitly has an 'any' type."
       },
       {
-        "line": 124,
+        "line": 122,
         "column": 44,
         "errorCode": "TS7006",
         "message": "Parameter 'e' implicitly has an 'any' type."

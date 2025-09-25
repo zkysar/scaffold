@@ -346,36 +346,6 @@
         "message": "Unexpected any. Specify a different type."
       }
     ],
-    "src/services/project-extension.service.ts": [
-      {
-        "line": 19,
-        "column": 1,
-        "rule": "import/order",
-        "severity": "warning",
-        "message": "`@/services/project-creation.service` type import should occur before type import of `@/services/project-manifest.service`"
-      },
-      {
-        "line": 19,
-        "column": 15,
-        "rule": "@typescript-eslint/no-unused-vars",
-        "severity": "error",
-        "message": "'IProjectCreationService' is defined but never used."
-      },
-      {
-        "line": 20,
-        "column": 1,
-        "rule": "import/order",
-        "severity": "warning",
-        "message": "`@/services/project-creation.service` import should occur before type import of `@/services/project-manifest.service`"
-      },
-      {
-        "line": 20,
-        "column": 10,
-        "rule": "@typescript-eslint/no-unused-vars",
-        "severity": "error",
-        "message": "'ProjectCreationService' is defined but never used."
-      }
-    ],
     "src/services/project-fix.service.ts": [
       {
         "line": 9,
