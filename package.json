@@ -23,14 +23,8 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage .scaffold-temp",
     "prepare": "husky",
-    "burndown:status": "node scripts/burndown.js status",
-    "burndown:list": "node scripts/burndown.js list",
-    "burndown:scan": "node scripts/burndown.js scan",
-    "burndown:test": "node scripts/burndown.js test",
-    "burndown:lint": "node scripts/burndown.js lint",
-    "burndown:check": "node scripts/burndown.js check",
-    "burndown:remove": "node scripts/burndown.js remove",
-    "burndown:refresh": "node scripts/burndown.js refresh"
+    "tracking:update": "node scripts/update-tracking.js",
+    "tracking:update:silent": "node scripts/update-tracking.js --silent"
   },
   "keywords": [
     "cli",
