@@ -224,6 +224,12 @@
     ],
     "src/services/project-validation.service.ts": [
       {
+        "line": 41,
+        "column": 5,
+        "errorCode": "TS1206",
+        "message": "Decorators are not valid here."
+      },
+      {
         "line": 42,
         "column": 5,
         "errorCode": "TS1206",
@@ -236,19 +242,13 @@
         "message": "Decorators are not valid here."
       },
       {
-        "line": 44,
-        "column": 5,
-        "errorCode": "TS1206",
-        "message": "Decorators are not valid here."
-      },
-      {
-        "line": 44,
+        "line": 43,
         "column": 76,
         "errorCode": "TS2304",
         "message": "Cannot find name 'IVariableSubstitutionService'."
       },
       {
-        "line": 45,
+        "line": 44,
         "column": 5,
         "errorCode": "TS1206",
         "message": "Decorators are not valid here."
