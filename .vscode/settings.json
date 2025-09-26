@@ -38,15 +38,24 @@
   },
   // Jest extension configuration
   "jest.jestCommandLine": "node_modules/.bin/jest",
-  "jest.rootPath": "${workspaceFolder}",
-  "jest.nodeEnv": {
-    "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-  },
+  "jest.rootPath": ".",
   "jest.runMode": {
     "type": "on-demand",
     "deferred": false,
     "coverage": false
   },
+  "jest.debugCodeLens.showWhenTestStateInferred": true,
+  "jest.testExplorerEnabled": false,
+  "jest.testExplorerFileExtensions": [".js", ".ts", ".jsx", ".tsx"],
+  "jest.testExplorerConfigString": "jest.config.js",
+  "jest.enableInlineErrorMessages": true,
+  "jest.codeLens.showWhenTestStateInferred": true,
+  "jest.codeLens.showCoverage": false,
+  "jest.codeLens.showRun": true,
+  "jest.codeLens.showDebug": true,
+  "jest.snapshotUpdateCommand": "update",
+  "jest.automaticallyOpenOutput": "never",
+  "jest.automaticallyOpenPeekView": "never",
   "testing.automaticallyOpenPeekView": "never",
 
   // Make errors more visible
