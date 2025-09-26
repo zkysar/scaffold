@@ -6,7 +6,6 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 import { execSync } from 'child_process';
 
-
 import { logger } from '@/lib/logger';
 /**
  * Create a temporary directory for testing

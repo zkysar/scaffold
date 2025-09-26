@@ -3,13 +3,10 @@
  * Manages SHA-based identification and aliasing for templates
  */
 
-import * as os from 'os';
-import * as path from 'path';
+import { injectable, inject } from 'tsyringe';
 
-import { injectable } from 'tsyringe';
-
-import { generateSHAFromObject } from '@/lib/sha';
 import type { Template } from '@/models';
+
 import { IdentifierService } from './identifier-service';
 
 /**
@@ -19,19 +16,16 @@ import { IdentifierService } from './identifier-service';
 export class TemplateIdentifierService extends IdentifierService {
   private static instance: TemplateIdentifierService | null = null;
 
-  constructor(aliasFilePath?: string) {
-    const defaultPath = path.join(os.homedir(), '.scaffold', 'templates', 'aliases.json');
-    super(aliasFilePath ?? defaultPath);
+  constructor(@inject('aliasFilePath') aliasFilePath: string) {
+    super(aliasFilePath);
   }
 
   /**
    * Get singleton instance with optional custom alias file path
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static getInstance(aliasFilePath?: string): TemplateIdentifierService {
-    if (!TemplateIdentifierService.instance || aliasFilePath) {
-      TemplateIdentifierService.instance = new TemplateIdentifierService(aliasFilePath);
-    }
-    return TemplateIdentifierService.instance;
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -40,23 +34,9 @@ export class TemplateIdentifierService extends IdentifierService {
    * @param template - The template object
    * @returns SHA-256 hash of template content
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   computeTemplateSHA(template: Template): string {
-    // Extract only the content-relevant fields for hashing
-    const contentForHash = {
-      name: template.name,
-      version: template.version,
-      description: template.description,
-      rootFolder: template.rootFolder,
-      author: template.author,
-      folders: template.folders,
-      files: template.files,
-      variables: template.variables,
-      rules: template.rules,
-      dependencies: template.dependencies
-    };
-
-    // Generate SHA from the content
-    return generateSHAFromObject(contentForHash, []);
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -64,19 +44,9 @@ export class TemplateIdentifierService extends IdentifierService {
    * @param template - The template with UUID
    * @returns Template with SHA as id
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   migrateTemplateToSHA(template: Template): Template {
-    // Compute SHA from content
-    const sha = this.computeTemplateSHA(template);
-
-    // Create new template with SHA as id
-    const migratedTemplate: Template = {
-      ...template,
-      id: sha,
-      // Remove aliases from the template itself (managed separately)
-      aliases: undefined
-    };
-
-    return migratedTemplate;
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -84,9 +54,9 @@ export class TemplateIdentifierService extends IdentifierService {
    * @param template - The template to validate
    * @returns True if SHA is valid
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   validateTemplateSHA(template: Template): boolean {
-    const computedSHA = this.computeTemplateSHA(template);
-    return template.id === computedSHA;
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -94,16 +64,20 @@ export class TemplateIdentifierService extends IdentifierService {
    * @param template - The template
    * @param options - Display options
    */
-  formatTemplateForDisplay(template: Template, options: { verbose?: boolean } = {}): string {
-    return this.formatForDisplay(template.id, options);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  formatTemplateForDisplay(
+    template: Template,
+    options: { verbose?: boolean } = {}
+  ): string {
+    void options;
+    void template;
+    throw new Error('Method not implemented');
   }
 
   /**
    * Register default aliases for common templates
    */
   async registerDefaultAliases(): Promise<void> {
-    // This can be extended to register common aliases
-    // For example: 'react' -> react template SHA
-    // Currently a placeholder for future use
+    throw new Error('Method not implemented');
   }
 }

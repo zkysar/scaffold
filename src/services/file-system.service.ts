@@ -2,15 +2,10 @@
  * File system service for abstracting all file operations with comprehensive error handling
  */
 
-import { randomUUID } from 'crypto';
-import { accessSync } from 'fs';
 import * as path from 'path';
 
 import * as fs from 'fs-extra';
 import { injectable } from 'tsyringe';
-
-import { enhanceError } from '@/lib/error-utils';
-import { logger } from '@/lib/logger';
 
 export interface BackupInfo {
   id: string;
@@ -210,659 +205,157 @@ export class FileSystemService implements IFileSystemService {
     return this._isDryRun;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setDryRun(enabled: boolean): void {
-    this._isDryRun = enabled;
+    throw new Error('Method not implemented');
   }
 
   async createFile(
     filePath: string,
     content: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: FileOperationOptions = {}
   ): Promise<void> {
-    const resolvedPath = this.resolvePath(filePath);
-
-    if (this._isDryRun) {
-      logger.dryRun(`Would create file: ${resolvedPath}`);
-      return;
-    }
-
-    // Check overwrite before try-catch to avoid enhanced error wrapping
-    if (!options.overwrite && (await this.exists(resolvedPath))) {
-      throw new Error(
-        `File already exists and overwrite is disabled: ${resolvedPath}`
-      );
-    }
-
-    try {
-      if (options.createParentDirs !== false) {
-        await this.ensureDirectory(path.dirname(resolvedPath));
-      }
-
-      if (options.atomic) {
-        await this.writeFileAtomic(resolvedPath, content, options);
-      } else {
-        const writeOptions: fs.WriteFileOptions = {};
-        if (options.mode !== undefined) {
-          writeOptions.mode = options.mode;
-        }
-        await fs.writeFile(resolvedPath, content, writeOptions);
-      }
-
-      if (options.mode !== undefined) {
-        await fs.chmod(resolvedPath, options.mode);
-      }
-    } catch (error) {
-      throw enhanceError(error, `Failed to create file: ${resolvedPath}`, {
-        suggestion:
-          'Ensure the parent directory exists and you have write permissions.',
-        path: resolvedPath,
-        operation: 'createFile',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
   async createDirectory(
     dirPath: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: FileOperationOptions = {}
   ): Promise<void> {
-    const resolvedPath = this.resolvePath(dirPath);
-
-    if (this._isDryRun) {
-      logger.dryRun(`Would create directory: ${resolvedPath}`);
-      return;
-    }
-
-    try {
-      await fs.ensureDir(resolvedPath);
-
-      if (options.mode !== undefined) {
-        await fs.chmod(resolvedPath, options.mode);
-      }
-    } catch (error) {
-      throw enhanceError(error, `Failed to create directory: ${resolvedPath}`, {
-        suggestion:
-          'Ensure you have write permissions in the parent directory.',
-        path: resolvedPath,
-        operation: 'createDirectory',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
   async copyPath(
     source: string,
     dest: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: CopyOptions = {}
   ): Promise<void> {
-    const resolvedSource = this.resolvePath(source);
-    const resolvedDest = this.resolvePath(dest);
-
-    if (this._isDryRun) {
-      logger.dryRun(`Would copy: ${resolvedSource} -> ${resolvedDest}`);
-      return;
-    }
-
-    // Check source exists before try-catch to avoid enhanced error wrapping
-    if (!(await this.exists(resolvedSource))) {
-      throw new Error(`Source path does not exist: ${resolvedSource}`);
-    }
-
-    try {
-      if (options.createParentDirs !== false) {
-        await this.ensureDirectory(path.dirname(resolvedDest));
-      }
-
-      const copyOptions: fs.CopyOptions = {
-        overwrite: options.overwrite,
-        preserveTimestamps: options.preserveTimestamps,
-        dereference: options.dereference,
-        errorOnExist: options.errorOnExist,
-        filter: options.filter,
-      };
-
-      await fs.copy(resolvedSource, resolvedDest, copyOptions);
-    } catch (error) {
-      throw enhanceError(
-        error,
-        `Failed to copy: ${resolvedSource} -> ${resolvedDest}`,
-        {
-          suggestion:
-            'Ensure source exists and you have read/write permissions.',
-          path: resolvedSource,
-          operation: 'copyPath',
-        }
-      );
-    }
+    throw new Error('Method not implemented');
   }
 
   async deletePath(
     targetPath: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: DeleteOptions = {}
   ): Promise<void> {
-    const resolvedPath = this.resolvePath(targetPath);
-
-    if (this._isDryRun) {
-      logger.dryRun(`Would delete: ${resolvedPath}`);
-      return;
-    }
-
-    // Check existence and force option before try-catch to avoid enhanced error wrapping
-    if (!(await this.exists(resolvedPath))) {
-      if (!options.force) {
-        throw new Error(`Path does not exist: ${resolvedPath}`);
-      }
-      return;
-    }
-
-    try {
-      const maxRetries = options.maxRetries || 3;
-      let lastError: Error | null = null;
-
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        try {
-          if (await this.isDirectory(resolvedPath)) {
-            if (options.recursive) {
-              await fs.remove(resolvedPath);
-            } else {
-              await fs.rmdir(resolvedPath);
-            }
-          } else {
-            await fs.unlink(resolvedPath);
-          }
-          return;
-        } catch (error) {
-          lastError = error as Error;
-          if (attempt < maxRetries - 1) {
-            await new Promise(resolve =>
-              setTimeout(resolve, 100 * (attempt + 1))
-            );
-          }
-        }
-      }
-
-      throw lastError;
-    } catch (error) {
-      throw enhanceError(error, `Failed to delete: ${resolvedPath}`, {
-        suggestion: options.recursive
-          ? 'Ensure you have write permissions and no files are in use.'
-          : 'For directories, use recursive option or ensure directory is empty.',
-        path: resolvedPath,
-        operation: 'deletePath',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async exists(targetPath: string): Promise<boolean> {
-    try {
-      await fs.access(this.resolvePath(targetPath));
-      return true;
-    } catch {
-      return false;
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   existsSync(targetPath: string): boolean {
-    try {
-      accessSync(this.resolvePath(targetPath));
-      return true;
-    } catch {
-      return false;
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async readJson<T = unknown>(filePath: string): Promise<T> {
-    const resolvedPath = this.resolvePath(filePath);
-
-    // Check file exists before try-catch to avoid enhanced error wrapping
-    if (!(await this.exists(resolvedPath))) {
-      throw new Error(`JSON file does not exist: ${resolvedPath}`);
-    }
-
-    try {
-      return await fs.readJson(resolvedPath);
-    } catch (error) {
-      throw enhanceError(error, `Failed to read JSON file: ${resolvedPath}`, {
-        suggestion: 'Ensure the file exists and contains valid JSON.',
-        path: resolvedPath,
-        operation: 'readJson',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
   async writeJson(
     filePath: string,
     data: unknown,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: JsonWriteOptions = {}
   ): Promise<void> {
-    const resolvedPath = this.resolvePath(filePath);
-
-    if (this._isDryRun) {
-      logger.dryRun(`Would write JSON to: ${resolvedPath}`);
-      return;
-    }
-
-    // Check overwrite before try-catch to avoid enhanced error wrapping
-    if (!options.overwrite && (await this.exists(resolvedPath))) {
-      throw new Error(
-        `JSON file already exists and overwrite is disabled: ${resolvedPath}`
-      );
-    }
-
-    try {
-      if (options.createParentDirs !== false) {
-        await this.ensureDirectory(path.dirname(resolvedPath));
-      }
-
-      const jsonOptions = {
-        spaces: options.spaces || 2,
-        replacer: options.replacer,
-      };
-
-      if (options.atomic) {
-        const tempPath = `${resolvedPath}.tmp.${Date.now()}.${Math.random().toString(36).substr(2, 9)}`;
-        try {
-          await fs.writeJson(tempPath, data, jsonOptions);
-          await fs.move(tempPath, resolvedPath);
-        } catch (error) {
-          await fs.remove(tempPath).catch(() => {});
-          throw error;
-        }
-      } else {
-        await fs.writeJson(resolvedPath, data, jsonOptions);
-      }
-
-      if (options.mode !== undefined) {
-        await fs.chmod(resolvedPath, options.mode);
-      }
-    } catch (error) {
-      // Provide more specific error messages based on error type
-      let suggestion = 'Ensure the parent directory exists and you have write permissions.';
-
-      if (error instanceof Error) {
-        if (error.message.includes('ENOENT')) {
-          suggestion = 'Parent directory does not exist. Try creating the directory structure first.';
-        } else if (error.message.includes('EACCES') || error.message.includes('EPERM')) {
-          suggestion = 'Permission denied. Check file/directory permissions and ownership.';
-        } else if (error.message.includes('ENOSPC')) {
-          suggestion = 'No space left on device. Free up disk space and try again.';
-        } else if (error.message.includes('EISDIR')) {
-          suggestion = 'Target path is a directory, not a file. Check the path is correct.';
-        }
-      }
-
-      throw enhanceError(error, `Failed to write JSON file: ${resolvedPath}`, {
-        suggestion,
-        path: resolvedPath,
-        operation: 'writeJson',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
   async readFile(
     filePath: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     encoding: BufferEncoding = 'utf8'
   ): Promise<string> {
-    const resolvedPath = this.resolvePath(filePath);
-
-    // Check file exists before try-catch to avoid enhanced error wrapping
-    if (!(await this.exists(resolvedPath))) {
-      throw new Error(`File does not exist: ${resolvedPath}`);
-    }
-
-    try {
-      return await fs.readFile(resolvedPath, encoding);
-    } catch (error) {
-      throw enhanceError(error, `Failed to read file: ${resolvedPath}`, {
-        suggestion: 'Ensure the file exists and you have read permissions.',
-        path: resolvedPath,
-        operation: 'readFile',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
   async writeFile(
     filePath: string,
     content: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: FileOperationOptions = {}
   ): Promise<void> {
-    const resolvedPath = this.resolvePath(filePath);
-
-    if (this._isDryRun) {
-      logger.dryRun(`Would write file: ${resolvedPath}`);
-      return;
-    }
-
-    // Check overwrite before try-catch to avoid enhanced error wrapping
-    if (!options.overwrite && (await this.exists(resolvedPath))) {
-      throw new Error(
-        `File already exists and overwrite is disabled: ${resolvedPath}`
-      );
-    }
-
-    try {
-      if (options.createParentDirs !== false) {
-        await this.ensureDirectory(path.dirname(resolvedPath));
-      }
-
-      if (options.atomic) {
-        await this.writeFileAtomic(resolvedPath, content, options);
-      } else {
-        const writeOptions: fs.WriteFileOptions = {};
-        if (options.mode !== undefined) {
-          writeOptions.mode = options.mode;
-        }
-        await fs.writeFile(resolvedPath, content, writeOptions);
-      }
-
-      if (options.mode !== undefined) {
-        await fs.chmod(resolvedPath, options.mode);
-      }
-    } catch (error) {
-      throw enhanceError(error, `Failed to write file: ${resolvedPath}`, {
-        suggestion:
-          'Ensure the parent directory exists and you have write permissions.',
-        path: resolvedPath,
-        operation: 'writeFile',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async stat(targetPath: string): Promise<fs.Stats> {
-    const resolvedPath = this.resolvePath(targetPath);
-
-    try {
-      return await fs.stat(resolvedPath);
-    } catch (error) {
-      throw enhanceError(error, `Failed to get stats for: ${resolvedPath}`, {
-        suggestion: 'Ensure the path exists and you have read permissions.',
-        path: resolvedPath,
-        operation: 'stat',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async isDirectory(targetPath: string): Promise<boolean> {
-    try {
-      const stats = await this.stat(targetPath);
-      return stats.isDirectory();
-    } catch {
-      return false;
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async isFile(targetPath: string): Promise<boolean> {
-    try {
-      const stats = await this.stat(targetPath);
-      return stats.isFile();
-    } catch {
-      return false;
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async isSymlink(targetPath: string): Promise<boolean> {
-    try {
-      const stats = await fs.lstat(this.resolvePath(targetPath));
-      return stats.isSymbolicLink();
-    } catch {
-      return false;
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async readDirectory(dirPath: string): Promise<string[]> {
-    const resolvedPath = this.resolvePath(dirPath);
-
-    // Check directory exists and is directory before try-catch to avoid enhanced error wrapping
-    if (!(await this.exists(resolvedPath))) {
-      throw new Error(`Directory does not exist: ${resolvedPath}`);
-    }
-
-    if (!(await this.isDirectory(resolvedPath))) {
-      throw new Error(`Path is not a directory: ${resolvedPath}`);
-    }
-
-    try {
-      return await fs.readdir(resolvedPath);
-    } catch (error) {
-      throw enhanceError(error, `Failed to read directory: ${resolvedPath}`, {
-        suggestion:
-          'Ensure the directory exists and you have read permissions.',
-        path: resolvedPath,
-        operation: 'readDirectory',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async backup(paths: string[], description?: string): Promise<string> {
-    const backupId = randomUUID();
-    const timestamp = new Date().toISOString();
-    const backupPath = path.join(this.backupDir, backupId);
-
-    if (this._isDryRun) {
-      logger.dryRun(
-        `Would create backup: ${backupId} for paths: ${paths.join(', ')}`
-      );
-      return backupId;
-    }
-
-    try {
-      await this.ensureDirectory(backupPath);
-
-      const backupInfo: BackupInfo = {
-        id: backupId,
-        timestamp,
-        paths: paths.map(p => this.resolvePath(p)),
-        description,
-      };
-
-      // Copy each path to backup
-      for (const sourcePath of paths) {
-        const resolvedSource = this.resolvePath(sourcePath);
-        if (await this.exists(resolvedSource)) {
-          // Create a safe relative path for backup storage
-          // Remove leading slash and make path safe for cross-platform storage
-          const safePath = path.isAbsolute(resolvedSource)
-            ? resolvedSource.substring(1).replace(/:/g, '_') // Remove leading slash and handle Windows drive letters
-            : resolvedSource;
-          const backupTarget = path.join(backupPath, 'data', safePath);
-          await this.copyPath(resolvedSource, backupTarget, {
-            overwrite: true,
-          });
-        }
-      }
-
-      // Save backup metadata
-      await this.writeJson(path.join(backupPath, 'info.json'), backupInfo);
-
-      return backupId;
-    } catch (error) {
-      // Cleanup failed backup
-      await this.deletePath(backupPath, { recursive: true, force: true }).catch(
-        () => {}
-      );
-
-      throw enhanceError(
-        error,
-        `Failed to create backup for paths: ${paths.join(', ')}`,
-        {
-          suggestion:
-            'Ensure all source paths exist and you have read permissions.',
-          operation: 'backup',
-        }
-      );
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async restore(backupId: string): Promise<void> {
-    const backupPath = path.join(this.backupDir, backupId);
-
-    if (this._isDryRun) {
-      logger.dryRun(`Would restore from backup: ${backupId}`);
-      return;
-    }
-
-    // Check backup exists before try-catch to avoid enhanced error wrapping
-    if (!(await this.exists(backupPath))) {
-      throw new Error(`Backup does not exist: ${backupId}`);
-    }
-
-    try {
-      const backupInfoPath = path.join(backupPath, 'info.json');
-      if (!(await this.exists(backupInfoPath))) {
-        throw new Error(`Backup metadata is missing: ${backupId}`);
-      }
-
-      const backupInfo: BackupInfo = await this.readJson(backupInfoPath);
-      const dataPath = path.join(backupPath, 'data');
-
-      // Restore each backed up path
-      for (const originalPath of backupInfo.paths) {
-        // Use the same safe path logic as backup
-        const safePath = path.isAbsolute(originalPath)
-          ? originalPath.substring(1).replace(/:/g, '_') // Remove leading slash and handle Windows drive letters
-          : originalPath;
-        const backupSource = path.join(dataPath, safePath);
-
-        if (await this.exists(backupSource)) {
-          await this.copyPath(backupSource, originalPath, { overwrite: true });
-        }
-      }
-    } catch (error) {
-      throw enhanceError(error, `Failed to restore from backup: ${backupId}`, {
-        suggestion:
-          'Ensure the backup exists and you have write permissions to restore locations.',
-        operation: 'restore',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
   async listBackups(): Promise<BackupInfo[]> {
-    try {
-      if (!(await this.exists(this.backupDir))) {
-        return [];
-      }
-
-      const backupDirs = await this.readDirectory(this.backupDir);
-      const backups: BackupInfo[] = [];
-
-      for (const dirName of backupDirs) {
-        const infoPath = path.join(this.backupDir, dirName, 'info.json');
-        if (await this.exists(infoPath)) {
-          try {
-            const backupInfo = await this.readJson<BackupInfo>(infoPath);
-            backups.push(backupInfo);
-          } catch {
-            // Skip corrupted backup metadata
-          }
-        }
-      }
-
-      return backups.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-    } catch (error) {
-      throw enhanceError(error, 'Failed to list backups', {
-        suggestion:
-          'Ensure you have read permissions for the backup directory.',
-        operation: 'listBackups',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async deleteBackup(backupId: string): Promise<void> {
-    const backupPath = path.join(this.backupDir, backupId);
-
-    if (this._isDryRun) {
-      logger.dryRun(`Would delete backup: ${backupId}`);
-      return;
-    }
-
-    // Check backup exists before try-catch to avoid enhanced error wrapping
-    if (!(await this.exists(backupPath))) {
-      throw new Error(`Backup does not exist: ${backupId}`);
-    }
-
-    try {
-      await this.deletePath(backupPath, { recursive: true });
-    } catch (error) {
-      throw enhanceError(error, `Failed to delete backup: ${backupId}`, {
-        suggestion: 'Ensure the backup exists and you have write permissions.',
-        operation: 'deleteBackup',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   resolvePath(...pathSegments: string[]): string {
-    return path.resolve(...pathSegments);
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   relativePath(from: string, to: string): string {
-    return path.relative(from, to);
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   normalizePath(targetPath: string): string {
-    return path.normalize(targetPath).replace(/\\/g, '/');
+    throw new Error('Method not implemented');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async ensureDirectory(dirPath: string): Promise<void> {
-    if (this._isDryRun) {
-      logger.dryRun(`Would ensure directory: ${dirPath}`);
-      return;
-    }
-
-    try {
-      await fs.ensureDir(this.resolvePath(dirPath));
-    } catch (error) {
-      throw enhanceError(error, `Failed to ensure directory: ${dirPath}`, {
-        suggestion:
-          'Ensure you have write permissions in the parent directory.',
-        path: dirPath,
-        operation: 'ensureDirectory',
-      });
-    }
+    throw new Error('Method not implemented');
   }
 
   async move(
     source: string,
     dest: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: FileOperationOptions = {}
   ): Promise<void> {
-    const resolvedSource = this.resolvePath(source);
-    const resolvedDest = this.resolvePath(dest);
-
-    if (this._isDryRun) {
-      logger.dryRun(`Would move: ${resolvedSource} -> ${resolvedDest}`);
-      return;
-    }
-
-    // Check source existence before try-catch
-    if (!(await this.exists(resolvedSource))) {
-      throw new Error(`Source path does not exist: ${resolvedSource}`);
-    }
-
-    // Check overwrite before try-catch to avoid enhanced error wrapping
-    if (!options.overwrite && (await this.exists(resolvedDest))) {
-      throw new Error(
-        `Destination already exists and overwrite is disabled: ${resolvedDest}`
-      );
-    }
-
-    try {
-      if (options.createParentDirs !== false) {
-        await this.ensureDirectory(path.dirname(resolvedDest));
-      }
-
-      await fs.move(resolvedSource, resolvedDest, {
-        overwrite: options.overwrite,
-      });
-    } catch (error) {
-      throw enhanceError(
-        error,
-        `Failed to move: ${resolvedSource} -> ${resolvedDest}`,
-        {
-          suggestion:
-            'Ensure source exists and you have read/write permissions.',
-          path: resolvedSource,
-          operation: 'move',
-        }
-      );
-    }
+    throw new Error('Method not implemented');
   }
 
   /**
@@ -871,22 +364,9 @@ export class FileSystemService implements IFileSystemService {
   private async writeFileAtomic(
     filePath: string,
     content: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options: FileOperationOptions = {}
   ): Promise<void> {
-    const tempPath = `${filePath}.tmp.${Date.now()}.${Math.random().toString(36).substr(2, 9)}`;
-
-    try {
-      const writeOptions: fs.WriteFileOptions = {};
-      if (options.mode !== undefined) {
-        writeOptions.mode = options.mode;
-      }
-
-      await fs.writeFile(tempPath, content, writeOptions);
-      await fs.move(tempPath, filePath);
-    } catch (error) {
-      // Cleanup temp file on failure
-      await fs.remove(tempPath).catch(() => {});
-      throw error;
-    }
+    throw new Error('Method not implemented');
   }
 }

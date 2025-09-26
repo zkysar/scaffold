@@ -1,0 +1,93 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "eslint.validate": ["javascript", "typescript"],
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.eol": "\n",
+  "files.exclude": {
+    "dist": true,
+    "node_modules": true,
+    "coverage": true,
+    ".scaffold-temp": true
+  },
+  "search.exclude": {
+    "dist": true,
+    "node_modules": true,
+    "coverage": true,
+    ".scaffold-temp": true,
+    "package-lock.json": true
+  },
+  // Jest extension configuration
+  "jest.jestCommandLine": "node_modules/.bin/jest",
+  "jest.rootPath": "${workspaceFolder}",
+  "jest.nodeEnv": {
+    "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+  },
+  "jest.runMode": {
+    "type": "on-demand",
+    "deferred": false,
+    "coverage": false
+  },
+  "testing.automaticallyOpenPeekView": "never",
+
+  // Make errors more visible
+  "problems.autoReveal": true,
+  "problems.decorations.enabled": true,
+  "problems.showCurrentInStatus": false, // Show ALL problems, not just current file
+  "problems.sortOrder": "severity",
+  "problems.defaultViewMode": "tree", // Tree view shows files with errors
+
+  // Error lens extension settings (if installed)
+  "errorLens.enabled": true,
+  "errorLens.fontSize": "12",
+  "errorLens.fontWeight": "bold",
+  "errorLens.messageBackgroundMode": "message",
+  "errorLens.severityText": ["ERROR", "WARNING", "INFO", "HINT"],
+
+  // Highlight errors in editor
+  "editor.renderValidationDecorations": "on",
+  "editor.showUnused": true,
+  "editor.occurrencesHighlight": "multiFile",
+
+  // TypeScript error reporting
+  "typescript.validate.enable": true,
+  "typescript.reportStyleChecksAsWarnings": true,
+  "typescript.suggest.completeJSDocs": true,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true, // Show ALL TypeScript errors
+
+  // ESLint error reporting
+  "eslint.alwaysShowStatus": true,
+  "eslint.codeActionsOnSave.mode": "problems",
+  "eslint.format.enable": true,
+
+  // Workbench settings for problems panel
+  "workbench.panel.defaultLocation": "bottom",
+  "workbench.action.problems.focus": true,
+
+  // Status bar
+  "workbench.statusBar.visible": true,
+  "terminal.integrated.scrollback": 10000,
+  "accessibility.signals.terminalBell": {
+    "sound": "on"
+  },
+  "terminal.integrated.enableVisualBell": true
+}

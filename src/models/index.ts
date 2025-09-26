@@ -49,26 +49,3 @@ export type {
   ValidationContext,
   ValidationOptions,
 } from './validation-result';
-
-// Completion models
-export type {
-  CompletionConfig,
-  CompletionContext,
-  CompletionProvider,
-  CommandMetadata,
-  SubcommandMetadata,
-  OptionMetadata,
-  ArgumentMetadata,
-} from './completion-config';
-
-export type {
-  CompletionItem,
-  CompletionResult,
-  CompletionOptions,
-  CompletionCacheEntry,
-  ShellCompletionConfig,
-  CompletionInstallStatus,
-  ShellCompletionScript,
-} from './completion-types';
-
-export { ShellType } from './completion-types';

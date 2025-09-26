@@ -3,12 +3,17 @@
  * Ensures CLI artifacts are built before running tests
  */
 
+import 'reflect-metadata';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { execSync } from 'child_process';
 
-
 import { logger } from '@/lib/logger';
+import { configureContainer } from '@/di/container';
+
+// Configure DI container for integration tests
+configureContainer();
+
 // Global integration test setup
 beforeAll(async () => {
   const cliPath = path.join(__dirname, '../dist/cli/index.js');
@@ -19,7 +24,7 @@ beforeAll(async () => {
     try {
       execSync('npm run build', {
         stdio: 'inherit',
-        cwd: path.join(__dirname, '..')
+        cwd: path.join(__dirname, '..'),
       });
     } catch (error) {
       throw new Error(`Failed to build project: ${error}`);

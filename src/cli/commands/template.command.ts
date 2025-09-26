@@ -3,558 +3,60 @@
  * Template management operations
  */
 
-import * as chalk from 'chalk';
 import { Command } from 'commander';
-import inquirer from 'inquirer';
 import { DependencyContainer } from 'tsyringe';
 
-import { ExitCode, exitWithCode } from '@/constants/exit-codes';
-import { logger } from '@/lib/logger';
-import { shortSHA } from '@/lib/sha';
-import type { Template } from '@/models';
-import { TemplateService } from '@/services';
-import { TemplateIdentifierService } from '@/services/template-identifier-service';
+import { DisplayFactory } from '@/cli/displays/display-factory';
+import {
+  TemplateHandler,
+  TemplateOptions,
+} from '@/cli/handlers/template-handler';
 
-interface TemplateCommandOptions {
-  verbose?: boolean;
-  dryRun?: boolean;
-  force?: boolean;
-  output?: string;
-}
+import { CommandExecutor } from './command-executor';
+import { COMMAND_METADATA } from './command-metadata';
 
 export function createTemplateCommand(container: DependencyContainer): Command {
-  const command = new Command('template');
+  const command = new Command(COMMAND_METADATA.template.name);
 
   command
-    .description('Manage templates (create/list/delete/export/import/alias)')
-    .argument('<action>', 'Action to perform (create|list|delete|export|import|alias)')
-    .argument('[identifier]', 'Template SHA/alias or file path (required for some actions)')
+    .description(COMMAND_METADATA.template.description)
+    .argument(
+      '<action>',
+      'Action to perform (create|list|delete|export|import|alias)'
+    )
+    .argument(
+      '[identifier]',
+      'Template SHA/alias or file path (required for some actions)'
+    )
     .argument('[alias]', 'New alias (required for alias action)')
     .option('--verbose', 'Show detailed output')
     .option('--dry-run', 'Show what would be done without making changes')
     .option('--force', 'Force operation without confirmation')
     .option('-o, --output <path>', 'Output path for export operations')
-    .action(async (action: string, identifier?: string, alias?: string, options?: TemplateCommandOptions) => {
-      try {
-        // Extract options from the last argument if it's options
-        const finalOptions = options || {};
-        await handleTemplateCommand(action, identifier, alias, finalOptions, container);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+    .option('-f, --format <format>', 'Output format', 'table')
+    .action(
+      async (
+        action: string,
+        identifier?: string,
+        alias?: string,
+        options?: TemplateOptions
+      ) => {
+        const fullOptions: TemplateOptions = {
+          ...options,
+        };
 
-        // Check if it's a system/permission error
-        if (errorMessage.includes('permission denied') ||
-            errorMessage.includes('EACCES') ||
-            errorMessage.includes('EPERM') ||
-            errorMessage.includes('ENOENT') ||
-            errorMessage.includes('no such file or directory')) {
-          exitWithCode(ExitCode.SYSTEM_ERROR, `System error: ${errorMessage}`);
-        } else {
-          // Default to user error for other cases
-          exitWithCode(ExitCode.USER_ERROR, `Error: ${errorMessage}`);
-        }
+        const handler = container.resolve(TemplateHandler);
+        const displayFactory = container.resolve(DisplayFactory);
+        const executor = container.resolve(CommandExecutor);
+
+        const display = displayFactory.createTemplateDisplay();
+
+        await executor.execute(
+          () => handler.execute(fullOptions),
+          result => display.display(result, fullOptions)
+        );
       }
-    });
+    );
 
   return command;
-}
-
-async function handleTemplateCommand(
-  action: string,
-  identifier: string | undefined,
-  alias: string | undefined,
-  options: TemplateCommandOptions,
-  container: DependencyContainer
-): Promise<void> {
-  const verbose = options.verbose || false;
-
-  if (verbose) {
-    logger.info(`${chalk.blue('Template action:')} ${action}`);
-    if (identifier) logger.info(`${chalk.blue('Template identifier:')} ${identifier}`);
-    if (alias) logger.info(`${chalk.blue('Alias:')} ${alias}`);
-    logger.info(`${chalk.blue('Options:')} ${JSON.stringify(options, null, 2)}`);
-  }
-
-  const templateService = container.resolve(TemplateService);
-  const identifierService = container.resolve(TemplateIdentifierService);
-
-  switch (action.toLowerCase()) {
-    case 'list':
-      await handleListTemplates(templateService, options);
-      break;
-    case 'create':
-      await handleCreateTemplate(templateService, identifier, options);
-      break;
-    case 'delete':
-      await handleDeleteTemplate(templateService, identifier, options);
-      break;
-    case 'export':
-      await handleExportTemplate(templateService, identifier, options);
-      break;
-    case 'import':
-      await handleImportTemplate(templateService, identifier, options);
-      break;
-    case 'alias':
-      await handleAliasTemplate(identifierService, templateService, identifier, alias);
-      break;
-    default:
-      logger.error(`${chalk.red('Error:')} Unknown action: ${action}`);
-      logger.info(chalk.gray('Available actions: list, create, delete, export, import, alias'));
-      exitWithCode(ExitCode.USER_ERROR);
-  }
-}
-
-async function handleListTemplates(
-  templateService: TemplateService,
-  options: TemplateCommandOptions
-): Promise<void> {
-  const verbose = options.verbose || false;
-
-  try {
-    const library = await templateService.loadTemplates();
-
-    if (library.templates.length === 0) {
-      logger.info(chalk.yellow('No templates found.'));
-      logger.info(
-        chalk.gray(
-          'Use "scaffold template create" to create your first template.'
-        )
-      );
-      return;
-    }
-
-    logger.info(chalk.green('Available Templates:'));
-    logger.info('');
-
-    for (const template of library.templates) {
-      const shortId = shortSHA(template.id, verbose ? 12 : 8);
-      const aliasStr = template.aliases && template.aliases.length > 0
-        ? ` (alias: ${template.aliases.map(a => `"${a}"`).join(', ')})`
-        : '';
-      logger.info(`${chalk.bold(template.name)} ${chalk.gray(`${shortId}${aliasStr}`)}`);
-      logger.info(`${chalk.gray('  Version:')} ${template.version}`);
-      logger.info(`${chalk.gray('  Description:')} ${template.description}`);
-      logger.info(
-        chalk.gray('  Location: ') + `~/.scaffold/templates/${template.id}/template.json`
-      );
-
-      if (verbose) {
-        logger.info(`${chalk.gray('  Source:')} ${template.source}`);
-        logger.info(
-          chalk.gray('  Installed: ') + (template.installed ? 'Yes' : 'No')
-        );
-        logger.info(`${chalk.gray('  Last Updated:')} ${template.lastUpdated}`);
-      }
-
-      logger.info('');
-    }
-
-    logger.info(chalk.blue('Total: ') + library.templates.length + ' templates');
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes('No templates found')
-    ) {
-      logger.info(chalk.yellow('No templates found.'));
-      logger.info(
-        chalk.gray(
-          'Use "scaffold template create" to create your first template.'
-        )
-      );
-    } else {
-      throw error;
-    }
-  }
-}
-
-async function handleCreateTemplate(
-  templateService: TemplateService,
-  name: string | undefined,
-  options: TemplateCommandOptions
-): Promise<void> {
-  const verbose = options.verbose || false;
-  const dryRun = options.dryRun || false;
-
-  if (!name) {
-    logger.error(
-      chalk.red('Error:'),
-      'Template name is required for create action'
-    );
-    logger.info(chalk.gray('Usage: scaffold template create <name>'));
-    exitWithCode(ExitCode.USER_ERROR);
-  }
-
-  if (verbose) {
-    logger.info(`${chalk.blue('Creating template:')} ${name}`);
-  }
-
-  // Interactive template creation
-  const answers = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'description',
-      message: 'Template description:',
-      validate: (input: string) =>
-        input.trim().length > 0 || 'Description is required',
-    },
-    {
-      type: 'input',
-      name: 'rootFolder',
-      message: 'Root folder for template isolation:',
-      default: name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, ''),
-      validate: (input: string): string | boolean => {
-        if (!input.trim()) return 'Root folder is required';
-        if (!/^[a-zA-Z0-9_-]+$/.test(input))
-          return 'Root folder must contain only alphanumeric characters, underscores, and hyphens';
-        if (input.startsWith('.') || input.startsWith('-'))
-          return 'Root folder cannot start with a dot or hyphen';
-        return true;
-      },
-    },
-    {
-      type: 'input',
-      name: 'version',
-      message: 'Initial version:',
-      default: '1.0.0',
-      validate: (input: string): string | boolean => {
-        const semverRegex = /^\d+\.\d+\.\d+(-[\w.]+)?$/;
-        return (
-          semverRegex.test(input) || 'Invalid semantic version (e.g., 1.0.0)'
-        );
-      },
-    },
-    {
-      type: 'confirm',
-      name: 'strictMode',
-      message: 'Enable strict mode validation?',
-      default: false,
-    },
-    {
-      type: 'confirm',
-      name: 'allowExtraFiles',
-      message: 'Allow extra files in projects?',
-      default: true,
-    },
-  ]);
-
-  const template: Template = {
-    id: '', // SHA will be computed by the service
-    name,
-    version: answers.version,
-    description: answers.description,
-    rootFolder: answers.rootFolder,
-    folders: [],
-    files: [],
-    variables: [],
-    rules: {
-      strictMode: answers.strictMode,
-      allowExtraFiles: answers.allowExtraFiles,
-      allowExtraFolders: true,
-      conflictResolution: 'prompt',
-      excludePatterns: ['node_modules', '.git', '*.log'],
-      rules: [],
-    },
-    created: new Date().toISOString(),
-    updated: new Date().toISOString(),
-  };
-
-  if (dryRun) {
-    logger.info(chalk.yellow('DRY RUN - Template would be created with:'));
-    logger.info(JSON.stringify(template, null, 2));
-    return;
-  }
-
-  try {
-    await templateService.createTemplate(template);
-    // Template ID is now SHA computed by the service
-    const createdTemplate = await templateService.getTemplate(template.name);
-    logger.info(chalk.green('✓ Template created successfully!'));
-    logger.info(`${chalk.blue('Template SHA:')} ${shortSHA(createdTemplate.id)}`);
-    logger.info(`${chalk.blue('Template Name:')} ${template.name}`);
-    logger.info(`${chalk.blue('Version:')} ${template.version}`);
-
-    if (verbose) {
-      logger.info(`${chalk.gray('Full SHA:')} ${createdTemplate.id}`);
-      logger.info(`${chalk.gray('Location:')} ~/.scaffold/templates/${createdTemplate.id}/template.json`);
-    }
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('already exists')) {
-      logger.error(`${chalk.red('Error:')} Template '${name}' already exists`);
-      logger.info(
-        chalk.gray(
-          'Use a different name or delete the existing template first.'
-        )
-      );
-      exitWithCode(ExitCode.USER_ERROR);
-    } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
-      logger.error(`${chalk.red('Error:')} Permission denied`);
-      exitWithCode(ExitCode.SYSTEM_ERROR);
-    } else {
-      throw error;
-    }
-  }
-}
-
-async function handleDeleteTemplate(
-  templateService: TemplateService,
-  name: string | undefined,
-  options: TemplateCommandOptions
-): Promise<void> {
-  const verbose = options.verbose || false;
-  const dryRun = options.dryRun || false;
-  const force = options.force || false;
-
-  if (!name) {
-    logger.error(
-      chalk.red('Error:'),
-      'Template name or ID is required for delete action'
-    );
-    logger.info(chalk.gray('Usage: scaffold template delete <name>'));
-    exitWithCode(ExitCode.USER_ERROR);
-  }
-
-  if (verbose) {
-    logger.info(`${chalk.blue('Deleting template:')} ${name}`);
-  }
-
-  try {
-    // Find template by name or ID
-    const library = await templateService.loadTemplates();
-    const template = library.templates.find(
-      t => t.name === name || t.id === name
-    );
-
-    if (!template) {
-      logger.error(`${chalk.red('Error:')} Template '${name}' not found`);
-      exitWithCode(ExitCode.USER_ERROR);
-    }
-
-    if (!force && !dryRun) {
-      const { confirm } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'confirm',
-          message: `Are you sure you want to delete template '${template.name}' (${shortSHA(template.id)})?`,
-          default: false,
-        },
-      ]);
-
-      if (!confirm) {
-        logger.info(chalk.yellow('Operation cancelled.'));
-        return;
-      }
-    }
-
-    if (dryRun) {
-      logger.info(chalk.yellow('DRY RUN - Would delete template:'));
-      logger.info(`${chalk.blue('  SHA:')} ${shortSHA(template.id)}`);
-      logger.info(`${chalk.blue('  Name:')} ${template.name}`);
-      logger.info(`${chalk.blue('  Version:')} ${template.version}`);
-      return;
-    }
-
-    await templateService.deleteTemplate(template.id);
-    logger.info(chalk.green('✓ Template deleted successfully!'));
-    logger.info(`${chalk.blue('Deleted:')} ${template.name} (${shortSHA(template.id)})`);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('not found')) {
-      logger.error(`${chalk.red('Error:')} Template '${name}' not found`);
-      exitWithCode(ExitCode.USER_ERROR);
-    } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
-      logger.error(`${chalk.red('Error:')} Permission denied`);
-      exitWithCode(ExitCode.SYSTEM_ERROR);
-    } else {
-      throw error;
-    }
-  }
-}
-
-async function handleExportTemplate(
-  templateService: TemplateService,
-  name: string | undefined,
-  options: TemplateCommandOptions
-): Promise<void> {
-  const verbose = options.verbose || false;
-  const dryRun = options.dryRun || false;
-
-  if (!name) {
-    logger.error(
-      chalk.red('Error:'),
-      'Template name or ID is required for export action'
-    );
-    logger.info(
-      chalk.gray('Usage: scaffold template export <name> [-o output.json]')
-    );
-    exitWithCode(ExitCode.USER_ERROR);
-  }
-
-  const outputPath = options.output || `./${name}-template.json`;
-
-  if (verbose) {
-    logger.info(`${chalk.blue('Exporting template:')} ${name}`);
-    logger.info(`${chalk.blue('Output path:')} ${outputPath}`);
-  }
-
-  try {
-    // Find template by name or ID
-    const library = await templateService.loadTemplates();
-    const template = library.templates.find(
-      t => t.name === name || t.id === name
-    );
-
-    if (!template) {
-      logger.error(`${chalk.red('Error:')} Template '${name}' not found`);
-      exitWithCode(ExitCode.USER_ERROR);
-    }
-
-    if (dryRun) {
-      logger.info(
-        chalk.yellow('DRY RUN - Would export template to: ') + outputPath
-      );
-      logger.info(
-        chalk.blue('  Template: ') + `${template.name} (${template.id})`
-      );
-      return;
-    }
-
-    await templateService.exportTemplate(template.id, outputPath);
-    logger.info(chalk.green('✓ Template exported successfully!'));
-    logger.info(`${chalk.blue('Template:')} ${template.name} (${template.id})`);
-    logger.info(`${chalk.blue('Output:')} ${outputPath}`);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('not found')) {
-      logger.error(`${chalk.red('Error:')} Template '${name}' not found`);
-      exitWithCode(ExitCode.USER_ERROR);
-    } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
-      logger.error(`${chalk.red('Error:')} Permission denied writing to output file`);
-      exitWithCode(ExitCode.SYSTEM_ERROR);
-    } else {
-      throw error;
-    }
-  }
-}
-
-async function handleImportTemplate(
-  templateService: TemplateService,
-  archivePath: string | undefined,
-  options: TemplateCommandOptions
-): Promise<void> {
-  const verbose = options.verbose || false;
-  const dryRun = options.dryRun || false;
-
-  if (!archivePath) {
-    logger.error(
-      chalk.red('Error:'),
-      'Archive path is required for import action'
-    );
-    logger.info(chalk.gray('Usage: scaffold template import <archive-path>'));
-    exitWithCode(ExitCode.USER_ERROR);
-  }
-
-  if (verbose) {
-    logger.info(`${chalk.blue('Importing template from:')} ${archivePath}`);
-  }
-
-  if (dryRun) {
-    logger.info(
-      chalk.yellow('DRY RUN - Would import template from: ') + archivePath
-    );
-    return;
-  }
-
-  try {
-    const template = await templateService.importTemplate(archivePath);
-    logger.info(chalk.green('✓ Template imported successfully!'));
-    logger.info(`${chalk.blue('Template SHA:')} ${shortSHA(template.id)}`);
-    logger.info(`${chalk.blue('Template Name:')} ${template.name}`);
-    logger.info(`${chalk.blue('Version:')} ${template.version}`);
-    logger.info(`${chalk.blue('Description:')} ${template.description}`);
-
-    if (verbose) {
-      logger.info(`${chalk.gray('Full SHA:')} ${template.id}`);
-      logger.info(`${chalk.gray('Location:')} ~/.scaffold/templates/${template.id}/template.json`);
-    }
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('already exists')) {
-      logger.error(
-        chalk.red('Error:'),
-        'Template with the same ID already exists'
-      );
-      logger.info(
-        chalk.gray('Delete the existing template first or modify the import.')
-      );
-      exitWithCode(ExitCode.USER_ERROR);
-    } else if (
-      error instanceof Error &&
-      error.message.includes('does not exist')
-    ) {
-      logger.error(
-        chalk.red('Error:'),
-        `Archive file '${archivePath}' not found`
-      );
-      exitWithCode(ExitCode.USER_ERROR);
-    } else if (error instanceof Error && (error.message.includes('EACCES') || error.message.includes('EPERM'))) {
-      logger.error(`${chalk.red('Error:')} Permission denied`);
-      exitWithCode(ExitCode.SYSTEM_ERROR);
-    } else {
-      throw error;
-    }
-  }
-}
-
-async function handleAliasTemplate(
-  identifierService: TemplateIdentifierService,
-  templateService: TemplateService,
-  identifier: string | undefined,
-  alias: string | undefined
-): Promise<void> {
-  if (!identifier) {
-    logger.error(`${chalk.red('Error:')} Template SHA or existing alias is required`);
-    logger.info(chalk.gray('Usage: scaffold template alias <sha-or-alias> <new-alias>'));
-    exitWithCode(ExitCode.USER_ERROR);
-  }
-
-  if (!alias) {
-    logger.error(`${chalk.red('Error:')} New alias is required`);
-    logger.info(chalk.gray('Usage: scaffold template alias <sha-or-alias> <new-alias>'));
-    exitWithCode(ExitCode.USER_ERROR);
-  }
-
-  try {
-    // Get the template to ensure it exists
-    const template = await templateService.getTemplate(identifier);
-
-    // Register the alias
-    await identifierService.registerAlias(template.id, alias);
-
-    logger.info(chalk.green('✓ Alias registered successfully!'));
-    logger.info(`${chalk.blue('Template:')} ${template.name} (${shortSHA(template.id)})`);
-    logger.info(`${chalk.blue('New alias:')} ${alias}`);
-
-    // Show all aliases for this template
-    const allAliases = await identifierService.getAliases(template.id, [template.id]);
-    if (allAliases.length > 1) {
-      logger.info(`${chalk.gray('All aliases:')} ${allAliases.map(a => `"${a}"`).join(', ')}`);
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('not found')) {
-        logger.error(`${chalk.red('Error:')} Template '${identifier}' not found`);
-        exitWithCode(ExitCode.USER_ERROR);
-      } else if (error.message.includes('already registered')) {
-        logger.error(`${chalk.red('Error:')} ${error.message}`);
-        exitWithCode(ExitCode.USER_ERROR);
-      } else if (error.message.includes('EACCES') || error.message.includes('EPERM')) {
-        logger.error(`${chalk.red('Error:')} Permission denied`);
-        exitWithCode(ExitCode.SYSTEM_ERROR);
-      } else {
-        throw error;
-      }
-    } else {
-      throw error;
-    }
-  }
 }

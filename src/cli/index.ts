@@ -8,7 +8,6 @@ import 'module-alias/register';
 import 'reflect-metadata';
 import chalk from 'chalk';
 
-import { CommandRegistry } from '@/cli/completion/command-registry';
 import { createProgram } from '@/cli/program';
 import { configureContainer } from '@/di/container';
 import { logger } from '@/lib/logger';
@@ -19,12 +18,9 @@ const container = configureContainer();
 // Create the program
 const program = createProgram(container);
 
-// Register program with command registry for completion
-CommandRegistry.getInstance().setProgram(program);
-
 // Configure output
 program.configureOutput({
-  writeErr: (str) => process.stderr.write(chalk.red(str)),
+  writeErr: str => process.stderr.write(chalk.red(str)),
 });
 
 // Global error handling
@@ -36,6 +32,15 @@ program.exitOverride(err => {
   process.exit(1);
 });
 
+// Configure logger before commands run
+program.hook('preAction', thisCommand => {
+  const globalOptions = thisCommand.opts();
+  logger.setOptions({
+    verbose: globalOptions.verbose,
+    noColor: globalOptions.noColor,
+  });
+});
+
 // Show help if no command provided
 if (process.argv.length <= 2) {
   program.help();
@@ -43,10 +48,3 @@ if (process.argv.length <= 2) {
 
 // Parse CLI arguments
 program.parse();
-
-// Configure logger based on global options
-const globalOptions = program.opts();
-logger.setOptions({
-  verbose: globalOptions.verbose,
-  noColor: globalOptions.noColor
-});

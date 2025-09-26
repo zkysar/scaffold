@@ -12,7 +12,6 @@ Scaffold CLI provides a comprehensive solution for managing project templates an
 - **Structure validation** - Verify projects conform to expected patterns
 - **Automatic fixing** - Repair structural issues with intelligent suggestions
 - **Configuration cascade** - Global, workspace, and project-level settings
-- **Shell completion** - Built-in completion support for bash, zsh, and fish
 - **Extensible architecture** - Plugin-friendly design for custom functionality
 
 ## Installation
@@ -347,10 +346,6 @@ Higher-level configurations override lower-level ones.
     "verboseDefault": false,
     "progressBars": true
   },
-  "completion": {
-    "shellType": "auto",
-    "enabled": true
-  }
 }
 ```
 
@@ -410,7 +405,6 @@ src/
 ├── services/         # Business logic services
 ├── cli/             # CLI command handlers
 │   ├── commands/    # Individual command implementations
-│   └── completion/  # Shell completion handlers
 └── lib/             # Utility functions
 
 tests/

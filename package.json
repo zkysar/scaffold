@@ -18,7 +18,11 @@
     "test:coverage:check": "jest --coverage --coverageThreshold='{\"global\":{\"branches\":50,\"functions\":50,\"lines\":50,\"statements\":50}}'",
     "test:coverage:diff": "jest --coverage --changedSince=origin/main --coverageThreshold='{\"global\":{\"branches\":50,\"functions\":50,\"lines\":50,\"statements\":50}}'",
     "lint": "eslint src --ext .ts",
+    "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts'",
+    "format:check": "prettier --check 'src/**/*.ts' 'tests/**/*.ts'",
     "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "watch:all": "concurrently 'npm:typecheck:watch' 'npm:test:watch' -n 'TSC,TEST' -c 'blue,green'",
     "clean": "rm -rf dist coverage .scaffold-temp",
     "prepare": "husky"
   },
@@ -51,6 +55,7 @@
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
+    "concurrently": "^8.2.2",
     "@types/inquirer": "^8.2.10",
     "@types/jest": "^29.5.8",
     "@types/minimatch": "^5.1.2",

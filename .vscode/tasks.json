@@ -1,0 +1,69 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "TypeScript Watch",
+      "type": "npm",
+      "script": "typecheck:watch",
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated",
+        "group": "watchers"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Jest Watch",
+      "type": "npm",
+      "script": "test:watch",
+      "problemMatcher": {
+        "owner": "jest",
+        "source": "jest",
+        "applyTo": "allDocuments",
+        "fileLocation": ["absolute"],
+        "pattern": {
+          "regexp": "^\\s+●\\s+(.*)\\s+›\\s+(.*)$|^\\s+at\\s+.*\\s+\\((.+):(\\d+):(\\d+)\\)",
+          "file": 3,
+          "line": 4,
+          "column": 5,
+          "message": 1
+        }
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never",
+        "panel": "dedicated",
+        "group": "watchers"
+      }
+    },
+    {
+      "label": "Watch All",
+      "dependsOn": ["TypeScript Watch", "Jest Watch"],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "group": "watchers"
+      }
+    },
+    {
+      "label": "Fix All Issues",
+      "type": "shell",
+      "command": "npm run lint -- --fix && npm run format",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}

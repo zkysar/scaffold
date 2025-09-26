@@ -83,16 +83,22 @@ export function findSHAByPrefix(prefix: string, shas: string[]): string[] {
  * @param excludeKeys - Keys to exclude from hashing
  * @returns SHA-256 hash of the object's content
  */
-export function generateSHAFromObject(obj: any, excludeKeys: string[] = []): string {
+export function generateSHAFromObject(
+  obj: unknown,
+  excludeKeys: string[] = []
+): string {
   const filtered = filterObject(obj, excludeKeys);
-  const content = JSON.stringify(filtered, Object.keys(filtered).sort());
+  const content = JSON.stringify(
+    filtered,
+    Object.keys(filtered as object).sort()
+  );
   return generateSHA256(content);
 }
 
 /**
  * Recursively filter an object, excluding specified keys
  */
-function filterObject(obj: any, excludeKeys: string[]): any {
+function filterObject(obj: unknown, excludeKeys: string[]): unknown {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
@@ -101,10 +107,13 @@ function filterObject(obj: any, excludeKeys: string[]): any {
     return obj.map(item => filterObject(item, excludeKeys));
   }
 
-  const filtered: any = {};
+  const filtered: Record<string, unknown> = {};
   for (const key of Object.keys(obj)) {
     if (!excludeKeys.includes(key)) {
-      filtered[key] = filterObject(obj[key], excludeKeys);
+      filtered[key] = filterObject(
+        (obj as Record<string, unknown>)[key],
+        excludeKeys
+      );
     }
   }
 

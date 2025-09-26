@@ -1,8 +1,5 @@
 #!/usr/bin/env sh
 . "$(dirname "$0")/_/husky.sh"
 
-# Run lint-staged
-npx lint-staged
-
-# Temporarily disabled - tests are failing
-# npm test -- --maxWorkers=2
+npm run format
+npm run lint

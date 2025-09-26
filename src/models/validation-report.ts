@@ -5,19 +5,19 @@
 import { RuleFix } from '@/models/template';
 
 export interface ValidationError {
-  id: string;                    // Unique error identifier (UUID v4)
-  severity: "error" | "critical";
-  templateSha: string;           // SHA of template that was violated
-  ruleId: string;                // Which specific rule was violated
-  path: string;                  // Problem file/folder
-  expected: string;              // What should be there
-  actual: string;                // What is there
-  fix?: RuleFix;                 // How to fix this error (from rule)
-  fixApplied?: boolean;          // Was auto-fix attempted
-  message: string;               // Error message
-  file?: string;                 // File path for display
-  rule?: string;                 // Rule name for display
-  suggestion?: string;           // Suggestion for fixing
+  id: string; // Unique error identifier (UUID v4)
+  severity: 'error' | 'critical';
+  templateSha: string; // SHA of template that was violated
+  ruleId: string; // Which specific rule was violated
+  path: string; // Problem file/folder
+  expected: string; // What should be there
+  actual: string; // What is there
+  fix?: RuleFix; // How to fix this error (from rule)
+  fixApplied?: boolean; // Was auto-fix attempted
+  message: string; // Error message
+  file?: string; // File path for display
+  rule?: string; // Rule name for display
+  suggestion?: string; // Suggestion for fixing
 }
 
 export interface ValidationWarning {

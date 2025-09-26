@@ -1,17 +1,7 @@
 #!/usr/bin/env sh
 . "$(dirname "$0")/_/husky.sh"
 
-# Skip tests for now due to pre-existing test failures
-echo "Skipping tests due to pre-existing failures that need investigation..."
-
-# Run all tests including Docker integration tests
-# echo "Running all tests before push..."
-
-# Run unit tests
-# npm run test:unit
-
-# Run integration tests in Docker
-# echo "Running Docker integration tests..."
-# docker compose --profile test-integration up --abort-on-container-exit --exit-code-from test-integration
-
-echo "Tests skipped - need to be fixed in separate issue!"
+npm run format
+npm run lint
+npm run build
+npm run test

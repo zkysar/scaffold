@@ -163,11 +163,16 @@ export class Logger {
     if (this.options.noColor || !keyColor) {
       console.log(`${key}:`, value);
     } else {
-      const coloredKey = keyColor === 'blue' ? chalk.blue(key) :
-                        keyColor === 'gray' ? chalk.gray(key) :
-                        keyColor === 'green' ? chalk.green(key) :
-                        keyColor === 'yellow' ? chalk.yellow(key) :
-                        key;
+      const coloredKey =
+        keyColor === 'blue'
+          ? chalk.blue(key)
+          : keyColor === 'gray'
+            ? chalk.gray(key)
+            : keyColor === 'green'
+              ? chalk.green(key)
+              : keyColor === 'yellow'
+                ? chalk.yellow(key)
+                : key;
       console.log(`${coloredKey}:`, value);
     }
   }
@@ -197,7 +202,8 @@ export function createLogger(options: LoggerOptions): Logger {
 
 // Export convenience functions that use the default logger
 export const log = {
-  error: (message: string, error?: Error | string): void => logger.error(message, error),
+  error: (message: string, error?: Error | string): void =>
+    logger.error(message, error),
   warn: (message: string): void => logger.warn(message),
   success: (message: string): void => logger.success(message),
   info: (message: string): void => logger.info(message),
@@ -210,7 +216,8 @@ export const log = {
   debug: (message: string): void => logger.debug(message),
   dryRun: (message: string): void => logger.dryRun(message),
   newLine: (): void => logger.newLine(),
-  keyValue: (key: string, value: string, keyColor?: string): void => logger.keyValue(key, value, keyColor),
+  keyValue: (key: string, value: string, keyColor?: string): void =>
+    logger.keyValue(key, value, keyColor),
   raw: (...args: unknown[]): void => logger.raw(...args),
   rawError: (...args: unknown[]): void => logger.rawError(...args),
 };
